@@ -1,6 +1,6 @@
 # Changelog
 
-Omashell is a fork of [Omacale](https://github.com/AyushKr2003/omacale) by [AyushKr2003](https://github.com/AyushKr2003). Everything up to 0.45.4 is Omacale as AyushKr2003 made it; the versions below are what this fork adds. Each version has a [release on GitHub](https://github.com/Ozancann01/omacale/releases).
+Omashell is a fork of [Omacale](https://github.com/AyushKr2003/omacale) by [AyushKr2003](https://github.com/AyushKr2003). Everything up to 0.45.4 is Omacale as AyushKr2003 made it; the versions below are what this fork adds. Each version has a [release on GitHub](https://github.com/Ozancann01/omashell/releases).
 
 ## 0.62.0 — Omashell
 

@@ -349,13 +349,13 @@ Omarchy's `omarchy.lock` service owns the session lock, PAM, the stranded-lock r
 
 The version lives in `manifest.json`, `scripts/omashell` (`VERSION`) and the fallback in `Bar.qml`; bump all three together (minor for features, patch for fixes).
 
-**Each version also gets a `CHANGELOG.md` entry** (in the same commit as the bump), and once pushed a tag `vX.Y.Z` on that commit and a GitHub release on `Ozancann01/omacale` whose notes are that entry (the newest marked Latest). Patch fixes go into their minor's entry.
+**Each version also gets a `CHANGELOG.md` entry** (in the same commit as the bump), and once pushed a tag `vX.Y.Z` on that commit and a GitHub release on `Ozancann01/omashell` whose notes are that entry (the newest marked Latest). Patch fixes go into their minor's entry.
 
 **Bump it on every change that reaches the user, without being asked** -- a fix, a feature, anything that changes what the shell does. A docs-only or comment-only change doesn't need one.
 
 ## Git
 
-Omashell is Ozancann01's fork of Omacale (`AyushKr2003/omacale`, credited in README and About; keep that credit), at `Ozancann01/omacale` (the GitHub repo keeps its name), checked out at `~/Work/omacale`. Its `main` is the user's own version; feature branches are pushed to the fork, not proposed upstream unless asked.
+Omashell is Ozancann01's fork of Omacale (`AyushKr2003/omacale`, credited in README and About; keep that credit), at `Ozancann01/omashell` (renamed from omacale on GitHub), checked out at `~/Work/omacale`. Its `main` is the user's own version; feature branches are pushed to the fork, not proposed upstream unless asked.
 
 **Commit finished work without being asked**: once a change is done and verified, bump the version and commit it. Don't push unless asked.
 

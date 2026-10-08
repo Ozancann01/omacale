@@ -5,7 +5,7 @@ A [Caelestia](https://github.com/caelestia-dots/shell)-style desktop shell for [
 > **Omashell is built on [Omacale](https://github.com/AyushKr2003/omacale) by [AyushKr2003](https://github.com/AyushKr2003).** Nearly everything here started as Omacale: the frame, the bar, the drawers, the handovers and the settings app are AyushKr2003's work, which this fork extends (displays, profiles, night light, per-screen shell, theme sync, session menu, bar layout) under the same GPL-3.0 licence. All credit for the original goes to them; please star [the original](https://github.com/AyushKr2003/omacale) too.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/Ozancann01/omacale?label=release)](https://github.com/Ozancann01/omacale/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/Ozancann01/omashell?label=release)](https://github.com/Ozancann01/omashell/releases/latest)
 
 ![Omashell preview](preview.webp)
 
@@ -13,7 +13,7 @@ Omashell is a single Omarchy bar plugin (`omashell.bar`). It runs inside Omarchy
 
 ## What Omashell adds to Omacale
 
-Everything Omacale does, plus (details per version in the [changelog](CHANGELOG.md) and the [releases](https://github.com/Ozancann01/omacale/releases)):
+Everything Omacale does, plus (details per version in the [changelog](CHANGELOG.md) and the [releases](https://github.com/Ozancann01/omashell/releases)):
 
 | Area | What you get |
 |---|---|
@@ -87,7 +87,7 @@ Everything Omacale does, plus (details per version in the [changelog](CHANGELOG.
 ## Install
 
 ```bash
-git clone https://github.com/Ozancann01/omacale.git omashell
+git clone https://github.com/Ozancann01/omashell.git
 cd omashell
 ./install.sh
 ```
@@ -96,7 +96,7 @@ The installer copies the plugin to `~/.config/omarchy/plugins/omashell.bar`, mak
 
 **Coming from Omacale?** Run the same `./install.sh`: it carries your Omacale settings, state and Hyprland binds over to Omashell (backups in `~/.local/state/omashell/`), rebuilds the hand-overs and sets the old plugin folder aside.
 
-To install a specific version, pick one from [Releases](https://github.com/Ozancann01/omacale/releases) (`git checkout v0.62.0`, then `./install.sh`).
+To install a specific version, pick one from [Releases](https://github.com/Ozancann01/omashell/releases) (`git checkout v0.62.0`, then `./install.sh`).
 
 To update, pull and run the installer again. It upgrades in place: new plugin files, the notification and lock-screen handovers rebuilt for your Omarchy, and a shell restart. Your settings are kept, and `./uninstall.sh` still restores the setup from before the first install.
 

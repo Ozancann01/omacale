@@ -88,7 +88,7 @@ ColumnLayout {
   }
 
   Header { text: "Credits" }
-  Action { first: true; icon: "code"; label: "Omashell by Ozancann01"; sub: "github.com/Ozancann01/omacale"; onClicked: Qt.openUrlExternally("https://github.com/Ozancann01/omacale") }
+  Action { first: true; icon: "code"; label: "Omashell by Ozancann01"; sub: "github.com/Ozancann01/omashell"; onClicked: Qt.openUrlExternally("https://github.com/Ozancann01/omashell") }
   // The original this fork is built on; GPL-3.0 keeps its notice, and so do we.
   Action { icon: "volunteer_activism"; label: "Based on Omacale by AyushKr2003"; sub: "github.com/AyushKr2003/omacale · the original shell"; onClicked: Qt.openUrlExternally("https://github.com/AyushKr2003/omacale") }
   Action { last: true; icon: "favorite"; label: "Design by Caelestia"; sub: "github.com/caelestia-dots/shell · GPL-3.0"; onClicked: Qt.openUrlExternally("https://github.com/caelestia-dots/shell") }
