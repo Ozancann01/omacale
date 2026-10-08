@@ -53,7 +53,7 @@ QtObject {
     }))
   readonly property var barWidgets: widgetCatalog.filter(p => p.enabled)
   // Whether a status icon is on show: the one rule the bar (StatusRun,
-  // BarContent's "at most N" count) and Settings' bar preview go by.
+  // BarContent's "at most N" count) and Settings › Taskbar's notes go by.
   function statusOn(id) {
     const st = Config.o.bar.status
     switch (id) {

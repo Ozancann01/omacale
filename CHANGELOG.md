@@ -5,7 +5,7 @@ Omashell is a fork of [Omacale](https://github.com/AyushKr2003/omacale) by [Ayus
 ## Unreleased
 
 - Settings › Taskbar no longer shows the small picture of the bar above the list: it didn't always match the real bar.
-- **Settings › Taskbar matches the bar.** Items the "show at most N icons" limit puts behind the chevron are marked so (the chevron's row said "nothing behind it" while the bar had folded some), and items that are on but have nothing to draw right now (an empty tray, no update pending) say so instead of looking like they are on the bar.
+- **Settings › Taskbar matches the bar.** Items the "show at most N icons" limit puts behind the chevron are marked so (the chevron's row said "nothing behind it" while the bar had folded some), and items that are on but have nothing to draw right now (keep awake while it is off, an empty tray, no update pending) say when they show instead of looking like they are on the bar.
 
 ## 1.1.0 — Dock
 

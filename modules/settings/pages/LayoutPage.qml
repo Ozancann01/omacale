@@ -92,6 +92,21 @@ Item {
     if (BarLayout.STATUS.indexOf(id) >= 0) return PluginService.statusOn(id)
     return PluginService.itemShown(id)
   }
+  // Why an item that is on isn't on the bar now: the ones that only show
+  // while there is something to say.
+  function whenShown(id) {
+    const why = {
+      keepAwake: "shows only while keep awake is on",
+      update: "shows only when an update is waiting",
+      recording: "shows only while recording",
+      lockStatus: "shows only while Caps or Num Lock is on",
+      microphone: "shows only while an app uses the microphone",
+      bluetooth: "shows only while a device is connected",
+      tray: "shows only when an app is in the tray",
+      plugins: "shows only when the pill has widgets"
+    }
+    return why[id] || "nothing to show now"
+  }
   // The items the "at most N icons" limit puts behind the chevron, worked out
   // by the bar's own BarLayout.render.
   readonly property var limitFolded: {
@@ -296,7 +311,7 @@ Item {
           readonly property string note: r.it.error ? r.it.note
             : !r.off && !r.isShown ? "hidden" : r.child && r.mode === "overflow" ? "behind the pill's chevron"
             : r.list !== "drawer" && root.limitFolded.indexOf(r.modelData) >= 0 ? "behind the chevron (icon limit)"
-            : !r.off && !r.child && r.list !== "removed" && !r.it.plugin && !root.drawnOnBar(r.modelData) ? "nothing to show now"
+            : !r.off && !r.child && r.list !== "removed" && !r.it.plugin && !root.drawnOnBar(r.modelData) ? root.whenShown(r.modelData)
             : r.it.note
           visible: note !== ""
           text: "· " + note
