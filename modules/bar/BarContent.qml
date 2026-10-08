@@ -47,7 +47,7 @@ Item {
   }
 
   // ------------------------------------------------------------ layout
-  readonly property var widgetIds: (host.thirdPartyPlugins || []).map(e => host.entryId(e))
+  readonly property var widgetIds: host.widgetIds || []
   readonly property var layout: BarLayout.resolve({ start: cfg.layout.start, center: cfg.layout.center, end: cfg.layout.end, removed: cfg.layout.removed }, widgetIds)
   // The section models, replaced only when they really change, so a settings
   // write that leaves the layout alone doesn't recreate every entry.
@@ -436,11 +436,44 @@ Item {
     flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
     rowSpacing: root.gap
     columnSpacing: root.gap
+    // Neighbouring pills (status icons, widgets) share one pill: runs of
+    // shown entries that are `joinable`, as [{ a, b }] (first and last
+    // Loader). Each joined entry drops its own background and its padding on
+    // the joined side, and `backdrops` draws the run's pill behind them.
+    readonly property var runs: {
+      void root.layoutGen
+      const out = []
+      let cur = null
+      for (let i = 0; i < srep.count; i++) {
+        const l = srep.itemAt(i)
+        const it = l ? l.item : null
+        if (!it || !it.shown) continue      // hidden: takes no room, joins nothing
+        if (it.joinable === true) {
+          if (cur) { cur.b = l; cur.n++ } else { cur = { a: l, b: l, n: 1 } }
+        } else { if (cur) out.push(cur); cur = null }
+      }
+      if (cur) out.push(cur)
+      return out.filter(r => r.n > 1)
+    }
+    function joinOf(loader) {
+      for (const r of runs) {
+        if (r.a === loader) return { before: false, after: true }
+        if (r.b === loader) return { before: true, after: false }
+        // Inside a run: between its first and last, along the bar.
+        const p = root.apos(loader), pa = root.apos(r.a), pb = root.apos(r.b)
+        if (p > pa && p < pb) return { before: true, after: true }
+      }
+      return { before: false, after: false }
+    }
     Repeater {
       id: srep
       model: box.segList
       Loader {
+        id: ld
         required property var modelData
+        readonly property var join: { void box.runs; return box.joinOf(ld) }
+        Binding { target: ld.item; property: "joinBefore"; value: ld.join.before; when: !!ld.item && ld.item.joinable === true }
+        Binding { target: ld.item; property: "joinAfter"; value: ld.join.after; when: !!ld.item && ld.item.joinable === true }
         Layout.fillWidth: !!item && item.Layout.fillWidth
         Layout.fillHeight: !!item && item.Layout.fillHeight
         Layout.alignment: item ? item.Layout.alignment : 0
@@ -472,6 +505,25 @@ Item {
   Item {
     id: col
     anchors.fill: parent
+
+    // The shared pills behind joined entries (Section.runs), one per run,
+    // from its first entry's start to its last entry's end.
+    Repeater {
+      model: [startBox, centerBox, endBox].reduce((out, b) => out.concat(b.runs.map(r => ({ box: b, a: r.a, b: r.b }))), [])
+      Rectangle {
+        required property var modelData
+        readonly property Item box: modelData.box
+        readonly property Item first: modelData.a
+        readonly property Item last: modelData.b
+        x: box.x + first.x
+        y: box.y + first.y
+        width: root.vertical ? Tk.barInner : last.x + last.width - first.x
+        height: root.vertical ? last.y + last.height - first.y : Tk.barInner
+        radius: (root.vertical ? width : height) / 2
+        color: Colours.m3surfaceContainer
+        visible: box.visible
+      }
+    }
     // Padded at its two ends along the bar.
     anchors.topMargin: root.vertical ? root.vPadding : 0
     anchors.bottomMargin: root.vertical ? root.vPadding : 0

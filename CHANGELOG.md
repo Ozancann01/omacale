@@ -2,6 +2,13 @@
 
 Omashell is a fork of [Omacale](https://github.com/AyushKr2003/omacale) by [AyushKr2003](https://github.com/AyushKr2003). Everything up to 0.45.4 is Omacale as AyushKr2003 made it; the versions below are what this fork adds. Each version has a [release on GitHub](https://github.com/Ozancann01/omashell/releases).
 
+## 0.63.0 — One Taskbar, Omarchy's widgets
+
+- **Settings › Taskbar is one list of everything in the bar**: Omashell's items, Omarchy's own widgets and plugins, each with a chip saying where it comes from, an eye, its settings and a remove button in the same columns. The plugin pill's widgets sit under it and can be dragged out for a place of their own or back in. The separate Layout and Bar plugins pages are gone; Logo and Power share a small page.
+- **Omarchy's own bar widgets in Omashell's bar**: the AI agents usage panel, weather and indicators are put on the bar as on Omarchy's own, and "Add a widget" lists the rest by category (media, Tailscale, Dropbox, ...; switched-off ones are turned on when added). Omarchy's versions of things Omashell already draws (volume, network, clock, ...) are behind a switch.
+- **Omarchy updates**: a bar widget a new Omarchy adds is put on the bar by itself (before the power button), marked New in Settings, with a toast. A widget that no longer loads takes no room and its row says why. A placed Omarchy widget answers its own panel hotkey.
+- **Neighbouring icons share one pill**: status icons and widgets next to each other are drawn as one group instead of separate pills.
+
 ## 0.62.0 — Omashell
 
 - **New name: Omashell.** Plugin `omashell.bar`, command and IPC `omashell` (`omarchy-shell omashell …`), settings in `~/.config/omashell`, state in `~/.local/state/omashell`.

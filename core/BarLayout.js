@@ -34,11 +34,47 @@ var ITEMS = {
   power:         { section: "end",    label: "Power",           icon: "power_settings_new", key: "bar.power",               sub: "Opens the session menu" }
 }
 
+// The Settings page each built-in's gear opens ("" = none: its eye is all).
+var PAGES = {
+  logo: "barButtons", workspaces: "workspaces", activeWindow: "activeWindow", tray: "tray", clock: "clock",
+  keepAwake: "status", update: "status", recording: "", notifications: "status", lockStatus: "status",
+  audio: "status", microphone: "status", kbLayout: "status", network: "status", bluetooth: "status",
+  battery: "status", plugins: "", power: "barButtons"
+}
+
+// A widget's category (its manifest's barWidget.category) as an icon, for its
+// row in Settings and the bar's stand-in when it is too long to show.
+var CATEGORY_ICONS = {
+  "network": "lan", "fun": "mood", "media": "music_note", "system": "memory",
+  "productivity": "task_alt", "developer": "code", "development": "code",
+  "utilities": "build", "communication": "chat", "weather": "partly_cloudy_day",
+  "time": "schedule", "ai": "smart_toy", "status": "monitor_heart", "audio": "volume_up",
+  "files": "folder", "info": "info", "appearance": "palette", "compositor": "desktop_windows",
+  "window management": "select_window", "layout": "space_bar", "plugin": "extension"
+}
+function categoryIcon(category) {
+  return CATEGORY_ICONS[String(category || "").toLowerCase()] || "extension"
+}
+
 var ORDER = {
   start: ["logo", "workspaces"],
   center: ["activeWindow"],
   end: ["plugins", "tray", "clock"].concat(STATUS).concat(["power"])
 }
+
+// Omarchy's own bar widgets that Omashell already draws itself (the value is
+// the Omashell item; "" = covered elsewhere, e.g. Settings › Display). They are
+// offered only behind Settings › Taskbar's "Omarchy's versions" switch and are
+// never put on the bar by themselves.
+var DUPLICATES = {
+  "omarchy.audio": "audio", "omarchy.network": "network", "omarchy.bluetooth": "bluetooth",
+  "omarchy.clock": "clock", "omarchy.tray": "tray", "omarchy.workspaces": "workspaces",
+  "omarchy.menu": "logo", "omarchy.power": "battery", "omarchy.microphone": "microphone",
+  "omarchy.keyboard-layout": "kbLayout", "omarchy.system-update": "update",
+  "omarchy.active-window": "activeWindow", "omarchy.monitor": ""
+}
+// Widgets that make no sense on their own in Omashell's bar.
+var NEVER = ["omarchy.spacer"]
 
 function isPlugin(id) { return typeof id === "string" && id.indexOf("plugin:") === 0 }
 function pluginOf(id) { return id.slice(7) }
@@ -87,12 +123,14 @@ function resolve(saved, widgetIds) {
       out[SECTIONS[s]].push(id)
     }
   }
-  // Removed: built-ins only, and only while not on the bar.
+  // Removed: built-ins and enabled widgets, and only while not on the bar.
   var gone = listOf(saved ? saved.removed : null)
   for (var r = 0; r < gone.length; r++) {
-    if (typeof gone[r] !== "string" || seen[gone[r]] || !ITEMS.hasOwnProperty(gone[r])) continue
-    seen[gone[r]] = true
-    out.removed.push(gone[r])
+    var g = gone[r]
+    if (typeof g !== "string" || seen[g]) continue
+    if (isPlugin(g) ? known && widgets.indexOf(pluginOf(g)) < 0 : !ITEMS.hasOwnProperty(g)) continue
+    seen[g] = true
+    out.removed.push(g)
   }
   for (var t = 0; t < SECTIONS.length; t++) {
     var sec = SECTIONS[t], order = ORDER[sec]
@@ -127,16 +165,18 @@ function segments(list) {
 }
 
 // Put `id` in `target` (a section, or "removed" to take it off the bar) at
-// `index`, counted in the target as it is without the item. A widget's entry
-// placed into "removed" goes back to the plugin group instead.
-function place(layout, id, target, index) {
+// `index`, counted in the target as it is without the item. A plugin-pill
+// widget (third-party: in `pillIds`, or any widget when pillIds is not given)
+// placed into "removed" goes back to the pill instead; any other widget is
+// taken off the bar like a built-in.
+function place(layout, id, target, index, pillIds) {
   var l = clone(layout)
   var lists = SECTIONS.concat(["removed"])
   for (var s = 0; s < lists.length; s++) {
     var i = l[lists[s]].indexOf(id)
     if (i >= 0) l[lists[s]].splice(i, 1)
   }
-  if (target === "removed" && isPlugin(id)) return l
+  if (target === "removed" && isPlugin(id) && (!pillIds || listOf(pillIds).indexOf(pluginOf(id)) >= 0)) return l
   var list = l[target]
   if (!list) return clone(layout)
   list.splice(Math.max(0, Math.min(list.length, index)), 0, id)
@@ -154,6 +194,48 @@ function takeOut(layout, pluginId) {
 }
 function putBack(layout, pluginId) {
   return place(layout, "plugin:" + pluginId, "removed", 0)
+}
+
+// Widgets Omarchy offers that have not been offered before, put on the bar:
+// what makes a widget a later Omarchy update adds show up by itself.
+//   widgets: [{ id, firstParty }] -- the enabled bar widgets
+//   seen:    ids already offered once (bar.layout.seen)
+//   first:   true before the first adoption ever (bar.layout.adopted false);
+//            then only the Omarchy widgets Omarchy's own bar layout has
+//            (omarchyIds) are placed, everything else is just marked seen
+// A first-party widget that isn't a duplicate goes at the end of the end
+// section (before the power button, when that is last); a third-party one needs no place (the plugin pill shows it).
+// Returns { layout, seen, changed }.
+function adoptNew(layout, widgets, seen, first, omarchyIds) {
+  var l = clone(layout), was = listOf(seen), out = was.slice(), changed = !!first
+  var list = listOf(widgets), mine = listOf(omarchyIds)
+  for (var i = 0; i < list.length; i++) {
+    var w = list[i]
+    if (!w || typeof w.id !== "string" || out.indexOf(w.id) >= 0) continue
+    out.push(w.id)
+    changed = true
+    if (!w.firstParty || DUPLICATES.hasOwnProperty(w.id) || NEVER.indexOf(w.id) >= 0) continue
+    if (first && mine.indexOf(w.id) < 0) continue
+    var id = "plugin:" + w.id
+    if (find(l, id) || l.removed.indexOf(id) >= 0) continue
+    l = appendEnd(l, id)
+  }
+  return { layout: l, seen: out, changed: changed }
+}
+
+// `id` at the end of the end section -- before the power button when that
+// closes the bar, so it stays last.
+function appendEnd(layout, id) {
+  // The index place() takes is counted without the item itself.
+  var e = layout.end.filter(function (x) { return x !== id })
+  return place(layout, id, "end", e.length && e[e.length - 1] === "power" && id !== "power" ? e.length - 1 : e.length, [])
+}
+
+// What a widget is in Settings › Taskbar: "omarchy" (Omarchy's own) or
+// "plugin" (third-party); built-ins are "omashell".
+function sourceOf(id, firstPartyIds) {
+  if (!isPlugin(id)) return "omashell"
+  return listOf(firstPartyIds).indexOf(pluginOf(id)) >= 0 ? "omarchy" : "plugin"
 }
 
 // The section whose free space the window title takes: where it is, while it

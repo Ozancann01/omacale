@@ -48,7 +48,7 @@ Item {
   readonly property bool capsLock: Sys.capsLock
   readonly property bool numLock: Sys.numLock
 
-  readonly property string version: manifest && manifest.version ? manifest.version : "0.62.0"
+  readonly property string version: manifest && manifest.version ? manifest.version : "0.63.0"
 
   signal toggleRequested(string name, string screenName, string arg)
 
@@ -111,6 +111,63 @@ Item {
   onCollectedPluginsChanged: {
     var next = collectedPlugins
     if (JSON.stringify(next) !== JSON.stringify(thirdPartyPlugins)) thirdPartyPlugins = next
+  }
+
+  // Every bar widget the shell has loaded (Omarchy's own included), as
+  // [{ id, firstParty, name, enabled }]: what a widget of its own in
+  // bar.layout can be. Read from the registry, so a widget a later Omarchy
+  // adds is here without Omashell knowing it. Omarchy registers its own
+  // widgets whether they are on or not; on means in its bar layout
+  // (shell.json, what `omarchy plugin enable` adds to), which is all a
+  // custom bar is shown of the plugin registry.
+  readonly property var omarchyLayoutIds: {
+    var layout = barConfig && barConfig.layout ? barConfig.layout : {}
+    return ["left", "center", "right"].reduce((out, s) =>
+      out.concat((Array.isArray(layout[s]) ? layout[s] : []).map(e => root.entryId(e))), [])
+  }
+  readonly property var registryWidgets: {
+    var reg = barWidgetRegistry
+    if (!reg || !reg.widgets) return []
+    void(reg.revision)
+    var on = omarchyLayoutIds
+    return Object.keys(reg.widgets).sort().map(id => {
+      var meta = reg.metadataFor(id) || {}
+      return { id: id, firstParty: !!meta.firstParty, name: meta.displayName ? String(meta.displayName) : id,
+        enabled: on.indexOf(id) >= 0 }
+    })
+  }
+  property var widgetIds: []
+  onRegistryWidgetsChanged: {
+    // Only widgets that are on are drawn: one turned off leaves its place.
+    var ids = registryWidgets.filter(w => w.enabled).map(w => w.id)
+    if (JSON.stringify(ids) !== JSON.stringify(widgetIds)) widgetIds = ids
+    adoptTimer.restart()
+  }
+  // The hosted entry for a widget: its shell.json entry (with its settings)
+  // when Omarchy's layout has one, else a bare { id }.
+  function widgetEntry(id) {
+    if (!id || widgetIds.indexOf(id) < 0) return null
+    var layout = barConfig && barConfig.layout ? barConfig.layout : {}
+    var sections = ["left", "center", "right"]
+    for (var s = 0; s < sections.length; s++) {
+      var list = Array.isArray(layout[sections[s]]) ? layout[sections[s]] : []
+      for (var i = 0; i < list.length; i++)
+        if (entryId(list[i]) === id) return list[i]
+    }
+    return { id: id }
+  }
+  Connections {
+    target: PluginService
+    function onAdoptRequested() { adoptTimer.restart() }
+  }
+  // New widgets go on the bar (PluginService.adoptWidgets). The registry
+  // fills in one widget at a time while the shell starts: wait for it to settle.
+  Timer {
+    id: adoptTimer
+    interval: 3000
+    // An empty registry is a shell still starting (or reloading plugins),
+    // not one without widgets: adopting then would mark nothing seen.
+    onTriggered: if (root.registryWidgets.length) PluginService.adoptWidgets(root.registryWidgets, root.omarchyLayoutIds)
   }
 
   // Omarchy widgets draw their mark in Style.bar.iconCanvas (16px) with a
@@ -241,9 +298,9 @@ Item {
     return fallback
   }
 
-  // The third-party widgets in the plugin pill that have a panel, in the order
-  // they are drawn on that screen: top to bottom on a column, left to right on
-  // a row.
+  // The hosted widgets with a panel (in the plugin pill or placed on their
+  // own, Omarchy's included), in the order they are drawn on that screen: top
+  // to bottom on a column, left to right on a row.
   function panelOrder(screenName) {
     var s = scopeFor(screenName)
     if (!s) return []
@@ -259,6 +316,13 @@ Item {
   function openBarWidget(id, screenName) {
     // Bar hidden: nothing to open a bar panel from.
     if (barHidden) return false
+    // Omarchy's own widget on the bar (Settings › Taskbar) answers its own
+    // hotkey, ahead of the Omashell popout it stands in for.
+    var own = hostedSlot(id, screenName)
+    if (own && typeof own.activeItem.open === "function") {
+      own.activeItem.open()
+      return true
+    }
     var t = widgetTargets[id]
     var s = scopeFor(screenName)
     if (t && t.settings && s) {
@@ -270,11 +334,6 @@ Item {
       s.openPopoutKeys(t.popout)
       return true
     }
-    var slot = hostedSlot(id, screenName)
-    if (slot && typeof slot.activeItem.open === "function") {
-      slot.activeItem.open()
-      return true
-    }
     return false
   }
 
@@ -282,6 +341,7 @@ Item {
     return openBarWidget(String(id || ""), barScreen())
   }
   function hideBarWidget(id) {
+    if (hostedSlot(id, barScreen())) return closeHosted(id)
     var t = widgetTargets[id]
     if (t && t.settings) {
       for (const s of scopes) if (s.settings && s.nexusPage === t.settings) s.settings = false
@@ -291,6 +351,9 @@ Item {
       for (const s of scopes) if (s.popout === t.popout) s.popout = ""
       return true
     }
+    return closeHosted(id)
+  }
+  function closeHosted(id) {
     var hidden = false
     for (var i = 0; i < pluginSlots.length; i++) {
       var slot = pluginSlots[i]
@@ -302,7 +365,7 @@ Item {
     return hidden
   }
   function isBarWidgetOpen(id) {
-    var t = widgetTargets[id]
+    var t = hostedSlot(id, barScreen()) ? null : widgetTargets[id]
     if (t && t.settings) return scopes.some(s => s.settings && s.nexusPage === t.settings)
     if (t) {
       for (const s of scopes) if (s.popout === t.popout) return true
@@ -314,8 +377,8 @@ Item {
     }
     return false
   }
-  // `togglePanelAt <section> <n>` (SUPER+CTRL+1..9): the nth third-party
-  // widget you can see in the plugin pill (1-based), whatever the section --
+  // `togglePanelAt <section> <n>` (SUPER+CTRL+1..9): the nth hosted widget
+  // you can see (1-based), whatever the section --
   // Omashell's own popouts have their letter hotkeys. "" when there is none,
   // and the host then does nothing.
   function panelWidgetIdAt(section, index) {

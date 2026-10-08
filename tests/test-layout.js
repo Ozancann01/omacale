@@ -4,7 +4,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../core/BarLayout.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const L = {}
-vm.runInNewContext(src + "\nthis.L = { SECTIONS, STATUS, ITEMS, defaults, resolve, segments, place, takeOut, putBack, sectionLabel, isPlugin, pluginOf, flexSection }", L)
+vm.runInNewContext(src + "\nthis.L = { SECTIONS, STATUS, ITEMS, defaults, resolve, segments, place, takeOut, putBack, sectionLabel, isPlugin, pluginOf, flexSection, adoptNew, appendEnd, sourceOf, DUPLICATES, NEVER }", L)
 const B = L.L
 let failed = 0
 function test(name, fn) {
@@ -108,9 +108,67 @@ test("removed items stay off the bar when the layout is repaired", () => {
   const r = B.resolve({ start: ["logo", "workspaces"], center: ["activeWindow"], end: DEF_END.filter(i => i !== "battery"), removed: ["battery"] }, [])
   assert.ok(r.end.indexOf("battery") < 0); eq(r.removed, ["battery"])
 })
-test("removed keeps only known built-ins not also on the bar", () => {
-  const r = B.resolve({ start: ["logo", "workspaces"], center: ["activeWindow"], end: DEF_END, removed: ["clock", "nope", "plugin:a.b", 5, "battery"] }, ["a.b"])
-  eq(r.removed, []); eq(r.end, DEF_END)
+test("removed keeps known built-ins and enabled widgets not also on the bar", () => {
+  const r = B.resolve({ start: ["logo", "workspaces"], center: ["activeWindow"], end: DEF_END, removed: ["clock", "nope", "plugin:a.b", "plugin:gone", 5, "battery"] }, ["a.b"])
+  eq(r.removed, ["plugin:a.b"]); eq(r.end, DEF_END)
+})
+test("a removed widget is kept while the widget list is unknown", () => {
+  eq(B.resolve({ removed: ["plugin:omarchy.agents"] }, null).removed, ["plugin:omarchy.agents"])
+})
+test("a widget that isn't in the pill goes into removed", () => {
+  const l = B.place(B.place(B.defaults(), "plugin:omarchy.agents", "end", 99, []), "plugin:omarchy.agents", "removed", 0, ["x.y"])
+  eq(l.removed, ["plugin:omarchy.agents"]); eq(l.end, DEF_END)
+})
+test("a pill widget placed into removed goes back to the pill", () => {
+  eq(B.place(B.takeOut(B.defaults(), "x.y"), "plugin:x.y", "removed", 0, ["x.y"]), B.defaults())
+})
+
+// ---- adoption: widgets Omarchy offers show up by themselves
+const W = (id, fp) => ({ id, firstParty: fp })
+const OMARCHY = [W("omarchy.agents", true), W("omarchy.weather", true), W("omarchy.audio", true),
+  W("omarchy.spacer", true), W("omarchy.tailscale", true), W("omaplug", false)]
+test("first adoption places only Omarchy-only widgets from Omarchy's own bar", () => {
+  const r = B.adoptNew(B.defaults(), OMARCHY, [], true, ["omarchy.agents", "omarchy.audio", "omarchy.spacer", "omaplug"])
+  eq(r.layout.end, DEF_END.slice(0, -1).concat(["plugin:omarchy.agents", "power"]))
+  eq(r.seen, OMARCHY.map(w => w.id)); assert.ok(r.changed)
+})
+test("a new Omarchy widget goes at the end of the end section, before power", () => {
+  const r = B.adoptNew(B.defaults(), [W("omarchy.agents", true), W("omarchy.new", true)], ["omarchy.agents"], false, [])
+  eq(r.layout.end.slice(-2), ["plugin:omarchy.new", "power"]); eq(r.seen, ["omarchy.agents", "omarchy.new"])
+  const moved = B.place(B.defaults(), "power", "start", 0)
+  eq(B.adoptNew(moved, [W("omarchy.new", true)], [], false, []).layout.end.slice(-1), ["plugin:omarchy.new"])
+})
+test("duplicates, never-widgets and third-party widgets are only marked seen", () => {
+  const r = B.adoptNew(B.defaults(), [W("omarchy.audio", true), W("omarchy.spacer", true), W("omaplug", false)], [], false, [])
+  eq(r.layout, B.defaults()); eq(r.seen, ["omarchy.audio", "omarchy.spacer", "omaplug"]); assert.ok(r.changed)
+})
+test("nothing new is no change", () => {
+  const r = B.adoptNew(B.defaults(), [W("omarchy.agents", true)], ["omarchy.agents"], false, [])
+  assert.ok(!r.changed); eq(r.layout, B.defaults())
+})
+test("a widget already placed or removed is not placed again", () => {
+  const l = B.place(B.defaults(), "plugin:omarchy.agents", "removed", 0, [])
+  eq(B.adoptNew(l, [W("omarchy.agents", true)], [], false, []).layout, l)
+  const m = B.place(B.defaults(), "plugin:omarchy.weather", "start", 0, [])
+  eq(B.adoptNew(m, [W("omarchy.weather", true)], [], false, []).layout, m)
+})
+test("adoption does not mutate its input", () => {
+  const d = B.defaults(), seen = []
+  B.adoptNew(d, [W("omarchy.agents", true)], seen, false, []); eq(d, B.defaults()); eq(seen, [])
+})
+test("every duplicate points at a built-in or nothing", () => {
+  for (const id in B.DUPLICATES) assert.ok(B.DUPLICATES[id] === "" || B.ITEMS[B.DUPLICATES[id]], id)
+})
+test("appendEnd keeps power last, and moves an item already on the bar", () => {
+  eq(B.appendEnd(B.defaults(), "plugin:x.y").end.slice(-2), ["plugin:x.y", "power"])
+  eq(B.appendEnd(B.defaults(), "clock").end.slice(-2), ["clock", "power"])
+  const noPower = B.place(B.defaults(), "power", "removed", 0)
+  eq(B.appendEnd(noPower, "plugin:x.y").end.slice(-1), ["plugin:x.y"])
+})
+test("sourceOf tells built-ins, Omarchy widgets and plugins apart", () => {
+  assert.strictEqual(B.sourceOf("clock", []), "omashell")
+  assert.strictEqual(B.sourceOf("plugin:omarchy.agents", ["omarchy.agents"]), "omarchy")
+  assert.strictEqual(B.sourceOf("plugin:omaplug", ["omarchy.agents"]), "plugin")
 })
 test("removing the window title leaves no flexible section", () => {
   assert.strictEqual(B.flexSection(B.place(B.defaults(), "activeWindow", "removed", 0), true), "")

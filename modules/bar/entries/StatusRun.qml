@@ -41,10 +41,17 @@ Rectangle {
   readonly property bool shown: ids.some(id => on(id))
   visible: shown
   Layout.alignment: bar.crossAlign
-  implicitWidth: bar.vertical ? Tk.barInner : statusCol.implicitWidth + Tk.padding.medium * 2
-  implicitHeight: bar.vertical ? statusCol.implicitHeight + Tk.padding.medium * 2 : Tk.barInner
+  // Next to a widget, the two share one pill (BarContent's Section.runs draws
+  // it): no background of its own, and no padding on the joined side.
+  readonly property bool joinable: true
+  property bool joinBefore: false
+  property bool joinAfter: false
+  readonly property real padStart: joinBefore ? 0 : Tk.padding.medium
+  readonly property real padEnd: joinAfter ? 0 : Tk.padding.medium
+  implicitWidth: bar.vertical ? Tk.barInner : statusCol.implicitWidth + padStart + padEnd
+  implicitHeight: bar.vertical ? statusCol.implicitHeight + padStart + padEnd : Tk.barInner
   radius: (bar.vertical ? width : height) / 2
-  color: Colours.m3surfaceContainer
+  color: joinBefore || joinAfter ? "transparent" : Colours.m3surfaceContainer
   clip: true
   Behavior on implicitHeight { enabled: bar.vertical; Anim {} }
   Behavior on implicitWidth { enabled: !bar.vertical; Anim {} }
@@ -54,8 +61,8 @@ Rectangle {
   GridLayout {
     id: statusCol
     readonly property real gapPx: Tk.spacing.medium / 2
-    x: bar.vertical ? Math.round((parent.width - width) / 2) : parent.width - width - Tk.padding.medium
-    y: bar.vertical ? parent.height - height - Tk.padding.medium : Math.round((parent.height - height) / 2)
+    x: bar.vertical ? Math.round((parent.width - width) / 2) : parent.width - width - run.padEnd
+    y: bar.vertical ? parent.height - height - run.padEnd : Math.round((parent.height - height) / 2)
     columns: bar.vertical ? 1 : -1
     rows: bar.vertical ? -1 : 1
     flow: bar.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight

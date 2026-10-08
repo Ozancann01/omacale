@@ -31,6 +31,15 @@ test("the per-screen bar and desktop pickers are only on Shell on each screen", 
 test("every nav row leads to a page that exists", () => {
   for (const x of all) if (x.r.type === "nav") assert.ok(M.pageById(x.r.page), x.page + " -> " + x.r.page)
 })
+test("every bar item's gear opens a page that exists", () => {
+  const bl = fs.readFileSync(path.join(__dirname, "../core/BarLayout.js"), "utf8").replace(/^\.pragma.*$/m, "")
+  const b = {}
+  vm.runInNewContext(bl + "\nthis.B = { ITEMS, PAGES }", b)
+  for (const id in b.B.ITEMS) {
+    assert.ok(b.B.PAGES.hasOwnProperty(id), id + " has no PAGES entry")
+    if (b.B.PAGES[id]) assert.ok(M.pageById(b.B.PAGES[id]), id + " -> " + b.B.PAGES[id])
+  }
+})
 test("search finds the moved rows on their new pages", () => {
   assert.deepStrictEqual([...M.searchRows("brightness step").map(r => r.where)], ["Brightness"])
   assert.deepStrictEqual([...M.searchRows("cursor size").map(r => r.where)], ["Text and cursor"])
