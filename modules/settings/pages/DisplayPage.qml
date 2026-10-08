@@ -183,7 +183,7 @@ ColumnLayout {
     Layout.fillWidth: true
     visible: DisplayService.hasInternal && DisplayService.hasExternal
     text: "Laptop display"
-    subtext: "Off, only the external displays are used"
+    subtext: "Turn off to use only the external displays"
     checked: root.monitors.some(m => m.internal && m.enabled)
     onToggled: c => DisplayService.setInternal(c)
   }

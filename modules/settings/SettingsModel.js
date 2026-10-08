@@ -99,7 +99,17 @@ var pages = [
     rows: [
       { type: "custom", comp: "display" },
       { type: "section", text: "Cursor" },
-      { type: "stepper", key: "display.cursorSize", label: "Cursor size", subtext: "0 keeps Omarchy's (or your own). Hyprland draws it at this size times each display's scale, so it matches on every display; apps started earlier keep the old size until restarted", from: 0, to: 96, step: 4 },
+      // Real cursor theme sizes; a stepper from 0 started at an unusable 4px.
+      { type: "select", key: "display.cursorSize", label: "Cursor size", subtext: "Hyprland draws it at this size times each display's scale, so it matches on every display; apps started earlier keep the old size until restarted", options: [
+        { value: "0", label: "Omarchy's", icon: "arrow_selector_tool" },
+        { value: "16", label: "16 px", icon: "arrow_selector_tool" },
+        { value: "20", label: "20 px", icon: "arrow_selector_tool" },
+        { value: "24", label: "24 px", icon: "arrow_selector_tool" },
+        { value: "32", label: "32 px", icon: "arrow_selector_tool" },
+        { value: "40", label: "40 px", icon: "arrow_selector_tool" },
+        { value: "48", label: "48 px", icon: "arrow_selector_tool" },
+        { value: "64", label: "64 px", icon: "arrow_selector_tool" }
+      ] },
       { type: "select", key: "display.zeroScaling", label: "X11 app scaling", subtext: "Zero scaling keeps X11 apps sharp but small on scaled displays. Needs omacale.lua loaded; lines after it in looknfeel.lua win", options: [
         { value: "auto", label: "Leave as set", icon: "sync_alt" },
         { value: "on", label: "Zero scaling (sharp)", icon: "texture" },

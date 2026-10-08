@@ -51,10 +51,20 @@ QtObject {
         && mv "$d/hypr.lua.tmp" "$d/hypr.lua"
       hyprctl eval "if omacale_apply then omacale_apply({ spacing = $1, frameRounding = $2, cursorSize = $3, zeroScaling = \\"$4\\" }) end" >/dev/null 2>&1 || true
       # A cursor size of the user's own, at once: Hyprland's cursor and GTK's.
-      if [ "$3" -gt 0 ]; then
+      # The size it replaces is kept, so going back to 0 restores it live
+      # (the env vars in omacale.lua only reach the next session).
+      size="$3"
+      if [ "$size" -gt 0 ]; then
+        [ -f "$d/cursor-size.orig" ] || gsettings get org.gnome.desktop.interface cursor-size > "$d/cursor-size.orig" 2>/dev/null
+      elif [ -f "$d/cursor-size.orig" ]; then
+        size=$(cat "$d/cursor-size.orig"); rm -f "$d/cursor-size.orig"
+      else
+        size=0
+      fi
+      if [ "\${size:-0}" -gt 0 ] 2>/dev/null; then
         theme=$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null | tr -d "'")
-        hyprctl setcursor "\${theme:-default}" "$3" >/dev/null 2>&1 || true
-        gsettings set org.gnome.desktop.interface cursor-size "$3" 2>/dev/null || true
+        hyprctl setcursor "\${theme:-default}" "$size" >/dev/null 2>&1 || true
+        gsettings set org.gnome.desktop.interface cursor-size "$size" 2>/dev/null || true
       fi
     `, "hyprlook", String(root.spacing), String(root.frameRounding), String(root.cursorSize), root.zeroScaling]
   }

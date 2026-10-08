@@ -23,6 +23,9 @@ PanelWindow {
     height: col.implicitHeight + Tk.padding.extraLarge * 2
     radius: Tk.rounding.extraLarge
     color: Colours.palette.m3surfaceContainer
+    // Settings (same surface) is usually open behind it.
+    border.width: Tk.px(2)
+    border.color: Colours.m3outlineVariant
     Column {
       id: col
       anchors.centerIn: parent
