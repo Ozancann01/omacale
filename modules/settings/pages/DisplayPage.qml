@@ -19,8 +19,11 @@ ColumnLayout {
   Component.onCompleted: DisplayService.hold()
   Component.onDestruction: DisplayService.release()
 
-  readonly property var monitors: DisplayService.monitors
-  property string selected: ""
+  // The draft while hyprmoncfg's editor is there (what Apply would set), the
+  // live state otherwise.
+  readonly property var monitors: DisplayService.editable ? DisplayService.draftRows : DisplayService.monitors
+  readonly property bool edit: DisplayService.editable && !DisplayService.previewBusy
+  readonly property string selected: DisplayService.selected   // survives Settings closing for the confirm card
   readonly property var sel: monitors.find(m => m.name === selected) || monitors.find(m => m.focused) || monitors[0] || null
 
   spacing: Tk.spacing.extraSmall / 2
@@ -96,7 +99,22 @@ ColumnLayout {
             color: Colours.m3onSurfaceVariant
           }
         }
-        StateLayer { onClicked: root.selected = modelData.name }
+        // Click selects; with the editor, drag moves it (the daemon snaps it
+        // to its neighbours on edit_profile).
+        MouseArea {
+          id: boxMouse
+          anchors.fill: parent
+          cursorShape: root.edit ? (drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.PointingHandCursor
+          drag.target: root.edit ? parent : null
+          drag.threshold: Tk.px(6)
+          onPressed: DisplayService.selected = modelData.name
+          onReleased: {
+            if (!drag.active && Math.abs(parent.x - Math.round(modelData.x)) < 1 && Math.abs(parent.y - Math.round(modelData.y)) < 1) return
+            const at = Model.toLayout(parent.x, parent.y, canvasCard.fitted)
+            DisplayService.edit(modelData.key, { x: at.x, y: at.y, snap_distance: Math.round(Tk.px(16) / canvasCard.fitted.k) })
+            parent.x = Qt.binding(() => Math.round(modelData.x)); parent.y = Qt.binding(() => Math.round(modelData.y))
+          }
+        }
       }
     }
     IconTextButton {
@@ -113,10 +131,51 @@ ColumnLayout {
     }
   }
 
+  // ---- changes waiting for Apply
+  ConnectedRect {
+    Layout.fillWidth: true
+    Layout.topMargin: Tk.spacing.small
+    first: true
+    last: true
+    visible: DisplayService.dirty || DisplayService.lastError !== "" || DisplayService.previewBusy
+    implicitHeight: ab.implicitHeight + Tk.padding.medium * 2
+    RowLayout {
+      id: ab
+      anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+      anchors.leftMargin: Tk.padding.largeIncreased; anchors.rightMargin: Tk.padding.medium
+      spacing: Tk.spacing.medium
+      MIcon {
+        text: DisplayService.lastError ? "error" : "edit"
+        size: Tk.iconSize.medium
+        color: DisplayService.lastError ? Colours.m3error : Colours.m3primary
+      }
+      RowLabel {
+        Layout.fillWidth: true
+        text: DisplayService.lastError ? DisplayService.lastError
+          : DisplayService.previewBusy ? "Waiting for you to keep or revert"
+          : "Changes not applied yet"
+        subtext: DisplayService.previewBusy ? "" : "Applied for 30 seconds first; kept in profile " + (DisplayService.sourceProfile || "Omacale") + " if you keep them"
+      }
+      IconTextButton {
+        visible: DisplayService.dirty && !DisplayService.previewBusy
+        type: "text"; isRound: true; icon: "undo"; text: "Reset"
+        fontSize: Tk.body.small
+        onClicked: DisplayService.reset()
+      }
+      IconTextButton {
+        visible: DisplayService.dirty && !DisplayService.previewBusy
+        type: "filled"; isRound: true; icon: "check"; text: "Apply"
+        fontSize: Tk.body.small
+        disabled: DisplayService.editPending
+        onClicked: DisplayService.apply()
+      }
+    }
+  }
+
   // ---- the selected display
   SectionHeader { visible: !!root.sel; row: ({ text: root.sel ? root.sel.name : "" }) }
   Repeater {
-    model: root.sel ? [
+    model: root.sel && !DisplayService.editable ? [
       { label: "Model", value: root.sel.label },
       { label: "Resolution", value: root.sel.width + " × " + root.sel.height + " @ " + Math.round(root.sel.refresh) + " Hz" },
       { label: "Scale", value: Model.scaleLabel(root.sel.scale) + " · " + root.sel.lw + " × " + root.sel.lh + " logical" },
@@ -137,6 +196,15 @@ ColumnLayout {
         MText { Layout.maximumWidth: parent.width / 2; horizontalAlignment: Text.AlignRight; elide: Text.ElideRight; text: modelData.value; color: Colours.m3onSurfaceVariant }
       }
     }
+  }
+  DisplayEditor {
+    Layout.fillWidth: true
+    visible: DisplayService.editable && !!root.sel
+    sel: root.sel
+    monitors: root.monitors
+    settings: root.settings
+    enabled: root.edit
+    last: !brightRow.visible
   }
   ConnectedRect {
     id: brightRow

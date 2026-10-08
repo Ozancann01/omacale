@@ -48,7 +48,7 @@ Item {
   readonly property bool capsLock: Sys.capsLock
   readonly property bool numLock: Sys.numLock
 
-  readonly property string version: manifest && manifest.version ? manifest.version : "0.53.0"
+  readonly property string version: manifest && manifest.version ? manifest.version : "0.54.0"
 
   signal toggleRequested(string name, string screenName, string arg)
 
@@ -504,6 +504,12 @@ Item {
     function windowInfo(): void { root.toggle("windowInfo") }
     function dashboardTab(tab: string): void { root.toggle("dashboard", tab) }
     function close(): void { root.toggle("close") }
+    // Settings › Display's pending change: keep | revert | status.
+    function display(action: string): string {
+      if (action === "keep") DisplayService.keep()
+      else if (action === "revert") DisplayService.revert()
+      return DisplayService.confirming ? "confirming " + DisplayService.seconds : DisplayService.previewPending ? "applying" : "idle"
+    }
     // Any bar popout by Omacale's own name (network, bluetooth, audio,
     // battery, kblayout, lockstatus, update, activewindow), opened with the
     // keyboard on the focused monitor; again closes it.
@@ -571,6 +577,15 @@ Item {
   Variants {
     model: DisplayService.identifying ? Quickshell.screens : []
     DisplayIdentify {}
+  }
+  // Settings › Display › Apply: keep or revert, on every screen.
+  Variants {
+    model: DisplayService.confirming ? Quickshell.screens : []
+    DisplayConfirm {}
+  }
+  Connections {
+    target: DisplayService
+    function onPreviewEnded(fromSettings) { if (fromSettings) root.toggle("settings", "display") }
   }
 
   // Transparency: blur the Omacale layer behind translucent surfaces. This is

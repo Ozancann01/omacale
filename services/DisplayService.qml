@@ -43,9 +43,11 @@ QtObject {
 
   // ------------------------------------------------- hyprmoncfg socket
   property int seq: 0
+  property var methods: ({})             // request id -> method, for its response
   function send(method, params) {
     if (!sock.connected) return ""
     seq++
+    methods[String(seq)] = method
     sock.write(Model.request(seq, method, params))
     sock.flush()
     return String(seq)
@@ -56,6 +58,33 @@ QtObject {
     const m = Model.fromStatus(status)
     if (m.length) monitors = m
     activeProfile = status.active_profile ? status.active_profile.name || "" : ""
+    syncPreview(status.daemon ? status.daemon.preview : null)
+    // The live layout moved (hotplug, a profile switch, a kept preview):
+    // follow it, unless the user is in the middle of an edit.
+    if (!dirty && !editPending && !previewBusy) loadEditor()
+  }
+  function onResponse(e) {
+    const method = methods[String(e.id)] || ""
+    delete methods[String(e.id)]
+    if (e.error) {
+      lastError = String(e.error.message || "hyprmoncfg couldn't do that")
+      if (method === "edit_profile") { editPending = false; editQueue = []; }
+      if (method === "preview") { endPreview(); previewPending = false }
+      if (method === "commit" || method === "revert") actionPending = false
+      return
+    }
+    const r = e.result || {}
+    if (method === "editor_state") onEditor(r)
+    else if (method === "edit_profile") { draft = r.profile || draft; editPending = false; pump() }
+    else if (method === "preview") {
+      transactionId = String(r.id || "")
+      deadline = String(r.deadline || "")
+      if (transactionId) previewFile.write(transactionId)
+      else endPreview()
+      previewPending = false
+    }
+    else if (method === "commit" || method === "revert") { actionPending = false; endPreview(); loadEditor() }
+    else if (r.monitors) onStatus(r)
   }
   property Socket sock: Socket {
     path: Quickshell.env("XDG_RUNTIME_DIR") + "/hyprmoncfgd.sock"
@@ -66,11 +95,11 @@ QtObject {
         const e = Model.parseEnvelope(line)
         if (!e) return
         if (e.type === "event" && e.event === "status") root.onStatus(e.data)
-        else if (e.type === "response" && e.result && e.result.monitors) root.onStatus(e.result)
+        else if (e.type === "response") root.onResponse(e)
       }
     }
     onConnectedChanged: {
-      if (connected) root.send("subscribe", {})
+      if (connected) { root.send("subscribe", {}); root.loadEditor() }
       else if (root.holds > 0 && root.backend === "hyprmoncfg") reconnect.restart()
     }
     onError: connected = false
@@ -148,6 +177,143 @@ QtObject {
   function manage() {
     Quickshell.execDetached(["sh", "-c", "systemctl --user enable --now hyprmoncfgd.service && hyprmoncfg manage"])
     reconnect.restart()
+  }
+
+  // ----------------------------------------------------------- editing
+  // Only with hyprmoncfg: Omacale edits a copy of the live profile through
+  // the daemon (edit_profile is pure; it snaps and reflows, and applies
+  // nothing), then hands the result to `preview`. The daemon applies it,
+  // owns the 30-second revert deadline (so a crashed shell still reverts),
+  // and saves it into the profile on Keep. Omacale never writes a profile.
+  property var editorDoc: null
+  property var draft: null
+  property string savedSig: ""
+  property string sourceProfile: ""
+  readonly property var draftRows: Model.fromEditor(draft ? { profile: draft, displays: editorDoc ? editorDoc.displays : [] } : null)
+  readonly property bool editable: backend === "hyprmoncfg" && sock.connected && !!draft
+  readonly property bool dirty: !!draft && Model.signature(draft) !== savedSig
+  property bool editPending: false
+  property var editQueue: []
+  property string lastError: ""
+  property string selected: ""            // Settings › Display's selected display
+
+  function loadEditor() { if (backend === "hyprmoncfg") send("editor_state", {}) }
+  function onEditor(doc) {
+    if (!doc || !doc.profile) return
+    editorDoc = doc
+    sourceProfile = String(doc.source_profile || "")
+    draft = JSON.parse(JSON.stringify(doc.profile))
+    savedSig = Model.signature(doc.profile)
+  }
+  // Edits go one at a time, each on the draft the previous one returned.
+  function edit(key, fields) {
+    if (!editable || previewBusy) return
+    lastError = ""
+    editQueue = editQueue.concat([Object.assign({ output_key: key }, fields)])
+    pump()
+  }
+  function pump() {
+    if (editPending || !editQueue.length) return
+    const next = editQueue[0]
+    editQueue = editQueue.slice(1)
+    editPending = true
+    if (send("edit_profile", { profile: draft, edit: next }) === "") { editPending = false; editQueue = [] }
+  }
+  function reset() {
+    lastError = ""
+    editQueue = []
+    if (editorDoc) { draft = JSON.parse(JSON.stringify(editorDoc.profile)) }
+  }
+
+  // ------------------------------------------------- preview / keep / revert
+  property string transactionId: ""
+  property string deadline: ""
+  property bool previewPending: false
+  property bool actionPending: false
+  readonly property bool previewBusy: previewPending || transactionId !== ""
+  readonly property bool confirming: transactionId !== "" && !reclaiming
+  property int seconds: 0
+  property Timer clock: Timer {
+    running: root.confirming
+    repeat: true
+    interval: 250
+    triggeredOnStart: true
+    onTriggered: root.seconds = Model.secondsLeft(root.deadline, Date.now())
+  }
+
+  // Saved into the profile it came from (a new "Omacale" profile if the
+  // layout matched none) when kept; PR 8 adds naming and choosing profiles.
+  function apply() {
+    if (!editable || !dirty || previewBusy) return
+    lastError = ""
+    fromSettings = true
+    const profile = JSON.parse(JSON.stringify(draft))
+    profile.name = sourceProfile || "Omacale"
+    previewPending = true
+    hold()                              // stay connected until it is kept or reverted
+    if (send("preview", { profile: profile, timeout_seconds: 30, save_on_commit: true }) === "") {
+      previewPending = false
+      lastError = "hyprmoncfg isn't reachable"
+      release()
+    }
+  }
+  function keep() {
+    if (!confirming || actionPending) return
+    actionPending = true
+    if (send("commit", { transaction_id: transactionId, save: true }) === "") actionPending = false
+  }
+  function revert() {
+    if (!confirming || actionPending) return
+    actionPending = true
+    if (send("revert", { transaction_id: transactionId }) === "") actionPending = false
+  }
+  // The daemon's status says whether our preview still runs; once it is gone
+  // (timed out and reverted, or kept/reverted from elsewhere) the card goes.
+  function syncPreview(p) {
+    if (!transactionId) return
+    if (Model.ownsPreview(p, transactionId)) { reclaiming = false; if (p.deadline) deadline = String(p.deadline) }
+    else if (!actionPending) { endPreview(); loadEditor() }
+  }
+  // The card takes the keyboard, which closes Settings (its focus grab is
+  // cleared); Bar.qml opens Settings › Display again once it's answered.
+  signal previewEnded(bool fromSettings)
+  property bool fromSettings: false
+  function endPreview() {
+    if (transactionId !== "" || previewPending) previewEnded(fromSettings)
+    fromSettings = false
+    const held = transactionId !== "" || previewPending   // apply() and a reclaim each hold once
+    transactionId = ""
+    deadline = ""
+    actionPending = false
+    reclaiming = false
+    previewFile.clear()
+    if (held) release()
+  }
+
+  // The preview's id, kept in $XDG_RUNTIME_DIR so a shell restarted during
+  // the countdown asks again (only about Omacale's own preview).
+  readonly property string previewPath: Quickshell.env("XDG_RUNTIME_DIR") + "/omacale-display-preview"
+  property bool reclaiming: false
+  property QtObject previewFile: QtObject {
+    function write(id) { Quickshell.execDetached(["sh", "-c", 'printf %s "$1" > "$2"', "w", id, root.previewPath]) }
+    function clear() { Quickshell.execDetached(["rm", "-f", root.previewPath]) }
+  }
+  // hyprmoncfg's own Omarchy plugin confirms every preview whose client went
+  // away ("reclaimable"), so with it installed a restarted shell leaves the
+  // question to it rather than putting a second card over it.
+  property Process previewRead: Process {
+    running: true
+    command: ["sh", "-c", 'id=$(cat "$1" 2>/dev/null) || exit 0; if [ -d "$2" ]; then rm -f "$1"; else printf %s "$id"; fi',
+      "read", root.previewPath, Quickshell.env("HOME") + "/.config/omarchy/plugins/crmne.hyprmoncfg"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        const id = text.trim()
+        if (!id) return
+        root.reclaiming = true
+        root.transactionId = id          // syncPreview drops it if it's over
+        root.hold()
+      }
+    }
   }
 
   // ---------------------------------------------------------- identify

@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -60,6 +60,84 @@ test("the arrangement fits the canvas, centred", () => {
 })
 test("scale labels", () => {
   assert.strictEqual(D.scaleLabel(1.25), "125%"); assert.strictEqual(D.scaleLabel(1.33333), "133%"); assert.strictEqual(D.scaleLabel(2), "200%")
+})
+
+// ---- editing (PR 7)
+const ed = () => D.fromEditor(fx("editor.json"))
+test("the editor draft has every output with its modes and sharp scales", () => {
+  const m = ed()
+  assert.strictEqual(m.length, 2)
+  const h = m.find(x => x.name === "HDMI-A-1")
+  assert.strictEqual(h.key, "iiyama north america|pl2530h|000000000")
+  assert.strictEqual(h.mode, "1920x1080@60.00Hz"); assert.strictEqual(h.modes.length, 24)
+  assert.ok(h.scaleOptions.indexOf(1.25) >= 0); assert.strictEqual(h.physicalWidth, 540)
+  assert.strictEqual(h.lw, 1536); assert.strictEqual(h.internal, false)
+  assert.strictEqual(m.find(x => x.name === "eDP-1").internal, true)
+})
+test("an editor document without displays or outputs gives no rows", () => {
+  assert.deepStrictEqual(plain(D.fromEditor(null)), []); assert.deepStrictEqual(plain(D.fromEditor({ profile: {} })), [])
+})
+test("modes group by resolution, biggest first, fastest refresh first", () => {
+  const g = D.modeGroups(["1280x720@60.00Hz", "1920x1080@60.00Hz", "1920x1080@74.97Hz", "1920x1080@60.00Hz", "1600x1200@60.00Hz", "junk"])
+  assert.deepStrictEqual(plain(g.map(x => x.res)), ["1920x1080", "1600x1200", "1280x720"])
+  assert.deepStrictEqual(plain(g[0].rates.map(r => r.mode)), ["1920x1080@74.97Hz", "1920x1080@60.00Hz"])
+  assert.strictEqual(g[0].rates[0].hz, 74.97)
+})
+test("a new resolution keeps the nearest refresh rate", () => {
+  const modes = ["1920x1080@60.00Hz", "1920x1080@50.00Hz", "1280x720@59.94Hz", "1280x720@50.00Hz"]
+  assert.strictEqual(D.modeFor(modes, "1280x720", 60), "1280x720@59.94Hz")
+  assert.strictEqual(D.modeFor(modes, "1280x720", 50), "1280x720@50.00Hz")
+  assert.strictEqual(D.modeFor(modes, "800x600", 60), "")
+})
+test("refresh labels drop needless decimals", () => {
+  assert.strictEqual(D.refreshLabel(60), "60 Hz"); assert.strictEqual(D.refreshLabel(59.94), "59.94 Hz"); assert.strictEqual(D.refreshLabel(144.001), "144 Hz")
+})
+test("the recommended scale follows pixel density, from the sharp scales", () => {
+  const opts = [1, 1.2, 1.25, 1.33333, 1.5, 1.6, 2, 2.4, 2.5, 3]
+  assert.strictEqual(D.recommendedScale({ width: 1920, physicalWidth: 340, internal: true, scaleOptions: opts }), 1.25)   // 14" 1080p laptop
+  assert.strictEqual(D.recommendedScale({ width: 1920, physicalWidth: 540, internal: false, scaleOptions: opts }), 1)     // 25" 1080p
+  assert.strictEqual(D.recommendedScale({ width: 3840, physicalWidth: 597, internal: false, scaleOptions: opts }), 1.5)   // 27" 4K
+  assert.strictEqual(D.recommendedScale({ width: 3840, physicalWidth: 345, internal: true, scaleOptions: opts }), 2.5)    // 15.6" 4K laptop
+  assert.strictEqual(D.recommendedScale({ width: 1920, physicalWidth: 0, scaleOptions: opts }), 1)                        // size unknown
+  assert.strictEqual(D.recommendedScale({ width: 1920, physicalWidth: 340, internal: true, scaleOptions: [] }), 1)
+})
+test("rotation and flip make a Hyprland transform and back", () => {
+  assert.strictEqual(D.transformOf(1, false), 1); assert.strictEqual(D.transformOf(0, true), 4); assert.strictEqual(D.transformOf(3, true), 7)
+  assert.strictEqual(D.rotationOf(6), 2); assert.strictEqual(D.flippedOf(6), true); assert.strictEqual(D.flippedOf(3), false)
+})
+test("the signature changes with a layout field, not with the order of keys", () => {
+  const p = fx("editor.json").profile
+  const q = JSON.parse(JSON.stringify(p))
+  assert.strictEqual(D.signature(p), D.signature(q))
+  q.outputs[1].mode = "1920x1080@50.00Hz"
+  assert.notStrictEqual(D.signature(p), D.signature(q))
+  const r = JSON.parse(JSON.stringify(p)); r.outputs[0] = Object.fromEntries(Object.entries(r.outputs[0]).reverse())
+  assert.strictEqual(D.signature(p), D.signature(r))
+})
+test("seconds left until the daemon's deadline", () => {
+  const now = Date.parse("2026-10-08T10:00:00Z")
+  assert.strictEqual(D.secondsLeft("2026-10-08T10:00:30Z", now), 30)
+  assert.strictEqual(D.secondsLeft("2026-10-08T10:00:00.400Z", now), 1)
+  assert.strictEqual(D.secondsLeft("2026-10-08T09:59:00Z", now), 0)
+  assert.strictEqual(D.secondsLeft("junk", now), 0)
+})
+test("only Omacale's own preview is confirmed by Omacale", () => {
+  assert.strictEqual(D.ownsPreview({ transaction_id: "t1" }, "t1"), true)
+  assert.strictEqual(D.ownsPreview({ transaction_id: "t1", reclaimable: true }, "t2"), false)
+  assert.strictEqual(D.ownsPreview({ transaction_id: "t1" }, ""), false)
+  assert.strictEqual(D.ownsPreview(null, "t1"), false)
+})
+test("the last enabled display can't be turned off", () => {
+  const m = ed()
+  assert.strictEqual(D.canDisable(m, "boe|0x0910"), true)
+  m[1].enabled = false
+  assert.strictEqual(D.canDisable(m, "boe|0x0910"), false)
+})
+test("a dragged box lands at layout coordinates", () => {
+  const m = ed(), f = D.fit(m, 600, 300, 20)
+  const r = D.rects(m, f).find(x => x.name === "eDP-1")
+  assert.deepStrictEqual(plain(D.toLayout(r.x, r.y, f)), { x: 4122, y: 0 })
+  assert.deepStrictEqual(plain(D.toLayout(r.x + 10 * f.k, r.y - 5 * f.k, f)), { x: 4132, y: -5 })
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

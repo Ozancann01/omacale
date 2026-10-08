@@ -184,5 +184,7 @@ ScreensCard 1.0 modules/settings/pages/ScreensCard.qml
 ScreenSelect 1.0 modules/settings/rows/ScreenSelect.qml
 singleton DisplayService 1.0 services/DisplayService.qml
 DisplayIdentify 1.0 modules/display/DisplayIdentify.qml
+DisplayConfirm 1.0 modules/display/DisplayConfirm.qml
 DisplayPage 1.0 modules/settings/pages/DisplayPage.qml
+DisplayEditor 1.0 modules/settings/pages/DisplayEditor.qml
 DisplaysCard 1.0 modules/utilities/DisplaysCard.qml
