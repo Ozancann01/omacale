@@ -259,9 +259,16 @@ ColumnLayout {
   // ---- desktop-wide
   SectionHeader { row: ({ text: "All displays" }) }
   RowToggle {
-    id: linkRow
     Layout.fillWidth: true
     first: true
+    text: "Ask when a display is connected"
+    subtext: "Opens Extend / Mirror / Only laptop / Only external (also on the optional display key, Settings › Keybinds)"
+    checked: Config.o.display.quickOnConnect
+    onToggled: c => Config.set("display.quickOnConnect", c)
+  }
+  RowToggle {
+    id: linkRow
+    Layout.fillWidth: true
     visible: Object.keys(DisplayService.brightness).length > 1
     text: "Same brightness on every display"
     subtext: "One brightness for all: the sliders and scrolling on the bar move every display together"

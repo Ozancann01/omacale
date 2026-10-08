@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi, quickMode, quickEdits }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -190,6 +190,42 @@ test("physical size as a diagonal in inches, and pixel density", () => {
   assert.strictEqual(D.diagonalInches(540, 300), 24.3)
   assert.strictEqual(D.diagonalInches(0, 0), 0)
   assert.strictEqual(D.ppi(1920, 340), 143); assert.strictEqual(D.ppi(1920, 0), 0)
+})
+
+// ---- quick display menu (PR 9)
+const two = () => {
+  const m = ed()                         // eDP-1 (internal) right of HDMI-A-1, both on
+  return m
+}
+const byKey = (edits, key) => edits.find(e => e.output_key === key)
+test("the current mode is read from the layout", () => {
+  const m = two()
+  assert.strictEqual(D.quickMode(m), "extend")
+  m[0].mirrorOf = m[1].key; assert.strictEqual(D.quickMode(m), "mirror")
+  const a = two(); a[1].enabled = false; assert.strictEqual(D.quickMode(a), "laptop")
+  const b = two(); b[0].enabled = false; assert.strictEqual(D.quickMode(b), "external")
+  assert.strictEqual(D.quickMode([two()[0]]), "")          // a laptop alone: nothing to choose
+})
+test("extend turns everything on, unmirrored, side by side with the laptop last", () => {
+  const m = two(); m[0].mirrorOf = m[1].key; m[0].x = m[1].x; m[0].y = m[1].y
+  const e = D.quickEdits(m, "extend")
+  assert.deepStrictEqual(plain(byKey(e, m[1].key)), { output_key: m[1].key, enabled: true, mirror_of: "", x: 2586, y: 0 })
+  assert.deepStrictEqual(plain(byKey(e, m[0].key)), { output_key: m[0].key, enabled: true, mirror_of: "", x: 2586 + 1536, y: 0 })
+})
+test("mirror shows the first external display on the laptop", () => {
+  const e = D.quickEdits(two(), "mirror")
+  const m = two()
+  assert.deepStrictEqual(plain(byKey(e, m[0].key)), { output_key: m[0].key, enabled: true, mirror_of: m[1].key })
+  assert.deepStrictEqual(plain(byKey(e, m[1].key)), { output_key: m[1].key, enabled: true, mirror_of: "" })
+})
+test("only the laptop / only the external turn the others off, never all", () => {
+  const m = two()
+  const l = D.quickEdits(m, "laptop"), x = D.quickEdits(m, "external")
+  assert.strictEqual(byKey(l, m[1].key).enabled, false); assert.strictEqual(byKey(l, m[0].key).enabled, true)
+  assert.strictEqual(byKey(x, m[0].key).enabled, false); assert.strictEqual(byKey(x, m[1].key).enabled, true)
+  // the turned-on one goes first, so no edit ever leaves zero displays on
+  assert.strictEqual(l[0].enabled, true); assert.strictEqual(x[0].enabled, true)
+  assert.deepStrictEqual(plain(D.quickEdits([m[0]], "external")), [])
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

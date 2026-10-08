@@ -326,6 +326,8 @@ QtObject {
         property string zeroScaling: "auto"
         // One brightness for every display (Settings › Display, the Displays card).
         property bool linkBrightness: false
+        // Open the display-switch menu when a display is connected.
+        property bool quickOnConnect: false
       }
       property JsonObject background: JsonObject {
         // Screens without the desktop clock and visualiser.

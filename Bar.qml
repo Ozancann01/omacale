@@ -48,7 +48,7 @@ Item {
   readonly property bool capsLock: Sys.capsLock
   readonly property bool numLock: Sys.numLock
 
-  readonly property string version: manifest && manifest.version ? manifest.version : "0.56.0"
+  readonly property string version: manifest && manifest.version ? manifest.version : "0.57.0"
 
   signal toggleRequested(string name, string screenName, string arg)
 
@@ -506,7 +506,8 @@ Item {
     function close(): void { root.toggle("close") }
     // Settings › Display's pending change: keep | revert | status.
     function display(action: string): string {
-      if (action === "keep") DisplayService.keep()
+      if (action === "menu") root.displayMenu()
+      else if (action === "keep") DisplayService.keep()
       else if (action === "revert") DisplayService.revert()
       return DisplayService.confirming ? "confirming " + DisplayService.seconds : DisplayService.previewPending ? "applying" : "idle"
     }
@@ -587,6 +588,24 @@ Item {
     target: DisplayService
     function onPreviewEnded(fromSettings) { if (fromSettings) root.toggle("settings", "display") }
   }
+  // The display-switch menu, on the screen that had focus when it opened.
+  property string quickScreen: ""
+  function displayMenu() {
+    if (DisplayService.quickOpen) { DisplayService.quickShow(false); return }
+    quickScreen = Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : (Quickshell.screens[0] ? Quickshell.screens[0].name : "")
+    DisplayService.quickShow(true)
+  }
+  Variants {
+    model: DisplayService.quickOpen && !DisplayService.confirming ? Quickshell.screens.filter(s => s.name === root.quickScreen) : []
+    DisplayQuick {}
+  }
+  // Settings › Display › "Ask when a display is connected": the menu, once
+  // hyprmoncfg has had a moment to apply its own profile for the new set.
+  Timer {
+    id: connectedAsk
+    interval: 1500
+    onTriggered: if (!DisplayService.quickOpen && !DisplayService.confirming) root.displayMenu()
+  }
 
   // Transparency: blur the Omacale layer behind translucent surfaces. This is
   // a runtime Hyprland rule (hyprctl eval) — nothing is written to
@@ -650,6 +669,7 @@ Item {
   Connections {
     target: Hyprland
     function onRawEvent(e) {
+      if (e.name === "monitoraddedv2" && Config.o.display.quickOnConnect) connectedAsk.restart()
       if (e.name !== "configreloaded") return
       if (root.blur) root.applyBlur()
       if (root.clockBlur || root.visBlur) root.applyDesktopBlur()

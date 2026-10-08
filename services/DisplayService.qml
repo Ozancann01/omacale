@@ -35,6 +35,7 @@ QtObject {
   property Process probe: Process {
     command: ["sh", "-c", "command -v hyprmoncfg >/dev/null || exit 3; systemctl --user is-active --quiet hyprmoncfgd.service || exit 4; exit 0"]
     onExited: code => {
+      root.probed = true
       if (code === 3) root.backend = "none"
       else if (code === 4) root.backend = "unmanaged"
       else { root.backend = "hyprmoncfg"; sock.connected = true }
@@ -73,7 +74,7 @@ QtObject {
     delete methods[String(e.id)]
     if (e.error) {
       lastError = String(e.error.message || "hyprmoncfg couldn't do that")
-      if (method === "edit_profile") { editPending = false; editQueue = []; }
+      if (method === "edit_profile") { editPending = false; editQueue = []; if (quickApply) { quickApply = false; release() } }
       if (method === "preview") { endPreview(); previewPending = false }
       if (method === "commit" || method === "revert") actionPending = false
       if (method === "save" || method === "delete" || method === "set_profile_auto") profileBusy = false
@@ -248,6 +249,7 @@ QtObject {
     pump()
   }
   function pump() {
+    if (!editPending && !editQueue.length && quickApply) { quickApply = false; apply(false); release(); return }
     if (editPending || !editQueue.length) return
     const next = editQueue[0]
     editQueue = editQueue.slice(1)
@@ -278,11 +280,11 @@ QtObject {
 
   // Saved into the profile it came from (a new "Omacale" profile if the
   // layout matched none) when kept; PR 8 adds naming and choosing profiles.
-  function apply() {
+  function apply(settings) {
     if (!editable || !dirty || previewBusy) return
     const profile = JSON.parse(JSON.stringify(draft))
     profile.name = sourceProfile || "Omacale"
-    startPreview({ profile: profile, timeout_seconds: 30, save_on_commit: true }, true, true)
+    startPreview({ profile: profile, timeout_seconds: 30, save_on_commit: true }, true, settings !== false)
   }
   // A saved profile, tried the same way (kept as it is, nothing saved).
   function applyProfile(name) {
@@ -364,6 +366,41 @@ QtObject {
       }
     }
   }
+
+  // -------------------------------------------------- quick display menu
+  // Extend / Mirror / Only laptop / Only external (modules/display/
+  // DisplayQuick.qml, IPC `display menu`). With hyprmoncfg: the mode's edits
+  // on a fresh draft, then the same keep-or-revert Apply. Without it,
+  // Omarchy's laptop-panel commands (no "only laptop" there).
+  property bool quickOpen: false
+  property bool probed: false
+  // Which way the switch will go is known: hyprmoncfg's editor is loaded, or
+  // there is no hyprmoncfg to wait for.
+  readonly property bool quickReady: editable || (probed && backend !== "hyprmoncfg")
+  property bool quickApply: false
+  readonly property string quickCurrent: Model.quickMode(editable ? draftRows : monitors)
+  function quickShow(on) {
+    if (on === quickOpen) return
+    quickOpen = on
+    if (on) hold(); else release()
+  }
+  function quick(mode) {
+    const go = mode !== quickCurrent && quickReady && !(editable && previewBusy)
+    // The menu's hold goes when it closes; a switch keeps its own until
+    // Apply (startPreview) holds the socket for the countdown.
+    if (go && editable) hold()
+    quickShow(false)
+    if (!go) return
+    if (editable) {
+      reset()
+      editQueue = Model.quickEdits(draftRows, mode)
+      quickApply = true
+      pump()
+    } else if (mode === "extend") { setMirror(false); setInternal(true) }
+    else if (mode === "mirror") { setInternal(true); setMirror(true) }
+    else if (mode === "external") setInternal(false)
+  }
+
 
   // ---------------------------------------------------------- profiles
   // hyprmoncfg writes the profiles; Omacale asks it to.

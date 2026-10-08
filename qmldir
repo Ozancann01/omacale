@@ -185,6 +185,7 @@ ScreenSelect 1.0 modules/settings/rows/ScreenSelect.qml
 singleton DisplayService 1.0 services/DisplayService.qml
 DisplayIdentify 1.0 modules/display/DisplayIdentify.qml
 DisplayConfirm 1.0 modules/display/DisplayConfirm.qml
+DisplayQuick 1.0 modules/display/DisplayQuick.qml
 DisplayPage 1.0 modules/settings/pages/DisplayPage.qml
 DisplayEditor 1.0 modules/settings/pages/DisplayEditor.qml
 DisplayProfiles 1.0 modules/settings/pages/DisplayProfiles.qml

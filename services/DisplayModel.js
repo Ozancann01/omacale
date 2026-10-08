@@ -236,3 +236,53 @@ function diagonalInches(wmm, hmm) {
   return wmm > 0 && hmm > 0 ? Math.round(Math.sqrt(wmm * wmm + hmm * hmm) / 25.4 * 10) / 10 : 0
 }
 function ppi(width, wmm) { return wmm > 0 ? Math.round(width / (wmm / 25.4)) : 0 }
+
+// ------------------------------------------------------- quick display menu
+// Extend / Mirror / Only laptop / Only external, as on other desktops'
+// display-switch key. Needs a built-in display and at least one other.
+function quickParts(rows) {
+  var inner = rows.filter(function (r) { return r.internal })[0] || null
+  var outer = rows.filter(function (r) { return !r.internal }).sort(function (a, b) { return a.x - b.x })
+  return { inner: inner, outer: outer }
+}
+
+function quickMode(rows) {
+  var p = quickParts(rows || [])
+  if (!p.inner || !p.outer.length) return ""
+  if (!p.inner.enabled) return "external"
+  if (p.inner.mirrorOf) return "mirror"
+  if (!p.outer.some(function (r) { return r.enabled })) return "laptop"
+  return "extend"
+}
+
+// The edit_profile edits that switch to `mode`, in an order where every step
+// is a valid layout for hyprmoncfg: whatever stays on is turned on (and
+// un-mirrored beside its source, which would otherwise overlap it) before
+// anything is turned off.
+function quickEdits(rows, mode) {
+  var p = quickParts(rows || [])
+  if (!p.inner || !p.outer.length) return []
+  var first = p.outer[0]
+  function on(r) {
+    var e = { output_key: r.key, enabled: true, mirror_of: "" }
+    var at = unmirrorAt(rows, r.key)
+    if (at) { e.x = at.x; e.y = at.y }
+    return e
+  }
+  function off(r) { return { output_key: r.key, enabled: false, mirror_of: "" } }
+  if (mode === "extend") {
+    // Externals left to right from the first one's place, the laptop last.
+    var x = first.x, y = first.y, out = []
+    p.outer.concat([p.inner]).forEach(function (r) {
+      out.push({ output_key: r.key, enabled: true, mirror_of: "", x: x, y: y })
+      x += r.lw
+    })
+    return out
+  }
+  if (mode === "mirror")
+    return [{ output_key: first.key, enabled: true, mirror_of: "" },
+            { output_key: p.inner.key, enabled: true, mirror_of: first.key }]
+  if (mode === "laptop") return [on(p.inner)].concat(p.outer.map(off))
+  if (mode === "external") return p.outer.map(on).concat([off(p.inner)])
+  return []
+}
