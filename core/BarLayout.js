@@ -17,7 +17,7 @@ var ITEMS = {
   logo:          { section: "start",  label: "Logo",            icon: "change_history",   key: "bar.logo",                  sub: "Opens the launcher" },
   workspaces:    { section: "start",  label: "Workspaces",      icon: "workspaces",       key: "",                          sub: "Always shown" },
   activeWindow:  { section: "center", label: "Window title",    icon: "web_asset",        key: "bar.activeWindow.enabled",  sub: "Takes the free space" },
-  overflow:      { section: "end",    label: "Chevron",         icon: "expand_less",      key: "",                          sub: "Opens the items behind it" },
+  overflow:      { section: "end",    label: "Chevron",         icon: "more_horiz",      key: "",                          sub: "Opens the items behind it" },
   plugins:       { section: "end",    label: "Plugin group",    icon: "extension",        key: "bar.plugins.enabled",       sub: "Third-party widgets" },
   tray:          { section: "end",    label: "Tray",            icon: "widgets",          key: "bar.tray.enabled",          sub: "System tray icons" },
   clock:         { section: "end",    label: "Clock",           icon: "schedule",         key: "bar.clock.enabled",         sub: "Opens the dashboard" },

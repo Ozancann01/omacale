@@ -1,18 +1,26 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Services.SystemTray
 import "../../.."
 import "../../../core/BarLayout.js" as BarLayout
 
-// Settings › Taskbar's bar: everything in it, in one list per section
-// (bar.layout), Noctalia-style; no Caelestia original. Omashell's own items,
-// Omarchy's widgets and third-party plugins are rows alike, told apart by a
-// chip. Rows are dragged by their handle to any place in any section, into
-// "Not in the bar" to take them off it, and back out to add them again. The
-// plugin pill's widgets sit indented under it and can be dragged out of it
-// for a place of their own, or back in. The eye is the item's existing switch
-// (Status icons › Network, Clock › Show, ...): hidden, an item keeps its
-// place; the gear opens its own settings. Widgets not in the bar at all are
-// under "Add a widget", grouped by their category.
+// Settings › Taskbar's bar: everything in it (bar.layout), Noctalia-style; no
+// Caelestia original.
+//
+// On top, a small picture of the bar (BarPreview); clicking an icon there
+// shows its row. Below, the sections, and in each the items grouped as the
+// bar draws them: neighbours that share a pill (BarLayout.groups) sit in one
+// card. Omashell's own items, Omarchy's widgets and plugins are rows alike;
+// only the last two carry a chip. The chevron's row opens to what is behind
+// it (bar.layout.drawer) and the "at most N icons" limit; the plugin pill's
+// row to its widgets. "Not shown" (bar.layout.removed) and "Add a widget"
+// are folded away until opened.
+//
+// Rows are dragged by their handle to any place in any section, into or out
+// of the chevron or the plugin pill, and into "Not shown" (which opens while
+// a row is over it). The eye is the item's existing switch (Status icons ›
+// Network, Clock › Show, ...): hidden, an item keeps its place; the gear
+// opens its own settings.
 //
 // The page is an Item rather than a layout so the dragged row's ghost and
 // the drop line can float above the rows.
@@ -36,20 +44,21 @@ Item {
     return PluginService.barLayout()
   }
   readonly property bool vertical: Tk.barVertical
-  // "pill" is the plugin pill's own rows, checked first so a drop over them
-  // lands in the pill rather than in the section around it.
-  readonly property var lists: ["pill"].concat(BarLayout.SECTIONS).concat(["drawer", "removed"])
+  // Nested lists first, so a drop over their rows lands in them rather than
+  // in the section around them.
+  readonly property var lists: ["pill", "drawer"].concat(BarLayout.SECTIONS).concat(["removed"])
   readonly property var pillIds: PluginService.pillWidgets.map(p => p.id)
   readonly property var placed: BarLayout.SECTIONS.concat(["drawer", "removed"]).reduce((out, s) =>
     out.concat(root.layout[s].filter(id => BarLayout.isPlugin(id)).map(id => BarLayout.pluginOf(id))), [])
   // Third-party widgets still in the pill, in the order the pill shows them.
   readonly property var pillMembers: PluginService.pillWidgets.filter(p => root.placed.indexOf(p.id) < 0).map(p => "plugin:" + p.id)
-  readonly property bool pillOnBar: BarLayout.SECTIONS.some(s => root.layout[s].indexOf("plugins") >= 0)
-
-  function title(list) {
-    return list === "removed" ? "Not in the bar" : list === "drawer" ? "Behind the chevron" : BarLayout.sectionLabel(list, vertical)
-  }
   readonly property bool chevronOff: root.layout.removed.indexOf("overflow") >= 0
+
+  // Folded parts. The chevron's starts open, the rest closed.
+  property bool chevronOpen: true
+  property bool pillOpen: true
+  property bool removedOpen: false
+  property bool addOpen: false
 
   // A row's facts, built-in or widget.
   function info(id) {
@@ -57,21 +66,37 @@ Item {
       const pid = BarLayout.pluginOf(id)
       const p = PluginService.byId(pid)
       const err = PluginService.widgetErrors[pid] || ""
-      const source = p && p.firstParty ? "omarchy" : "plugin"
       return {
-        label: p ? p.name : pid, icon: BarLayout.categoryIcon(p ? p.category : ""), source: source,
-        sub: err ? "Couldn't load: " + err : (p && p.description ? p.description : (source === "omarchy" ? "Omarchy widget" : "Plugin")),
-        error: err !== "", key: "", page: "", plugin: true, pluginId: pid,
+        label: p ? p.name : pid, icon: BarLayout.categoryIcon(p ? p.category : ""), source: p && p.firstParty ? "omarchy" : "plugin",
+        note: err ? "Couldn't load: " + err : "", error: err !== "", key: "", page: "", plugin: true, pluginId: pid,
         inPill: root.pillIds.indexOf(pid) >= 0, fresh: Config.o.bar.layout.fresh.indexOf(pid) >= 0
       }
     }
-    const it = BarLayout.ITEMS[id] || { label: id, icon: "help", key: "", sub: "" }
+    const it = BarLayout.ITEMS[id] || { label: id, icon: "help", key: "" }
+    const behind = root.layout.drawer.length
     return {
-      label: id === "plugins" ? "Plugin pill" : it.label, icon: it.icon, source: "omashell",
-      sub: id === "plugins" ? (root.pillMembers.length ? "Third-party widgets, together" : "Empty: no third-party widgets") : it.sub,
+      label: id === "plugins" ? "Plugin pill" : id === "overflow" ? "Chevron" : it.label, icon: it.icon, source: "",
+      note: id === "overflow" ? (behind ? behind + " behind it" : "nothing behind it yet")
+        : id === "plugins" ? (root.pillMembers.length ? root.pillMembers.length + " widgets" : "empty") : "",
       error: false, key: it.key, page: BarLayout.PAGES[id] || "", plugin: false, pluginId: "", inPill: false, fresh: false
     }
   }
+  // For the preview: whether an item is on show, and its icon.
+  function isShown(id) {
+    if (BarLayout.isPlugin(id)) {
+      const pid = BarLayout.pluginOf(id)
+      return PluginService.barWidgets.some(p => p.id === pid) && !(root.pillIds.indexOf(pid) >= 0 && PluginService.barMode(pid) === "hidden")
+    }
+    if (id === "plugins") return root.pillMembers.length > 0 && PluginService.itemShown(id)
+    if (id === "overflow") return root.layout.drawer.length > 0 || Config.o.bar.layout.maxShown > 0
+    // As TrayEntry: on, with an icon that isn't passive or hidden.
+    if (id === "tray") return Config.o.bar.tray.enabled && SystemTray.items.values.some(i => i.status !== Status.Passive
+      && Config.o.bar.tray.hiddenIcons.indexOf(i.id) < 0)
+    if (BarLayout.STATUS.indexOf(id) >= 0) return PluginService.statusOn(id)
+    return PluginService.itemShown(id)
+  }
+  function iconOf(id) { return root.info(id).icon }
+
   function openSettings(it) {
     if (it.plugin) { root.settings.selectedPlugin = it.pluginId; root.settings.push("pluginInfo") }
     else if (it.page) root.settings.push(it.page)
@@ -79,7 +104,32 @@ Item {
   function place(id, list, index) { PluginService.placeItem(id, list, index) }
   // "Add to" menu for a row: every section but the one it is in.
   function addOptions(from) {
-    return BarLayout.SECTIONS.filter(s => s !== from).map(s => ({ value: s, label: title(s), icon: s === "start" ? "first_page" : s === "end" ? "last_page" : "horizontal_distribute" }))
+    return BarLayout.SECTIONS.filter(s => s !== from).map(s => ({ value: s, label: BarLayout.sectionLabel(s, vertical), icon: s === "start" ? "first_page" : s === "end" ? "last_page" : "horizontal_distribute" }))
+  }
+
+  // Every row of a list, wherever its card put it, in page order.
+  function rowsOf(item, list, out) {
+    if (!item) return out
+    for (const c of item.children) {
+      if (c.barRow === true && c.list === list && c.visible) out.push(c)
+      rowsOf(c, list, out)
+    }
+    return out
+  }
+  function rowsFor(list) {
+    const s = sections[list]
+    return s ? rowsOf(s, list, []).sort((a, b) => a.mapToItem(root, 0, 0).y - b.mapToItem(root, 0, 0).y) : []
+  }
+  // The preview's click: scroll the row into view and flash it.
+  function showRow(id) {
+    let target = null
+    for (const l of lists) for (const r of rowsFor(l)) if (r.modelData === id) target = r
+    if (id !== "overflow" && root.layout.drawer.indexOf(id) >= 0) chevronOpen = true
+    if (!target || !flick) return
+    const y = target.mapToItem(flick.contentItem, 0, 0).y
+    const max = Math.max(0, flick.contentHeight - flick.height + (flick.bottomMargin || 0))
+    flick.contentY = Math.max(-(flick.topMargin || 0), Math.min(max, y - flick.height / 3))
+    target.flash()
   }
 
   // ------------------------------------------------------------- add list
@@ -114,21 +164,22 @@ Item {
   property string dropList: ""
   property int dropIndex: -1
   property real lineY: 0
-  property var sections: ({})    // list -> its section column
+  property var sections: ({})    // list -> the item holding its rows
+  function register(list, item) { const m = root.sections; m[list] = item; root.sections = m }
+  function unregister(list, item) { if (root.sections[list] === item) { const m = root.sections; delete m[list]; root.sections = m } }
 
   // The settings page's scroll view, for scrolling while dragging near its edge.
   readonly property Item flick: { let f = root.parent; while (f && f.contentY === undefined) f = f.parent; return f }
   property real flickPointer: 0  // pointer, in the scroll view's coordinates
 
-  // Only a third-party widget can go into the pill.
+  // Only a third-party widget can go into the pill; the chevron can't go
+  // behind itself.
   function canDrop(list) {
-    if (list !== "pill") return true
-    return BarLayout.isPlugin(dragId) && pillIds.indexOf(BarLayout.pluginOf(dragId)) >= 0
+    if (list === "pill") return BarLayout.isPlugin(dragId) && pillIds.indexOf(BarLayout.pluginOf(dragId)) >= 0
+    if (list === "drawer") return dragId !== "overflow"
+    return true
   }
-  function rowsIn(list) {
-    const s = sections[list]
-    return s ? s.rowItems().filter(r => r.modelData !== dragId) : []
-  }
+  function rowsIn(list) { return rowsFor(list).filter(r => r.modelData !== dragId) }
   function startDrag(row, pointerY) {
     const top = row.mapToItem(root, 0, 0).y
     dragId = row.modelData
@@ -141,7 +192,7 @@ Item {
   function moveDrag(pointerY) {
     dragY = pointerY
     if (flick) flickPointer = root.mapToItem(flick, 0, pointerY).y
-    // The section the pointer is over, or the nearest one.
+    // The list the pointer is over, or the nearest one.
     let best = "", bestD = Infinity
     for (const l of lists) {
       const s = sections[l]
@@ -152,16 +203,15 @@ Item {
     }
     dropList = best
     if (!best) return
+    // "Not shown" opens under a row held over it.
+    if (best === "removed" && bestD === 0 && !removedOpen) removedOpen = true
     const rows = rowsIn(best)
     let i = 0
     for (const r of rows) if (pointerY > r.mapToItem(root, 0, 0).y + r.height / 2) i++
     dropIndex = i
-    const gap = col.spacing
-    if (!rows.length) {
-      const s = sections[best]
-      // Just above the empty section's hint, not through its text.
-      lineY = s.emptyItem().mapToItem(root, 0, 0).y - gap / 2 - 1
-    } else if (i < rows.length) lineY = rows[i].mapToItem(root, 0, 0).y - gap / 2 - 1
+    const gap = Tk.spacing.extraSmall / 2
+    if (!rows.length) lineY = sections[best].emptyItem().mapToItem(root, 0, 0).y - gap / 2 - 1
+    else if (i < rows.length) lineY = rows[i].mapToItem(root, 0, 0).y - gap / 2 - 1
     else { const r = rows[rows.length - 1]; lineY = r.mapToItem(root, 0, 0).y + r.height + gap / 2 - 1 }
   }
   function endDrag() {
@@ -188,35 +238,56 @@ Item {
     }
   }
 
-  // A row of the bar: handle, icon, name and chip, and its actions.
+  // ------------------------------------------------------------- pieces
+  // One compact row: handle, icon, name, chip, a short note, and its actions.
   component BarRow: ConnectedRect {
     id: r
     required property string modelData
-    property bool off: false       // in "Not in the bar"
-    property bool child: false     // a widget inside the plugin pill
+    property string list            // which list it is a row of (drag and drop)
+    readonly property bool barRow: true
+    readonly property bool off: list === "removed"
+    readonly property bool child: list === "pill"
     readonly property var it: root.info(modelData)
     readonly property string mode: it.inPill ? PluginService.barMode(it.pluginId) : ""
     // The eye: a built-in's existing switch; a pill widget's hidden mode.
     readonly property bool isShown: child ? mode !== "hidden" : it.plugin ? true : PluginService.itemShown(modelData)
-    readonly property bool dim: off || !isShown || it.error
+    readonly property bool dim: off || !isShown
+    // The extra line of a folding row (the chevron, the plugin pill).
+    property bool foldable: false
+    property bool folded: false
+    signal toggleFold()
+    function flash() { flashAnim.restart() }
+
     Layout.fillWidth: true
-    Layout.leftMargin: child ? Tk.padding.extraLarge : 0
     implicitHeight: rl.implicitHeight + Tk.padding.small * 2
     opacity: root.dragId === modelData ? 0.3 : 1
-    color: child ? Colours.m3surfaceContainerLow : Colours.m3surfaceContainer
+
+    Rectangle {
+      id: veil
+      anchors.fill: parent
+      radius: Tk.rounding.small
+      color: Colours.m3primary
+      opacity: 0
+      SequentialAnimation {
+        id: flashAnim
+        NumberAnimation { target: veil; property: "opacity"; to: 0.25; duration: 120 }
+        PauseAnimation { duration: 300 }
+        NumberAnimation { target: veil; property: "opacity"; to: 0; duration: 600 }
+      }
+    }
 
     RowLayout {
       id: rl
       anchors.fill: parent
       anchors.topMargin: Tk.padding.small
       anchors.bottomMargin: Tk.padding.small
-      anchors.leftMargin: Tk.padding.small
-      anchors.rightMargin: Tk.padding.medium
-      spacing: Tk.spacing.medium
+      anchors.leftMargin: Tk.padding.extraSmall
+      anchors.rightMargin: Tk.padding.small
+      spacing: Tk.spacing.small
 
       // The drag handle.
       MouseArea {
-        Layout.preferredWidth: Tk.iconSize.medium + Tk.padding.small * 2
+        Layout.preferredWidth: Tk.iconSize.medium + Tk.padding.small
         Layout.fillHeight: true
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
         preventStealing: true
@@ -224,37 +295,35 @@ Item {
         onPositionChanged: m => { if (pressed) root.moveDrag(mapToItem(root, m.x, m.y).y) }
         onReleased: root.endDrag()
         onCanceled: root.cancelDrag()
-        MIcon { anchors.centerIn: parent; text: "drag_indicator"; size: Tk.iconSize.medium; color: Colours.m3outline }
+        MIcon { anchors.centerIn: parent; text: "drag_indicator"; size: Tk.iconSize.small; color: Colours.m3outline }
       }
       MIcon {
         text: r.it.error ? "error" : r.it.icon
-        size: Tk.iconSize.medium
-        color: r.it.error ? Colours.m3error : Colours.m3onSurfaceVariant
+        size: Tk.iconSize.small
+        color: r.it.error ? Colours.m3error : r.modelData === "power" ? Colours.m3error : Colours.m3onSurfaceVariant
         opacity: r.dim && !r.it.error ? 0.45 : 1
       }
-      ColumnLayout {
+      RowLayout {
         Layout.fillWidth: true
-        spacing: 0
-        opacity: r.dim && !r.it.error ? 0.45 : 1
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: Tk.spacing.small
-          MText { Layout.fillWidth: false; Layout.maximumWidth: rl.width / 2; text: r.it.label; font.pointSize: Tk.body.small; elide: Text.ElideRight }
-          SourceChip { source: r.it.source }
-          SourceChip { visible: r.it.fresh; source: "new" }
-          Item { Layout.fillWidth: true }
-        }
+        spacing: Tk.spacing.small
+        opacity: r.dim && !r.it.error ? 0.5 : 1
+        MText { text: r.it.label; font.pointSize: Tk.body.small; elide: Text.ElideRight; Layout.maximumWidth: rl.width * 0.45 }
+        SourceChip { visible: r.it.source !== ""; source: r.it.source }
+        SourceChip { visible: r.it.fresh; source: "new" }
         MText {
           Layout.fillWidth: true
-          text: r.off ? "Not in the bar" : r.child && r.mode === "overflow" ? "Behind the pill's chevron"
-            : !r.isShown ? "Hidden" : r.it.sub
+          readonly property string note: r.it.error ? r.it.note
+            : !r.off && !r.isShown ? "hidden" : r.child && r.mode === "overflow" ? "behind the pill's chevron" : r.it.note
+          visible: note !== ""
+          text: "· " + note
           color: r.it.error ? Colours.m3error : Colours.m3outline
           font.pointSize: Tk.label.small
           elide: Text.ElideRight
         }
+        Item { Layout.fillWidth: true; visible: !r.it.note && r.isShown && !r.it.error }
       }
-      // Three fixed columns (eye, settings, remove), so the buttons line up
-      // down the list whichever a row has.
+      // Three fixed columns (eye, settings or fold, remove), so the buttons
+      // line up down the list whichever a row has.
       ActionSlot {
         shown: !r.off && (r.child || (!r.it.plugin && !!r.it.key))
         icon: r.isShown ? "visibility" : "visibility_off"
@@ -263,9 +332,10 @@ Item {
       }
       ActionSlot {
         id: moreBtn
-        shown: r.child || r.it.plugin || r.it.page !== ""
-        icon: r.child ? "more_vert" : "settings"
+        shown: r.foldable || r.child || r.it.plugin || r.it.page !== ""
+        icon: r.foldable ? (r.folded ? "expand_more" : "expand_less") : r.child ? "more_vert" : "settings"
         onClicked: {
+          if (r.foldable) { r.toggleFold(); return }
           if (!r.child) { root.openSettings(r.it); return }
           root.settings.openMenu(moreBtn, moreBtn, [
             { value: "pinned", label: "Always in the pill", icon: "push_pin" },
@@ -283,9 +353,9 @@ Item {
       ActionSlot {
         id: lastBtn
         // Off the bar (a third-party widget back into the pill instead), or,
-        // in "Not in the bar", back onto it.
+        // under "Not shown", back onto it.
         shown: !r.child
-        icon: r.off ? "add" : r.it.inPill ? "move_down" : "delete"
+        icon: r.off ? "add" : r.it.inPill ? "move_down" : "close"
         onClicked: {
           if (r.off) root.settings.openMenu(lastBtn, lastBtn, root.addOptions(""), "",
             v => root.place(r.modelData, v, (root.layout[v] || []).length))
@@ -309,21 +379,21 @@ Item {
       visible: slot.shown
       type: "text"
       icon: slot.icon
+      iconSize: Tk.iconSize.small
       onClicked: slot.clicked()
     }
   }
 
-  // Where a row comes from: Omashell, Omarchy or a plugin (or "new").
+  // Where a row comes from, when that isn't Omashell itself (or "new").
   component SourceChip: Rectangle {
     property string source
     readonly property var look: ({
-      omashell: { text: "Omashell", bg: Colours.m3primaryContainer, fg: Colours.m3onPrimaryContainer },
       omarchy: { text: "Omarchy", bg: Colours.m3tertiaryContainer, fg: Colours.m3onTertiaryContainer },
       plugin: { text: "Plugin", bg: Colours.m3secondaryContainer, fg: Colours.m3onSecondaryContainer },
       "new": { text: "New", bg: Colours.m3primary, fg: Colours.m3onPrimary }
     })[source] || { text: source, bg: Colours.m3surfaceContainerHigh, fg: Colours.m3onSurface }
     implicitWidth: chipText.implicitWidth + Tk.padding.small * 2
-    implicitHeight: chipText.implicitHeight + Tk.padding.extraSmall
+    implicitHeight: chipText.implicitHeight + Tk.padding.extraSmall / 2
     radius: height / 2
     color: look.bg
     MText {
@@ -331,120 +401,187 @@ Item {
       anchors.centerIn: parent
       text: parent.look.text
       color: parent.look.fg
-      font.pointSize: Tk.label.small
+      font.pointSize: Tk.label.small * 0.9
       weight: Font.Medium
     }
   }
 
+  // A small heading, or a folding one with a count.
+  component Heading: RowLayout {
+    id: h
+    property string text
+    property int count: -1
+    property bool foldable: false
+    property bool open: true
+    signal toggled()
+    Layout.fillWidth: true
+    Layout.topMargin: Tk.spacing.medium
+    spacing: Tk.spacing.small
+    MText {
+      Layout.leftMargin: Tk.padding.small
+      text: h.text + (h.count >= 0 ? "  " + h.count : "")
+      color: Colours.m3onSurfaceVariant
+      font.pointSize: Tk.label.large
+      weight: Font.Medium
+    }
+    Item { Layout.fillWidth: true }
+    IconButton {
+      visible: h.foldable
+      type: "text"
+      icon: h.open ? "expand_less" : "expand_more"
+      iconSize: Tk.iconSize.small
+      onClicked: h.toggled()
+    }
+  }
+
+  // ------------------------------------------------------------- page
   ColumnLayout {
     id: col
     anchors.left: parent.left
     anchors.right: parent.right
     spacing: Tk.spacing.extraSmall / 2
 
+    BarPreview {
+      Layout.fillWidth: true
+      Layout.bottomMargin: Tk.spacing.small
+      layout: root.layout
+      page: root
+      onPicked: id => root.showRow(id)
+    }
+
+    // The three sections, each its groups.
     Repeater {
-      model: BarLayout.SECTIONS.concat(["drawer", "removed"])
+      model: BarLayout.SECTIONS
 
       ColumnLayout {
         id: sec
         required property string modelData
-        required property int index
-        readonly property var ids: modelData === "removed" ? root.layout.removed : root.layout[modelData]
+        readonly property var ids: root.layout[modelData]
         Layout.fillWidth: true
         spacing: Tk.spacing.extraSmall / 2
-        Component.onCompleted: { const m = root.sections; m[modelData] = sec; root.sections = m }
-        function rowItems() {
-          const out = []
-          for (let i = 0; i < rowsRep.count; i++) { const d = rowsRep.itemAt(i); if (d) out.push(d.row) }
-          return out
-        }
+        Component.onCompleted: root.register(modelData, sec)
+        Component.onDestruction: root.unregister(modelData, sec)
         function emptyItem() { return empty }
 
-        // The sections are sub-headings of the page's "Bar" (or, for "Not in
-        // the bar", a heading of its own).
-        SectionHeader { visible: sec.modelData === "removed" || sec.modelData === "drawer"; row: ({ text: root.title(sec.modelData) }) }
-        MText {
-          visible: sec.modelData === "drawer"
-          Layout.fillWidth: true
-          text: root.chevronOff ? "The chevron is under Not in the bar, so these aren't shown. Add it back to the bar to open them."
-            : "Folded away behind the chevron in the bar; hovering or clicking it opens them."
-          color: root.chevronOff ? Colours.m3error : Colours.m3outline
-          font.pointSize: Tk.label.small
-          wrapMode: Text.WordWrap
-        }
-        RowStepper {
-          visible: sec.modelData === "drawer"
-          Layout.fillWidth: true
-          first: true
-          last: true
-          settings: root.settings
-          row: ({ key: "bar.layout.maxShown", label: "Show at most this many icons",
-            subtext: Config.o.bar.layout.maxShown > 0 ? "After the chevron; the rest go behind it" : "No limit: only the items below go behind it",
-            from: 0, to: 20, step: 1 })
-        }
-        MText {
-          visible: sec.modelData !== "removed" && sec.modelData !== "drawer"
-          Layout.topMargin: sec.index === 0 ? 0 : Tk.spacing.small
-          Layout.leftMargin: Tk.padding.small
-          text: root.title(sec.modelData)
-          color: Colours.m3onSurfaceVariant
-          font.pointSize: Tk.label.medium
-          weight: Font.Medium
-        }
+        Heading { text: BarLayout.sectionLabel(sec.modelData, root.vertical) }
         MText {
           id: empty
           Layout.fillWidth: true
+          Layout.leftMargin: Tk.padding.small
           // Also the drop target of an empty section, so it keeps its room while dragging.
           visible: sec.ids.length === 0 || (sec.ids.length === 1 && sec.ids[0] === root.dragId)
-          text: sec.modelData === "removed" ? "Everything is on the bar. Drag an item here to take it off."
-            : sec.modelData === "drawer" ? "Nothing yet. Drag an item here to tuck it behind the chevron."
-            : "Empty. Drag an item here."
+          text: "Empty. Drag an item here."
           color: Colours.m3outline
-          wrapMode: Text.WordWrap
+          font.pointSize: Tk.label.small
         }
 
         Repeater {
-          id: rowsRep
-          model: sec.ids
+          model: BarLayout.groups(sec.ids)
 
-          // A row, and under the plugin pill's row the widgets in it.
-          ColumnLayout {
-            id: entry
-            required property string modelData
-            required property int index
-            readonly property Item row: mainRow
-            readonly property bool hasPill: modelData === "plugins" && sec.modelData !== "removed" && root.pillMembers.length > 0
+          // A pill group is one card with its rows inside; a lone item is a row.
+          Rectangle {
+            id: card
+            required property var modelData
+            readonly property bool pill: modelData.pill
             Layout.fillWidth: true
-            spacing: Tk.spacing.extraSmall / 2
+            implicitHeight: cardCol.implicitHeight + (pill ? Tk.padding.extraSmall * 2 : 0)
+            radius: Tk.rounding.large
+            color: pill ? Colours.m3surfaceContainerLow : "transparent"
+            border.width: pill ? 1 : 0
+            border.color: Qt.alpha(Colours.m3outlineVariant, 0.6)
 
-            BarRow {
-              id: mainRow
-              modelData: entry.modelData
-              off: sec.modelData === "removed"
-              first: entry.index === 0
-              last: entry.index === rowsRep.count - 1 && !entry.hasPill
-            }
             ColumnLayout {
-              id: pillRows
-              visible: entry.hasPill
-              Layout.fillWidth: true
+              id: cardCol
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              anchors.margins: card.pill ? Tk.padding.extraSmall : 0
               spacing: Tk.spacing.extraSmall / 2
-              Component.onCompleted: if (entry.modelData === "plugins") { const m = root.sections; m.pill = pillRows; root.sections = m }
-              Component.onDestruction: if (root.sections.pill === pillRows) { const m = root.sections; delete m.pill; root.sections = m }
-              function rowItems() {
-                const out = []
-                for (let i = 0; i < pillRep.count; i++) { const d = pillRep.itemAt(i); if (d) out.push(d) }
-                return out
-              }
-              function emptyItem() { return pillRows }
+
               Repeater {
-                id: pillRep
-                model: entry.hasPill ? root.pillMembers : []
-                BarRow {
+                id: cardRows
+                model: card.modelData.ids
+
+                ColumnLayout {
+                  id: entry
+                  required property string modelData
                   required property int index
-                  child: true
-                  first: false
-                  last: entry.index === rowsRep.count - 1 && index === pillRep.count - 1
+                  readonly property bool isChevron: modelData === "overflow"
+                  readonly property bool isPill: modelData === "plugins" && root.pillMembers.length > 0
+                  Layout.fillWidth: true
+                  spacing: Tk.spacing.extraSmall / 2
+
+                  BarRow {
+                    modelData: entry.modelData
+                    list: sec.modelData
+                    first: entry.index === 0
+                    last: entry.index === cardRows.count - 1 && !(entry.isChevron && root.chevronOpen) && !(entry.isPill && root.pillOpen)
+                    foldable: entry.isChevron || entry.isPill
+                    folded: entry.isChevron ? !root.chevronOpen : !root.pillOpen
+                    onToggleFold: { if (entry.isChevron) root.chevronOpen = !root.chevronOpen; else root.pillOpen = !root.pillOpen }
+                  }
+
+                  // What is behind the chevron, and the limit.
+                  ColumnLayout {
+                    id: drawerRows
+                    visible: entry.isChevron && root.chevronOpen
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Tk.padding.large
+                    spacing: Tk.spacing.extraSmall / 2
+                    Component.onCompleted: if (entry.isChevron) root.register("drawer", drawerRows)
+                    Component.onDestruction: root.unregister("drawer", drawerRows)
+                    function emptyItem() { return drawerEmpty }
+                    MText {
+                      id: drawerEmpty
+                      Layout.fillWidth: true
+                      Layout.leftMargin: Tk.padding.small
+                      visible: root.layout.drawer.length === 0 || (root.layout.drawer.length === 1 && root.layout.drawer[0] === root.dragId)
+                      text: "Drag items here to fold them behind the chevron."
+                      color: Colours.m3outline
+                      font.pointSize: Tk.label.small
+                    }
+                    Repeater {
+                      id: drawerRep
+                      model: entry.isChevron ? root.layout.drawer : []
+                      BarRow {
+                        required property int index
+                        list: "drawer"
+                        first: false
+                        last: false
+                      }
+                    }
+                    RowStepper {
+                      Layout.fillWidth: true
+                      first: false
+                      last: entry.index === cardRows.count - 1
+                      settings: root.settings
+                      row: ({ key: "bar.layout.maxShown", label: "Show at most this many icons",
+                        subtext: Config.o.bar.layout.maxShown > 0 ? "The rest fold behind the chevron too" : "Off: only the items above",
+                        from: 0, to: 20, step: 1 })
+                    }
+                  }
+
+                  // The plugin pill's widgets.
+                  ColumnLayout {
+                    id: pillRows
+                    visible: entry.isPill && root.pillOpen
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Tk.padding.large
+                    spacing: Tk.spacing.extraSmall / 2
+                    Component.onCompleted: if (entry.modelData === "plugins") root.register("pill", pillRows)
+                    Component.onDestruction: root.unregister("pill", pillRows)
+                    function emptyItem() { return pillRows }
+                    Repeater {
+                      id: pillRep
+                      model: entry.isPill ? root.pillMembers : []
+                      BarRow {
+                        required property int index
+                        list: "pill"
+                        first: false
+                        last: entry.index === cardRows.count - 1 && index === pillRep.count - 1
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -452,18 +589,70 @@ Item {
         }
       }
     }
-
-    // ----------------------------------------------------------- add list
-    SectionHeader { row: ({ text: "Add a widget" }) }
     MText {
       Layout.fillWidth: true
-      visible: root.addGroups.length === 0
-      text: PluginService.loaded ? "Every widget is on the bar or under Not in the bar." : "Reading the widgets..."
-      color: Colours.m3outline
+      Layout.leftMargin: Tk.padding.small
+      visible: root.chevronOff && root.layout.drawer.length > 0
+      text: "The chevron is under Not shown, so what is behind it isn't on the bar."
+      color: Colours.m3error
+      font.pointSize: Tk.label.small
       wrapMode: Text.WordWrap
     }
+
+    // ----------------------------------------------------------- not shown
+    ColumnLayout {
+      id: removedSec
+      Layout.fillWidth: true
+      spacing: Tk.spacing.extraSmall / 2
+      Component.onCompleted: root.register("removed", removedSec)
+      Component.onDestruction: root.unregister("removed", removedSec)
+      function emptyItem() { return removedHead }
+      Heading {
+        id: removedHead
+        text: "Not shown"
+        count: root.layout.removed.length
+        foldable: true
+        open: root.removedOpen
+        onToggled: root.removedOpen = !root.removedOpen
+      }
+      MText {
+        Layout.fillWidth: true
+        Layout.leftMargin: Tk.padding.small
+        visible: root.removedOpen && root.layout.removed.length === 0
+        text: "Everything is on the bar. Drag an item here to take it off."
+        color: Colours.m3outline
+        font.pointSize: Tk.label.small
+      }
+      Repeater {
+        id: removedRep
+        model: root.removedOpen ? root.layout.removed : []
+        BarRow {
+          required property int index
+          list: "removed"
+          first: index === 0
+          last: index === removedRep.count - 1
+        }
+      }
+    }
+
+    // ----------------------------------------------------------- add list
+    Heading {
+      text: "Add a widget"
+      count: root.addable.length
+      foldable: true
+      open: root.addOpen
+      onToggled: root.addOpen = !root.addOpen
+    }
+    MText {
+      Layout.fillWidth: true
+      Layout.leftMargin: Tk.padding.small
+      visible: root.addOpen && root.addGroups.length === 0
+      text: PluginService.loaded ? "Every widget is on the bar or under Not shown." : "Reading the widgets..."
+      color: Colours.m3outline
+      font.pointSize: Tk.label.small
+    }
     Repeater {
-      model: root.addGroups
+      model: root.addOpen ? root.addGroups : []
       ColumnLayout {
         id: grp
         required property var modelData
@@ -473,8 +662,8 @@ Item {
           Layout.topMargin: Tk.spacing.small
           Layout.leftMargin: Tk.padding.small
           text: grp.modelData.category
-          color: Colours.m3onSurfaceVariant
-          font.pointSize: Tk.label.medium
+          color: Colours.m3outline
+          font.pointSize: Tk.label.small
           weight: Font.Medium
         }
         Repeater {
@@ -495,28 +684,20 @@ Item {
               anchors.fill: parent
               anchors.topMargin: Tk.padding.small
               anchors.bottomMargin: Tk.padding.small
-              anchors.leftMargin: Tk.padding.largeIncreased
+              anchors.leftMargin: Tk.padding.medium
               anchors.rightMargin: Tk.padding.medium
-              spacing: Tk.spacing.medium
-              MIcon { text: BarLayout.categoryIcon(ar.modelData.category); size: Tk.iconSize.medium; color: Colours.m3onSurfaceVariant }
-              ColumnLayout {
+              spacing: Tk.spacing.small
+              MIcon { text: BarLayout.categoryIcon(ar.modelData.category); size: Tk.iconSize.small; color: Colours.m3onSurfaceVariant }
+              MText { text: ar.modelData.name; font.pointSize: Tk.body.small }
+              SourceChip { source: ar.modelData.source }
+              MText {
                 Layout.fillWidth: true
-                spacing: 0
-                RowLayout {
-                  spacing: Tk.spacing.small
-                  MText { text: ar.modelData.name; font.pointSize: Tk.body.small }
-                  SourceChip { source: ar.modelData.source }
-                }
-                MText {
-                  Layout.fillWidth: true
-                  text: (ar.modelData.duplicateOf !== null ? "Omarchy's version of an Omashell item. " : "")
-                    + (ar.modelData.enabled ? "" : "Off: adding turns it on. ") + (ar.modelData.description || "")
-                  color: Colours.m3outline
-                  font.pointSize: Tk.label.small
-                  elide: Text.ElideRight
-                }
+                text: "· " + (ar.modelData.duplicateOf !== null ? "Omarchy's version of an Omashell item" : ar.modelData.enabled ? (ar.modelData.description || "") : "off; adding turns it on")
+                color: Colours.m3outline
+                font.pointSize: Tk.label.small
+                elide: Text.ElideRight
               }
-              MIcon { text: ar.busy ? "hourglass_top" : "add"; size: Tk.iconSize.medium; color: Colours.m3primary }
+              MIcon { text: ar.busy ? "hourglass_top" : "add"; size: Tk.iconSize.small; color: Colours.m3primary }
             }
           }
         }
@@ -525,11 +706,11 @@ Item {
     RowToggle {
       Layout.fillWidth: true
       Layout.topMargin: Tk.spacing.small
-      visible: root.duplicateCount > 0 || Config.o.bar.layout.showDuplicates
+      visible: root.addOpen && (root.duplicateCount > 0 || Config.o.bar.layout.showDuplicates)
       first: true
       last: true
       text: "Show Omarchy's versions of Omashell items"
-      subtext: "Its own volume, network, clock, ... widgets, to use instead of or beside Omashell's"
+      subtext: "Its own volume, network, clock, ... to use instead of or beside Omashell's"
       checked: Config.o.bar.layout.showDuplicates
       onToggled: c => Config.set("bar.layout.showDuplicates", c)
     }
@@ -542,9 +723,9 @@ Item {
     }
 
     // Reset, confirmed by a second click as Settings › About's "Reset all settings".
-    SectionHeader { row: ({ text: "More" }) }
     ConnectedRect {
       Layout.fillWidth: true
+      Layout.topMargin: Tk.spacing.large
       first: true
       last: true
       color: root.confirmReset ? Colours.m3errorContainer : Colours.m3surfaceContainer
@@ -590,12 +771,12 @@ Item {
     border.color: Colours.m3primary
     RowLayout {
       anchors.fill: parent
-      anchors.leftMargin: Tk.padding.small
+      anchors.leftMargin: Tk.padding.extraSmall
       anchors.rightMargin: Tk.padding.medium
-      spacing: Tk.spacing.medium
-      MIcon { Layout.preferredWidth: Tk.iconSize.medium + Tk.padding.small * 2; horizontalAlignment: Text.AlignHCenter; text: "drag_indicator"; size: Tk.iconSize.medium; color: Colours.m3primary }
-      MIcon { text: root.dragIcon; size: Tk.iconSize.medium; color: Colours.m3onSurface }
-      MText { Layout.fillWidth: true; text: root.dragLabel; color: Colours.m3onSurface }
+      spacing: Tk.spacing.small
+      MIcon { Layout.preferredWidth: Tk.iconSize.medium + Tk.padding.small; horizontalAlignment: Text.AlignHCenter; text: "drag_indicator"; size: Tk.iconSize.small; color: Colours.m3primary }
+      MIcon { text: root.dragIcon; size: Tk.iconSize.small; color: Colours.m3onSurface }
+      MText { Layout.fillWidth: true; text: root.dragLabel; color: Colours.m3onSurface; font.pointSize: Tk.body.small }
     }
   }
   // Where it will land.

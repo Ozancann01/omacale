@@ -47,7 +47,10 @@ Item {
   }
 
   // ------------------------------------------------------------ layout
-  readonly property var widgetIds: host.widgetIds || []
+  // null until the shell has registered its widgets and Omarchy's bar
+  // config has arrived: "not known yet" keeps every placed widget (resolve),
+  // where an empty list would drop them and build them again a moment later.
+  readonly property var widgetIds: host.widgetIds && host.widgetIds.length ? host.widgetIds : null
   readonly property var layout: BarLayout.resolve({ start: cfg.layout.start, center: cfg.layout.center, end: cfg.layout.end, removed: cfg.layout.removed, drawer: cfg.layout.drawer }, widgetIds)
   // What each section draws, the chevron's items included (BarLayout.render):
   // the drawer, plus the icons past bar.layout.maxShown.
@@ -55,26 +58,21 @@ Item {
   // Whether an item is on show, for the "at most N" limit. Status icons follow
   // statusOn, the one rule StatusRun draws them by.
   function onShow(id) {
-    if (BarLayout.isPlugin(id)) return widgetIds.indexOf(BarLayout.pluginOf(id)) >= 0
+    if (BarLayout.isPlugin(id)) return !!widgetIds && widgetIds.indexOf(BarLayout.pluginOf(id)) >= 0
     if (BarLayout.STATUS.indexOf(id) >= 0) return statusOn(id)
-    // Anything else: what its entry says (while it isn't folded; folded,
-    // the last answer it gave before is as good as any).
-    const e = entryFor(id)
-    return e ? !!e.shown || !!e.parent && e.parent.folded === true : true
+    // From the data, never from the entries: they are rebuilt from what
+    // this decides, and asking one that is being torn down fails.
+    if (id === "tray") return cfg.tray.enabled && SystemTray.items.values.some(i => i.status !== Status.Passive
+      && cfg.tray.hiddenIcons.indexOf(i.id) < 0)
+    if (id === "plugins") return cfg.plugins.enabled !== false && (host.thirdPartyPlugins || []).some(e =>
+      cfg.plugins.hidden.indexOf(host.entryId(e)) < 0 && placedWidgets.indexOf(host.entryId(e)) < 0)
+    return true
   }
   // Set by the lock icon while it is still folding away (StatusRun).
   property bool lockFolding: false
   function statusOn(id) {
-    const st = cfg.status
-    switch (id) {
-    case "keepAwake": return st.keepAwake && IdleService.enabled
-    case "update": return st.update && UpdateService.available
-    case "recording": return RecordService.running
-    case "lockStatus": return st.lockStatus && (host.capsLock || host.numLock || lockFolding)
-    case "microphone": return st.microphone && (!st.microphoneInUseOnly || AudioService.capturing)
-    case "bluetooth": return st.bluetooth && (!st.bluetoothConnectedOnly || Bluetooth.devices.values.some(d => d.connected))
-    default: return !!st[id]
-    }
+    // The lock icon stays while it is still folding away.
+    return PluginService.statusOn(id) || (id === "lockStatus" && cfg.status.lockStatus && lockFolding)
   }
   // The chevron's items are drawn while it is open (OverflowEntry).
   property bool drawerOpen: false
@@ -119,7 +117,7 @@ Item {
     for (const box of [startBox, centerBox, endBox])
       for (let i = 0; i < box.rep.count; i++) {
         const l = box.rep.itemAt(i)
-        if (l && l.item && l.modelData.drawer && l.visible) out.push(l.item)
+        if (l && l.item && l.drawer && l.visible) out.push(l.item)
       }
     return out
   }
@@ -463,6 +461,29 @@ Item {
   component Section: GridLayout {
     id: box
     property var segList: []
+    // The Repeater's model, kept in step with segList by moving, inserting
+    // and removing rows: an entry that only moves (a drag in Settings, an
+    // icon folding behind the chevron) keeps its delegate, and a hosted
+    // widget its state, instead of the whole section being rebuilt.
+    ListModel { id: segModel }
+    function rowOf(seg) {
+      return { segId: seg.id, kind: seg.kind, idsStr: seg.ids ? seg.ids.join(",") : "", pluginId: seg.pluginId || "", drawer: !!seg.drawer }
+    }
+    function sync() {
+      const next = segList || []
+      for (let i = 0; i < next.length; i++) {
+        let j = -1
+        for (let k = i; k < segModel.count; k++) if (segModel.get(k).segId === next[i].id) { j = k; break }
+        if (j < 0) segModel.insert(i, rowOf(next[i]))
+        else {
+          if (j !== i) segModel.move(j, i, 1)
+          if (segModel.get(i).drawer !== !!next[i].drawer) segModel.setProperty(i, "drawer", !!next[i].drawer)
+        }
+      }
+      while (segModel.count > next.length) segModel.remove(segModel.count - 1)
+    }
+    onSegListChanged: sync()
+    Component.onCompleted: sync()
     property string sec
     property alias rep: srep
     readonly property bool any: {
@@ -521,20 +542,23 @@ Item {
     }
     Repeater {
       id: srep
-      model: box.segList
+      model: segModel
       Loader {
         id: ld
-        required property var modelData
+        required property string segId
+        required property string kind
+        required property string idsStr
+        required property string pluginId
+        required property bool drawer
         required property int index
         readonly property var join: { void box.runs; return box.joinOf(ld) }
         Binding { target: ld.item; property: "joinBefore"; value: ld.join.before; when: !!ld.item && ld.item.joinable === true }
         Binding { target: ld.item; property: "joinAfter"; value: ld.join.after; when: !!ld.item && ld.item.joinable === true }
         // Behind the chevron, and it is closed.
-        readonly property bool folded: !!modelData.drawer && !root.drawerOpen
+        readonly property bool folded: drawer && !root.drawerOpen
         // How far it is unfolded, 0..1. The chevron's items come out one after
         // another from the chevron's side (and go back the other way round):
         // its length, its gap, its opacity and a short slide follow this.
-        readonly property bool drawer: !!modelData.drawer
         readonly property int drawerCount: box.segList.filter(s => s.drawer).length
         readonly property int drawerOrder: {
           if (!drawer) return 0
@@ -567,10 +591,10 @@ Item {
         Layout.fillHeight: !!item && item.Layout.fillHeight
         Layout.alignment: item ? item.Layout.alignment : 0
         visible: !!item && item.shown && foldProg > 0.001
-        sourceComponent: root.entryComponent(modelData)
+        sourceComponent: root.entryComponent({ kind: kind, id: segId })
         onLoaded: {
-          if (modelData.kind === "status") item.ids = modelData.ids
-          else if (modelData.kind === "plugin") item.pluginId = modelData.pluginId
+          if (kind === "status") item.ids = idsStr.split(",")
+          else if (kind === "plugin") item.pluginId = pluginId
         }
       }
     }

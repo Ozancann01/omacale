@@ -555,5 +555,10 @@ Item {
   }
   Component.onDestruction: {
     if (host) host.unregisterPluginSlot(root)
+    // See Bar.retireFacade: the widget outlives this slot's context.
+    if (activeItem && host && typeof host.retireFacade === "function" && "bar" in activeItem) {
+      const r = host.retireFacade(facade, moduleName)
+      if (r) activeItem.bar = r
+    }
   }
 }

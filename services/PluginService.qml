@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Bluetooth
 import ".."
 import "../core/BarLayout.js" as BarLayout
 
@@ -51,6 +52,21 @@ QtObject {
       duplicateOf: p.firstParty && BarLayout.DUPLICATES.hasOwnProperty(p.id) ? BarLayout.DUPLICATES[p.id] : null
     }))
   readonly property var barWidgets: widgetCatalog.filter(p => p.enabled)
+  // Whether a status icon is on show: the one rule the bar (StatusRun,
+  // BarContent's "at most N" count) and Settings' bar preview go by.
+  function statusOn(id) {
+    const st = Config.o.bar.status
+    switch (id) {
+    case "keepAwake": return st.keepAwake && IdleService.enabled
+    case "update": return st.update && UpdateService.available
+    case "recording": return RecordService.running
+    case "lockStatus": return st.lockStatus && (Sys.capsLock || Sys.numLock)
+    case "microphone": return st.microphone && (!st.microphoneInUseOnly || AudioService.capturing)
+    case "bluetooth": return st.bluetooth && (!st.bluetoothConnectedOnly || Bluetooth.devices.values.some(d => d.connected))
+    default: return !!st[id]
+    }
+  }
+
   // Widgets that failed to start in the bar, id -> why (BarWidgetSlot).
   property var widgetErrors: ({})
   function setWidgetError(id, why) {

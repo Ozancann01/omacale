@@ -183,6 +183,30 @@ Item {
   readonly property real pluginIconScale: (Tk.iconSize.small * 4 / 3) / Math.max(1, Style.bar.iconCanvas)
   readonly property int pluginBarSize: Math.floor(Tk.barInner / pluginIconScale)
 
+  // A hosted widget's buttons call their `bar` while they are destroyed
+  // (WidgetButton hides its tooltip), and by then the slot's own facade has
+  // lost its QML context ("evaluate a function in an invalid context"). A
+  // slot on its way out hands its widget one of these instead: made here, so
+  // it outlives the slot; it still releases the popout and click targets the
+  // widget held through the old facade, and does nothing else. Gone a few
+  // seconds later.
+  Component {
+    id: retiredFacade
+    PluginBarFacade {
+      property var original: null
+      function requestPopout(owner) {}
+      function releasePopout(owner) { _call("releasePluginPopout", [original, owner]) }
+      function registerClickTarget(target) {}
+      function unregisterClickTarget(target) { _call("unregisterPluginClickTarget", [original, target]) }
+      function showTooltip(target, text) {}
+    }
+  }
+  function retireFacade(facade, name) {
+    const r = retiredFacade.createObject(root, { host: root, moduleName: String(name || ""), original: facade })
+    if (r) r.destroy(5000)
+    return r
+  }
+
   // Slots exist once per output. Keep a host-level list so widgets that use
   // BarWidget.broadcast() receive every live instance, like they do on the
   // stock Omarchy bar.
