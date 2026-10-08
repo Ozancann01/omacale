@@ -69,10 +69,20 @@ Everything Omacale does, plus (details per version in the [changelog](CHANGELOG.
 
 ## Requirements
 
-- Omarchy, with its shell running
-- `jq`
-- Material Symbols Rounded font (added by the installer if missing)
-- `cava` (optional, for the visualiser)
+**Required**
+
+- [Omarchy](https://omarchy.org) 4.0 or newer, with its shell running (tested on Omarchy 4.0.4, Hyprland 0.56 with the Lua config, Quickshell 0.3)
+- Material Symbols Rounded font (the installer adds `ttf-material-symbols-variable` if missing)
+- Already part of Omarchy, nothing to install: `jq`, `python3`, `curl`, `wl-clipboard`, and for the new features `ddcutil` (brightness of external screens), `hyprsunset` (night light) and `aether` (theme from your wallpaper)
+
+**Optional**
+
+| Package | For | Without it |
+|---|---|---|
+| [hyprmoncfg](https://github.com/crmne/hyprmoncfg) (AUR: `hyprmoncfg-bin`, with its daemon `hyprmoncfgd` running; `hyprmoncfg manage` or the **Manage** button in Settings › Display) | Changing your screens (resolution, scale, arrangement, mirroring…), keep-or-revert, Profiles, Workspaces per screen, the full display menu | Settings › Display shows your screens read-only; brightness, *Turn off for now*, night light, text and cursor, and Shell on each screen still work, and the display menu offers Extend / Mirror / Only external through Omarchy's own laptop-screen switches |
+| `cava` (the installer offers it) | The music visualiser on the desktop | No visualiser |
+| DDC/CI turned on in your monitor's own menu | Brightness sliders for external screens | External screens show no brightness slider |
+| Weather location set (Settings › Language & region) | Night light from sunset to sunrise | Use custom times instead |
 
 ## Install
 
