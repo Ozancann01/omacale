@@ -23,21 +23,12 @@ Rectangle {
   // every child reads invisible, the pill hides, and its children then
   // stay invisible for good, so the pill never came back.
   readonly property var st: bar.cfg.status
-  // Set by the lock icon while it is still folding away.
-  property bool lockShown: false
   // Whether an icon is on show: the one rule for both the pill and each of
   // its icons (`want`), so a pill can never be drawn with nothing in it.
-  function on(id) {
-    switch (id) {
-    case "keepAwake": return st.keepAwake && IdleService.enabled
-    case "update": return st.update && UpdateService.available
-    case "recording": return RecordService.running
-    case "lockStatus": return st.lockStatus && (bar.host.capsLock || bar.host.numLock || lockShown)
-    case "microphone": return st.microphone && (!st.microphoneInUseOnly || AudioService.capturing)
-    case "bluetooth": return st.bluetooth && (!st.bluetoothConnectedOnly || Bluetooth.devices.values.some(d => d.connected))
-    default: return !!st[id]
-    }
-  }
+  // BarContent.statusOn, which the chevron's "at most N" limit counts by too.
+  property bool lockShown: false
+  onLockShownChanged: bar.lockFolding = lockShown
+  function on(id) { return bar.statusOn(id) }
   readonly property bool shown: ids.some(id => on(id))
   visible: shown
   Layout.alignment: bar.crossAlign

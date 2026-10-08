@@ -31,22 +31,25 @@ Item {
 
   readonly property var layout: {
     const l = Config.o.bar.layout
-    void l.start; void l.center; void l.end; void l.removed
+    void l.start; void l.center; void l.end; void l.removed; void l.drawer
     void PluginService.barWidgets
     return PluginService.barLayout()
   }
   readonly property bool vertical: Tk.barVertical
   // "pill" is the plugin pill's own rows, checked first so a drop over them
   // lands in the pill rather than in the section around it.
-  readonly property var lists: ["pill"].concat(BarLayout.SECTIONS).concat(["removed"])
+  readonly property var lists: ["pill"].concat(BarLayout.SECTIONS).concat(["drawer", "removed"])
   readonly property var pillIds: PluginService.pillWidgets.map(p => p.id)
-  readonly property var placed: BarLayout.SECTIONS.concat(["removed"]).reduce((out, s) =>
+  readonly property var placed: BarLayout.SECTIONS.concat(["drawer", "removed"]).reduce((out, s) =>
     out.concat(root.layout[s].filter(id => BarLayout.isPlugin(id)).map(id => BarLayout.pluginOf(id))), [])
   // Third-party widgets still in the pill, in the order the pill shows them.
   readonly property var pillMembers: PluginService.pillWidgets.filter(p => root.placed.indexOf(p.id) < 0).map(p => "plugin:" + p.id)
   readonly property bool pillOnBar: BarLayout.SECTIONS.some(s => root.layout[s].indexOf("plugins") >= 0)
 
-  function title(list) { return list === "removed" ? "Not in the bar" : BarLayout.sectionLabel(list, vertical) }
+  function title(list) {
+    return list === "removed" ? "Not in the bar" : list === "drawer" ? "Behind the chevron" : BarLayout.sectionLabel(list, vertical)
+  }
+  readonly property bool chevronOff: root.layout.removed.indexOf("overflow") >= 0
 
   // A row's facts, built-in or widget.
   function info(id) {
@@ -266,11 +269,12 @@ Item {
           if (!r.child) { root.openSettings(r.it); return }
           root.settings.openMenu(moreBtn, moreBtn, [
             { value: "pinned", label: "Always in the pill", icon: "push_pin" },
-            { value: "overflow", label: "Behind the chevron", icon: "expand_less" },
+            { value: "drawer", label: "Behind the chevron", icon: "expand_more" },
             { value: "out", label: "A place of its own", icon: "open_in_new" },
             { value: "info", label: "About this plugin", icon: "info" }
           ], r.mode, v => {
             if (v === "out") PluginService.takeOutWidget(r.it.pluginId)
+            else if (v === "drawer") root.place(r.modelData, "drawer", root.layout.drawer.length)
             else if (v === "info") root.openSettings(r.it)
             else PluginService.setBarMode(r.it.pluginId, v)
           })
@@ -339,7 +343,7 @@ Item {
     spacing: Tk.spacing.extraSmall / 2
 
     Repeater {
-      model: BarLayout.SECTIONS.concat(["removed"])
+      model: BarLayout.SECTIONS.concat(["drawer", "removed"])
 
       ColumnLayout {
         id: sec
@@ -358,9 +362,28 @@ Item {
 
         // The sections are sub-headings of the page's "Bar" (or, for "Not in
         // the bar", a heading of its own).
-        SectionHeader { visible: sec.modelData === "removed"; row: ({ text: root.title(sec.modelData) }) }
+        SectionHeader { visible: sec.modelData === "removed" || sec.modelData === "drawer"; row: ({ text: root.title(sec.modelData) }) }
         MText {
-          visible: sec.modelData !== "removed"
+          visible: sec.modelData === "drawer"
+          Layout.fillWidth: true
+          text: root.chevronOff ? "The chevron is under Not in the bar, so these aren't shown. Add it back to the bar to open them."
+            : "Folded away behind the chevron in the bar; hovering or clicking it opens them."
+          color: root.chevronOff ? Colours.m3error : Colours.m3outline
+          font.pointSize: Tk.label.small
+          wrapMode: Text.WordWrap
+        }
+        RowStepper {
+          visible: sec.modelData === "drawer"
+          Layout.fillWidth: true
+          first: true
+          last: true
+          settings: root.settings
+          row: ({ key: "bar.layout.maxShown", label: "Show at most this many icons",
+            subtext: Config.o.bar.layout.maxShown > 0 ? "After the chevron; the rest go behind it" : "No limit: only the items below go behind it",
+            from: 0, to: 20, step: 1 })
+        }
+        MText {
+          visible: sec.modelData !== "removed" && sec.modelData !== "drawer"
           Layout.topMargin: sec.index === 0 ? 0 : Tk.spacing.small
           Layout.leftMargin: Tk.padding.small
           text: root.title(sec.modelData)
@@ -374,6 +397,7 @@ Item {
           // Also the drop target of an empty section, so it keeps its room while dragging.
           visible: sec.ids.length === 0 || (sec.ids.length === 1 && sec.ids[0] === root.dragId)
           text: sec.modelData === "removed" ? "Everything is on the bar. Drag an item here to take it off."
+            : sec.modelData === "drawer" ? "Nothing yet. Drag an item here to tuck it behind the chevron."
             : "Empty. Drag an item here."
           color: Colours.m3outline
           wrapMode: Text.WordWrap

@@ -167,7 +167,11 @@ Item {
     interval: 3000
     // An empty registry is a shell still starting (or reloading plugins),
     // not one without widgets: adopting then would mark nothing seen.
-    onTriggered: if (root.registryWidgets.length) PluginService.adoptWidgets(root.registryWidgets, root.omarchyLayoutIds)
+    onTriggered: {
+      if (!root.registryWidgets.length) return
+      PluginService.adoptWidgets(root.registryWidgets, root.omarchyLayoutIds)
+      PluginService.moveUnpinned()
+    }
   }
 
   // Omarchy widgets draw their mark in Style.bar.iconCanvas (16px) with a

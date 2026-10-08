@@ -28,6 +28,9 @@ Item {
   readonly property bool shown: pill.visible && pill.anyShown
   // Next to status icons or widgets, they share one pill (BarContent's
   // Section.runs draws it): no background of its own, no padding where joined.
+  // Behind a closed chevron (BarContent's Loader): the pill lives on the
+  // overlay, outside the Loader, so it has to hide itself.
+  readonly property bool folded: !!parent && parent.folded === true
   readonly property bool joinable: true
   property bool joinBefore: false
   property bool joinAfter: false
@@ -86,7 +89,7 @@ Item {
       : padStart + padEnd + pinnedLen
         + (overflowCount > 0 ? (bar.vertical ? overflowIcon.implicitHeight : overflowIcon.implicitWidth) : -pluginCol.gapPx)
 
-    visible: bar.cfg.plugins.enabled !== false && pluginsList.length > 0
+    visible: bar.cfg.plugins.enabled !== false && pluginsList.length > 0 && !pluginsEntry.folded
     opacity: anyShown ? 1 : 0
     x: pluginsEntry.ox
     y: pluginsEntry.oy

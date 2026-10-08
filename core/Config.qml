@@ -168,6 +168,10 @@ QtObject {
           // Widgets adoption put on the bar since Settings › Taskbar was last
           // open: marked New there.
           property list<string> fresh: []
+          // Behind the chevron (BarLayout.render): items placed there, and
+          // with maxShown > 0 the shown icons after it past that many.
+          property list<string> drawer: []
+          property int maxShown: 0
           // Settings › Taskbar's add list: Omarchy's versions of built-ins too.
           property bool showDuplicates: false
         }

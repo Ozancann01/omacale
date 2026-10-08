@@ -96,7 +96,7 @@ QtObject {
 
   function savedLayout() {
     const l = Config.o.bar.layout
-    return { start: l.start, center: l.center, end: l.end, removed: l.removed }
+    return { start: l.start, center: l.center, end: l.end, removed: l.removed, drawer: l.drawer }
   }
   // Settings › Taskbar's bar. Resolved against the enabled bar widgets, so
   // a widget that was disabled drops out of its place.
@@ -110,6 +110,7 @@ QtObject {
     Config.set("bar.layout.center", l.center)
     Config.set("bar.layout.end", l.end)
     Config.set("bar.layout.removed", l.removed || [])
+    Config.set("bar.layout.drawer", l.drawer || [])
   }
   // Moving an item in Settings: a pill widget dropped on "Not in the bar"
   // goes back into the pill.
@@ -152,11 +153,25 @@ QtObject {
   // on its own bar.
   signal adoptRequested()
   function resetBarLayout() {
-    setBarLayout({ start: [], center: [], end: [], removed: [] })
+    setBarLayout({ start: [], center: [], end: [], removed: [], drawer: [] })
     Config.set("bar.layout.seen", [])
     Config.set("bar.layout.fresh", [])
     Config.set("bar.layout.adopted", false)
     adoptRequested()
+  }
+  // Pill widgets that waited behind the pill's own chevron
+  // (bar.plugins.unpinned, before the chevron for everything) go behind the
+  // bar's chevron instead, in the same order. Run with adoption; a no-op once
+  // done, as Settings no longer offers the pill's chevron.
+  function moveUnpinned() {
+    const unpinned = Array.from(Config.o.bar.plugins.unpinned)
+    if (!unpinned.length) return
+    let l = BarLayout.resolve(savedLayout(), null)
+    for (const id of unpinned)
+      if (!BarLayout.find(l, "plugin:" + id) && l.drawer.indexOf("plugin:" + id) < 0 && l.removed.indexOf("plugin:" + id) < 0)
+        l = BarLayout.place(l, "plugin:" + id, "drawer", l.drawer.length, [])
+    setBarLayout(l)
+    Config.set("bar.plugins.unpinned", [])
   }
   function clearFresh() { if (Config.o.bar.layout.fresh.length) Config.set("bar.layout.fresh", []) }
 

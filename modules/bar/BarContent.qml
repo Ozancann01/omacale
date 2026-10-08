@@ -48,7 +48,36 @@ Item {
 
   // ------------------------------------------------------------ layout
   readonly property var widgetIds: host.widgetIds || []
-  readonly property var layout: BarLayout.resolve({ start: cfg.layout.start, center: cfg.layout.center, end: cfg.layout.end, removed: cfg.layout.removed }, widgetIds)
+  readonly property var layout: BarLayout.resolve({ start: cfg.layout.start, center: cfg.layout.center, end: cfg.layout.end, removed: cfg.layout.removed, drawer: cfg.layout.drawer }, widgetIds)
+  // What each section draws, the chevron's items included (BarLayout.render):
+  // the drawer, plus the icons past bar.layout.maxShown.
+  readonly property var rendered: BarLayout.render(layout, cfg.layout.maxShown, id => root.onShow(id))
+  // Whether an item is on show, for the "at most N" limit. Status icons follow
+  // statusOn, the one rule StatusRun draws them by.
+  function onShow(id) {
+    if (BarLayout.isPlugin(id)) return widgetIds.indexOf(BarLayout.pluginOf(id)) >= 0
+    if (BarLayout.STATUS.indexOf(id) >= 0) return statusOn(id)
+    // Anything else: what its entry says (while it isn't folded; folded,
+    // the last answer it gave before is as good as any).
+    const e = entryFor(id)
+    return e ? !!e.shown || !!e.parent && e.parent.folded === true : true
+  }
+  // Set by the lock icon while it is still folding away (StatusRun).
+  property bool lockFolding: false
+  function statusOn(id) {
+    const st = cfg.status
+    switch (id) {
+    case "keepAwake": return st.keepAwake && IdleService.enabled
+    case "update": return st.update && UpdateService.available
+    case "recording": return RecordService.running
+    case "lockStatus": return st.lockStatus && (host.capsLock || host.numLock || lockFolding)
+    case "microphone": return st.microphone && (!st.microphoneInUseOnly || AudioService.capturing)
+    case "bluetooth": return st.bluetooth && (!st.bluetoothConnectedOnly || Bluetooth.devices.values.some(d => d.connected))
+    default: return !!st[id]
+    }
+  }
+  // The chevron's items are drawn while it is open (OverflowEntry).
+  property bool drawerOpen: false
   // The section models, replaced only when they really change, so a settings
   // write that leaves the layout alone doesn't recreate every entry.
   property var segs: ({ start: [], center: [], end: [] })
@@ -57,14 +86,16 @@ Item {
   // rebuild the pill's hosted widgets.
   property var placedWidgets: []
   function updateSegs() {
-    const next = { start: BarLayout.segments(layout.start), center: BarLayout.segments(layout.center), end: BarLayout.segments(layout.end) }
+    const r = rendered
+    const next = { start: BarLayout.segments(r.start), center: BarLayout.segments(r.center), end: BarLayout.segments(r.end) }
     if (JSON.stringify(next) !== JSON.stringify(segs)) segs = next
-    const placed = BarLayout.SECTIONS.reduce((out, s) =>
+    // The drawer's widgets too: kept out of the pill even with the chevron off the bar.
+    const placed = BarLayout.SECTIONS.concat(["drawer"]).reduce((out, s) =>
       out.concat(layout[s].filter(id => BarLayout.isPlugin(id)).map(id => BarLayout.pluginOf(id))), [])
     if (JSON.stringify(placed) !== JSON.stringify(placedWidgets)) placedWidgets = placed
   }
   // A Settings edit writes each list in turn; settle on the result once.
-  onLayoutChanged: Qt.callLater(updateSegs)
+  onRenderedChanged: Qt.callLater(updateSegs)
   Component.onCompleted: updateSegs()
   // The section whose free space the window title takes ("" while it is off).
   readonly property string titleIn: BarLayout.flexSection(layout, cfg.activeWindow.enabled)
@@ -82,6 +113,16 @@ Item {
     layoutGen++
   }
   function entryFor(id) { void layoutGen; return entryMap[id] || null }
+  // The chevron's items on the bar right now (open), in bar order.
+  function drawerItems() {
+    const out = []
+    for (const box of [startBox, centerBox, endBox])
+      for (let i = 0; i < box.rep.count; i++) {
+        const l = box.rep.itemAt(i)
+        if (l && l.item && l.modelData.drawer && l.visible) out.push(l.item)
+      }
+    return out
+  }
   readonly property var wsE: entryFor("workspaces")
   readonly property var titleE: entryFor("activeWindow")
   readonly property var trayE: entryFor("tray")
@@ -94,7 +135,8 @@ Item {
     for (const box of [startBox, centerBox, endBox])
       for (let i = 0; i < box.rep.count; i++) {
         const l = box.rep.itemAt(i)
-        if (l && l.item) out.push(l.item)
+        // Folded behind a closed chevron: not on the bar for anything.
+        if (l && l.item && !l.folded) out.push(l.item)
       }
     return out
   }
@@ -350,7 +392,7 @@ Item {
   // handler inside the bar is no good: leaving the layer surface altogether
   // never reaches it, and the group would stay open.
   // Open while the pointer is on the group; ScreenScope drives this.
-  readonly property bool groupsExpanded: (!!trayE && trayE.expanded) || (!!pluginsE && pluginsE.expanded)
+  readonly property bool groupsExpanded: (!!trayE && trayE.expanded) || (!!pluginsE && pluginsE.expanded) || drawerOpen
 
   function hoverAt(a, onBar) {
     for (const e of entries())
@@ -447,7 +489,7 @@ Item {
       for (let i = 0; i < srep.count; i++) {
         const l = srep.itemAt(i)
         const it = l ? l.item : null
-        if (!it || !it.shown) continue      // hidden: takes no room, joins nothing
+        if (!it || !it.shown || l.folded) continue      // hidden: takes no room, joins nothing
         if (it.joinable === true) {
           if (cur) { cur.b = l; cur.n++ } else { cur = { a: l, b: l, n: 1 } }
         } else { if (cur) out.push(cur); cur = null }
@@ -474,10 +516,12 @@ Item {
         readonly property var join: { void box.runs; return box.joinOf(ld) }
         Binding { target: ld.item; property: "joinBefore"; value: ld.join.before; when: !!ld.item && ld.item.joinable === true }
         Binding { target: ld.item; property: "joinAfter"; value: ld.join.after; when: !!ld.item && ld.item.joinable === true }
+        // Behind the chevron, and it is closed.
+        readonly property bool folded: !!modelData.drawer && !root.drawerOpen
         Layout.fillWidth: !!item && item.Layout.fillWidth
         Layout.fillHeight: !!item && item.Layout.fillHeight
         Layout.alignment: item ? item.Layout.alignment : 0
-        visible: !!item && item.shown
+        visible: !!item && item.shown && !folded
         sourceComponent: root.entryComponent(modelData)
         onLoaded: {
           if (modelData.kind === "status") item.ids = modelData.ids
@@ -490,7 +534,7 @@ Item {
     if (seg.kind === "status") return cStatus
     if (seg.kind === "plugin") return cSinglePlugin
     return ({ logo: cLogo, workspaces: cWorkspaces, activeWindow: cActiveWindow, plugins: cPlugins,
-      tray: cTray, clock: cClock, power: cPower })[seg.id] || null
+      tray: cTray, clock: cClock, power: cPower, overflow: cOverflow })[seg.id] || null
   }
   Component { id: cLogo; LogoEntry { bar: root } }
   Component { id: cWorkspaces; WorkspacesEntry { bar: root } }
@@ -501,6 +545,7 @@ Item {
   Component { id: cStatus; StatusRun { bar: root } }
   Component { id: cPower; PowerEntry { bar: root } }
   Component { id: cSinglePlugin; SinglePluginEntry { bar: root } }
+  Component { id: cOverflow; OverflowEntry { bar: root } }
 
   Item {
     id: col

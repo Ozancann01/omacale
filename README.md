@@ -24,7 +24,7 @@ Everything Omacale does, plus (details per version in the [changelog](CHANGELOG.
 | **Night light** | Warmth and a schedule (sunset to sunrise, or custom times). |
 | **Workspaces per screen** | Which workspaces live on which screen, saved in the profile. |
 | **Shell on each screen** | Bar on/off and its edge per screen, and where the desktop clock, notifications and OSD show. |
-| **Bar layout** | One list in Settings › Taskbar for everything in the bar (Omashell's items, Omarchy's own widgets, plugins): drag between start, center and end, take items off and add them back. Neighbouring icons and widgets share one pill. |
+| **Bar layout** | One list in Settings › Taskbar for everything in the bar (Omashell's items, Omarchy's own widgets, plugins): drag between start, center and end, take items off and add them back, or tuck any of them behind a chevron (or just "show at most N icons"). Neighbouring icons and widgets share one pill. |
 | **Omarchy's widgets** | Omarchy's own bar widgets (AI agents usage, weather, indicators, media, Tailscale, ...) in Omashell's bar. A widget a later Omarchy adds shows up on the bar by itself. |
 | **Theme** | Pickers everywhere, a whole theme from your wallpaper, colours that match Omarchy exactly, optionally Omarchy's own menus in your colours. |
 | **Session menu** | Super+Esc / power key open the session drawer, with Lock, Screensaver and your own picture. |

@@ -4,7 +4,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../core/BarLayout.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const L = {}
-vm.runInNewContext(src + "\nthis.L = { SECTIONS, STATUS, ITEMS, defaults, resolve, segments, place, takeOut, putBack, sectionLabel, isPlugin, pluginOf, flexSection, adoptNew, appendEnd, sourceOf, DUPLICATES, NEVER }", L)
+vm.runInNewContext(src + "\nthis.L = { SECTIONS, STATUS, ITEMS, defaults, resolve, segments, place, takeOut, putBack, sectionLabel, isPlugin, pluginOf, flexSection, adoptNew, appendEnd, sourceOf, render, foldable, DUPLICATES, NEVER }", L)
 const B = L.L
 let failed = 0
 function test(name, fn) {
@@ -13,15 +13,15 @@ function test(name, fn) {
 // Values made inside the vm context have its own Array prototype: compare plain copies.
 const plain = v => JSON.parse(JSON.stringify(v))
 const eq = (a, b) => assert.deepStrictEqual(plain(a), plain(b))
-const DEF_END = ["plugins", "tray", "clock", "keepAwake", "update", "recording", "notifications", "lockStatus",
+const DEF_END = ["overflow", "plugins", "tray", "clock", "keepAwake", "update", "recording", "notifications", "lockStatus",
   "audio", "microphone", "kbLayout", "network", "bluetooth", "battery", "power"]
 
-test("defaults are today's order", () => eq(B.defaults(), { start: ["logo", "workspaces"], center: ["activeWindow"], end: DEF_END, removed: [] }))
+test("defaults are today's order", () => eq(B.defaults(), { start: ["logo", "workspaces"], center: ["activeWindow"], end: DEF_END, removed: [], drawer: [] }))
 test("nothing saved resolves to defaults", () => eq(B.resolve(undefined, []), B.defaults()))
 test("empty lists resolve to defaults", () => eq(B.resolve({ start: [], center: [], end: [] }, []), B.defaults()))
 test("a saved order is kept", () => {
-  const saved = { start: ["logo", "workspaces", "network", "bluetooth"], center: ["clock"], end: ["activeWindow", "plugins", "tray",
-    "keepAwake", "update", "recording", "notifications", "lockStatus", "audio", "microphone", "kbLayout", "battery", "power"], removed: [] }
+  const saved = { start: ["logo", "workspaces", "network", "bluetooth"], center: ["clock"], end: ["overflow", "activeWindow", "plugins", "tray",
+    "keepAwake", "update", "recording", "notifications", "lockStatus", "audio", "microphone", "kbLayout", "battery", "power"], removed: [], drawer: [] }
   eq(B.resolve(saved, []), saved)
 })
 test("unknown ids and junk are dropped", () => {
@@ -63,7 +63,7 @@ test("segments: a plugin entry splits a run", () => {
 })
 test("takeOut puts the widget right after the plugin group", () => {
   const l = B.takeOut(B.defaults(), "x.y")
-  eq(l.end.slice(0, 2), ["plugins", "plugin:x.y"])
+  eq(l.end.slice(1, 3), ["plugins", "plugin:x.y"])
   eq(B.takeOut(l, "x.y"), l)                               // twice is a no-op
 })
 test("putBack removes the widget entry", () => eq(B.putBack(B.takeOut(B.defaults(), "x.y"), "x.y"), B.defaults()))
@@ -177,6 +177,49 @@ test("removing the window title leaves no flexible section", () => {
 test("plugin entries are all kept while the widget list is unknown", () => {
   const saved = { start: ["logo", "workspaces", "plugin:a.b"], center: ["activeWindow"], end: DEF_END, removed: [] }
   eq(B.resolve(saved, null).start, ["logo", "workspaces", "plugin:a.b"])
+})
+
+// ---- behind the chevron
+test("the drawer keeps its items off the sections and drops the chevron", () => {
+  const r = B.resolve({ end: DEF_END.filter(i => i !== "network"), drawer: ["network", "overflow", "nope", "network", "plugin:a.b"] }, ["a.b"])
+  eq(r.drawer, ["network", "plugin:a.b"]); assert.ok(r.end.indexOf("network") < 0); assert.ok(r.end.indexOf("overflow") >= 0)
+})
+test("an item on the bar is not also in the drawer", () => {
+  eq(B.resolve({ end: DEF_END, drawer: ["network"] }, []).drawer, [])
+})
+test("place moves items into and out of the drawer, never the chevron", () => {
+  const l = B.place(B.defaults(), "battery", "drawer", 0)
+  eq(l.drawer, ["battery"]); assert.ok(l.end.indexOf("battery") < 0)
+  eq(B.place(l, "battery", "end", 3).drawer, [])
+  eq(B.place(B.defaults(), "overflow", "drawer", 0), B.defaults())
+})
+const ids = sec => sec.map(x => x.id + (x.drawer ? "*" : ""))
+test("render puts the drawer next to the chevron, before it in the end section", () => {
+  const l = B.place(B.place(B.defaults(), "battery", "drawer", 0), "keepAwake", "drawer", 1)
+  const r = B.render(l, 0, null)
+  eq(ids(r.end).slice(0, 4), ["battery*", "keepAwake*", "overflow", "plugins"])
+  eq(ids(r.start), ["logo", "workspaces"])
+  const st = B.render(B.place(l, "overflow", "start", 0), 0, null)
+  eq(ids(st.start).slice(0, 3), ["overflow", "battery*", "keepAwake*"])
+})
+test("render folds shown icons past the limit, keeping the clock and power", () => {
+  const r = B.render(B.defaults(), 3, id => id !== "recording")
+  const folded = r.end.filter(x => x.drawer).map(x => x.id)
+  eq(folded, ["update", "notifications", "lockStatus", "audio", "microphone", "kbLayout", "network", "bluetooth", "battery"])
+  eq(r.end.filter(x => !x.drawer)[0].id, "overflow"); assert.ok(r.end.find(x => x.id === "clock" && !x.drawer)); assert.ok(r.end.find(x => x.id === "power" && !x.drawer))
+})
+test("without the chevron on the bar the drawer isn't drawn", () => {
+  const l = B.place(B.place(B.defaults(), "battery", "drawer", 0), "overflow", "removed", 0)
+  assert.ok(!B.render(l, 0, null).end.some(x => x.id === "battery"))
+})
+test("segments: a drawer item never shares a run with one on the bar", () => {
+  eq(B.segments([{ id: "network", drawer: true }, { id: "bluetooth", drawer: true }, { id: "battery", drawer: false }]), [
+    { kind: "status", id: "status:network,bluetooth", ids: ["network", "bluetooth"], drawer: true },
+    { kind: "status", id: "status:battery", ids: ["battery"] }])
+})
+test("adoption leaves a widget in the drawer there", () => {
+  const l = B.place(B.defaults(), "plugin:omarchy.agents", "drawer", 0, [])
+  eq(B.adoptNew(l, [W("omarchy.agents", true)], [], false, []).layout, l)
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

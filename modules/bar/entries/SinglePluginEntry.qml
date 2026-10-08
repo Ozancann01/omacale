@@ -26,6 +26,9 @@ Item {
   readonly property bool shown: !hidden && !!slot && slot.shown
   // Next to status icons or another widget, they share one pill (BarContent's
   // Section.runs draws it): no background of its own, no padding where joined.
+  // Behind a closed chevron (BarContent's Loader): the pill lives on the
+  // overlay, outside the Loader, so it has to hide itself.
+  readonly property bool folded: !!parent && parent.folded === true
   readonly property bool joinable: true
   property bool joinBefore: false
   property bool joinAfter: false
@@ -45,7 +48,7 @@ Item {
     readonly property real padEnd: singlePluginEntry.joinAfter ? 0 : Tk.padding.medium
     readonly property real slotLen: !singlePluginEntry.slot ? 0
       : singlePluginEntry.bar.vertical ? singlePluginEntry.slot.implicitHeight : singlePluginEntry.slot.implicitWidth
-    visible: slotLoader.active
+    visible: slotLoader.active && !singlePluginEntry.folded
     opacity: singlePluginEntry.shown ? 1 : 0
     x: singlePluginEntry.ox
     y: singlePluginEntry.oy
