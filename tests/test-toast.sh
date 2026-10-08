@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Shows each kind of toast on the live desktop, a couple of seconds apart, for
-# a preview: notification popups (normal, with actions, critical), Omacale's
+# a preview: notification popups (normal, with actions, critical), Omashell's
 # utilities toasts (info, success, warning, error) and Omarchy's OSD (sliders
-# and messages; with Omacale's OSD handover on, these draw as Omacale's
+# and messages; with Omashell's OSD handover on, these draw as Omashell's
 # sliders and toasts).
 #   tests/test-toast.sh            all of them
 #   tests/test-toast.sh notifs     notification popups only
@@ -14,8 +14,8 @@ gap="${GAP:-2}"
 which="${1:-all}"
 
 notifs() {
-  notify-send -a "Omacale" -i dialog-information \
-    "Hello from Omacale" "A normal notification popup."
+  notify-send -a "Omashell" -i dialog-information \
+    "Hello from Omashell" "A normal notification popup."
   sleep "$gap"
   # Waits in the background for a click, so the script carries on.
   notify-send -a "Messages" -i mail-message-new -A open=Open -A later=Later \
@@ -27,13 +27,13 @@ notifs() {
 }
 
 toasts() {
-  omarchy-shell omacale toast info "Info" "An info toast." info
+  omarchy-shell omashell toast info "Info" "An info toast." info
   sleep "$gap"
-  omarchy-shell omacale toast success "Saved" "A success toast." check_circle
+  omarchy-shell omashell toast success "Saved" "A success toast." check_circle
   sleep "$gap"
-  omarchy-shell omacale toast warning "Careful" "A warning toast." warning
+  omarchy-shell omashell toast warning "Careful" "A warning toast." warning
   sleep "$gap"
-  omarchy-shell omacale toast error "Failed" "An error toast." error
+  omarchy-shell omashell toast error "Failed" "An error toast." error
   sleep "$gap"
 }
 

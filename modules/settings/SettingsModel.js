@@ -1,6 +1,6 @@
 .pragma library
 
-// Omacale settings, laid out like Caelestia's Nexus: top-level pages grouped
+// Omashell settings, laid out like Caelestia's Nexus: top-level pages grouped
 // by category in the navigation pane, sub-pages opened from "nav" rows.
 //
 // Row types:
@@ -103,7 +103,7 @@ var pages = [
     rows: [ { type: "custom", comp: "network" } ]
   },
   {
-    // Caelestia's nexus has a "Display" stub (PageRegistry, TODO); this is Omacale's.
+    // Caelestia's nexus has a "Display" stub (PageRegistry, TODO); this is Omashell's.
     id: "display", label: "Display", icon: "monitor", category: "connectivity",
     description: "Arrangement, brightness, profiles, night light",
     // The screens and the selected one; the rest is on the sub-pages below
@@ -187,7 +187,7 @@ var pages = [
   },
   {
     id: "about", label: "About", icon: "info", category: "about",
-    description: "Omacale, system, reset",
+    description: "Omashell, system, reset",
     rows: [ { type: "custom", comp: "about" } ]
   }
 ]
@@ -241,7 +241,7 @@ var subpages = {
       { value: "48", label: "48 px", icon: "arrow_selector_tool" },
       { value: "64", label: "64 px", icon: "arrow_selector_tool" }
     ] },
-    { type: "select", key: "display.zeroScaling", label: "X11 app scaling", subtext: "Zero scaling keeps X11 apps sharp but small on scaled screens. Needs omacale.lua loaded; lines after it in looknfeel.lua win", options: [
+    { type: "select", key: "display.zeroScaling", label: "X11 app scaling", subtext: "Zero scaling keeps X11 apps sharp but small on scaled screens. Needs omashell.lua loaded; lines after it in looknfeel.lua win", options: [
       { value: "auto", label: "Leave as set", icon: "sync_alt" },
       { value: "on", label: "Zero scaling (sharp)", icon: "texture" },
       { value: "off", label: "Scaled (blurry, right size)", icon: "zoom_in" }
@@ -456,7 +456,7 @@ var subpages = {
     rows: [
       { type: "toggle", key: "session.enabled", label: "Enabled" },
       { type: "select", key: "session.menu", label: "Menu", subtext: "What the session key opens (Settings › Keybinds has the optional Super+Esc and power-key binds)", options: [
-        { value: "omacale", label: "Omacale session", icon: "power_settings_new" },
+        { value: "omashell", label: "Omashell session", icon: "power_settings_new" },
         { value: "omarchy", label: "Omarchy menu", icon: "menu" }
       ] },
       { type: "toggle", key: "session.extraButtons", label: "Lock & screensaver", subtext: "Two small buttons under the four, so the drawer offers everything Omarchy's System menu does" },
@@ -485,7 +485,7 @@ var subpages = {
   lock: {
     title: "Lock screen",
     rows: [
-      { type: "toggle", key: "lock.enabled", label: "Omacale lock screen", subtext: "Draw Omarchy's lock screen the way Caelestia does; Omarchy keeps the session lock and the password check" },
+      { type: "toggle", key: "lock.enabled", label: "Omashell lock screen", subtext: "Draw Omarchy's lock screen the way Caelestia does; Omarchy keeps the session lock and the password check" },
       { type: "custom", comp: "lock" },
       { type: "section", text: "Cards" },
       { type: "toggle", key: "lock.weather", when: { key: "lock.enabled", value: true }, label: "Weather", subtext: "Conditions, temperature and today's high and low" },
@@ -506,7 +506,7 @@ var subpages = {
   osd: {
     title: "OSD",
     rows: [
-      { type: "toggle", key: "osd.enabled", label: "Omacale OSD", subtext: "Caelestia's sliders out of the edge of the frame, and toasts for every other Omarchy OSD" },
+      { type: "toggle", key: "osd.enabled", label: "Omashell OSD", subtext: "Caelestia's sliders out of the edge of the frame, and toasts for every other Omarchy OSD" },
       { type: "custom", comp: "osd" },
       { type: "nav", icon: "monitor", label: "Screens", subtext: "Which screens show the sliders: in Display › Shell on each screen", page: "displayShell" },
       { type: "section", text: "Sliders" },
@@ -569,7 +569,7 @@ var subpages = {
       { type: "toggle", key: "utilities.toggles.wifi", label: "Wi-Fi" },
       { type: "toggle", key: "utilities.toggles.bluetooth", label: "Bluetooth" },
       { type: "toggle", key: "utilities.toggles.mic", label: "Microphone" },
-      { type: "toggle", key: "utilities.toggles.settings", label: "Settings", subtext: "Opens Omacale settings" },
+      { type: "toggle", key: "utilities.toggles.settings", label: "Settings", subtext: "Opens Omashell settings" },
       { type: "toggle", key: "utilities.toggles.gameMode", label: "Game mode" },
       { type: "toggle", key: "utilities.toggles.dnd", label: "Do not disturb" },
       { type: "toggle", key: "utilities.toggles.nightlight", label: "Night light", subtext: "Omarchy's night light; more than six toggles wrap onto a second row" }

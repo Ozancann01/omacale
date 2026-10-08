@@ -1,17 +1,17 @@
 -- ╭─────────────────────────────────────────────────────────────────────────╮
--- │  Omacale look'n'feel — Caelestia's Hyprland styling for Omarchy         │
+-- │  Omashell look'n'feel — Caelestia's Hyprland styling for Omarchy         │
 -- │  Load it from ~/.config/hypr/looknfeel.lua (before your own tweaks):    │
 -- │                                                                         │
 -- │    pcall(dofile, os.getenv("HOME")                                      │
--- │      .. "/.config/omarchy/plugins/omacale.bar/omacale.lua")             │
+-- │      .. "/.config/omarchy/plugins/omashell.bar/omashell.lua")             │
 -- │                                                                         │
--- │  pcall keeps Hyprland starting if Omacale is uninstalled; dofile (not   │
+-- │  pcall keeps Hyprland starting if Omashell is uninstalled; dofile (not   │
 -- │  require) re-reads it on every `hyprctl reload`.                        │
 -- ╰─────────────────────────────────────────────────────────────────────────╯
 --
 -- Ported from caelestia-dots (hypr/variables.lua, hypr/hyprland/animations.lua,
 -- decoration.lua, general.lua, rules.lua). Border colours stay with the
--- Omarchy theme (its hyprland.lua); the window shadow is Omacale's own frame
+-- Omarchy theme (its hyprland.lua); the window shadow is Omashell's own frame
 -- shadow, measured (see below).
 
 -- ── Variables (caelestia-dots hypr/variables.lua) ───────────────────────────
@@ -43,7 +43,7 @@ local vars = {
   windowBorderSize = 3,
 }
 
--- Windows cast the same shadow as Omacale's frame and drawers, which sit
+-- Windows cast the same shadow as Omashell's frame and drawers, which sit
 -- right beside them. That shadow is ScreenScope's MultiEffect: black
 -- (Colours.m3shadow) at 0.7, blurMax 15. It was rendered and read back pixel
 -- by pixel: 0.247 alpha at the edge, 0.129 at 2px, 0.055 at 4px, 0.016 at
@@ -62,8 +62,8 @@ local vars = {
 local shadow_colour = string.format("rgba(000000%02x)",
   math.floor(math.min(1, 0.275 / vars.windowOpacity) * 255 + 0.5))
 
--- ── Omacale's scale ─────────────────────────────────────────────────────────
--- The gaps and the window rounding follow Omacale's UI scale, so windows keep
+-- ── Omashell's scale ─────────────────────────────────────────────────────────
+-- The gaps and the window rounding follow Omashell's UI scale, so windows keep
 -- their place in the frame at any size. The values above are the 1x ones.
 --
 -- Rounding is concentric with the frame: a window sits gaps_out inside the
@@ -72,9 +72,9 @@ local shadow_colour = string.format("rgba(000000%02x)",
 -- gap would want a smaller radius still, but Hyprland's rounding is global.
 --
 -- The shell (services/HyprLook.qml) writes its spacing scale and frame
--- rounding to $XDG_STATE_HOME/omacale/hypr.lua, read here on every load, and
--- calls omacale_apply() with the same table when they change, so a change
--- lands at once and survives `hyprctl reload`. Without the file (no Omacale
+-- rounding to $XDG_STATE_HOME/omashell/hypr.lua, read here on every load, and
+-- calls omashell_apply() with the same table when they change, so a change
+-- lands at once and survives `hyprctl reload`. Without the file (no Omashell
 -- shell yet) everything stays at 1x.
 
 local base = {
@@ -85,7 +85,7 @@ local base = {
   frameRounding = vars.windowRounding + vars.windowGapsOut,
 }
 
-local function omacale_scaled(s)
+local function omashell_scaled(s)
   s = type(s) == "table" and s or {}
   local sp = tonumber(s.spacing) or 1
   if sp ~= sp or sp < 0 or sp > 4 then sp = 1 end
@@ -102,15 +102,15 @@ local function omacale_scaled(s)
   return out
 end
 
-local state_dir = (os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")) .. "/omacale"
+local state_dir = (os.getenv("XDG_STATE_HOME") or (os.getenv("HOME") .. "/.local/state")) .. "/omashell"
 local state_ok, state = pcall(dofile, state_dir .. "/hypr.lua")
-for k, v in pairs(omacale_scaled(state_ok and state or nil)) do vars[k] = v end
+for k, v in pairs(omashell_scaled(state_ok and state or nil)) do vars[k] = v end
 
 -- Settings › Display › Cursor (services/HyprLook.qml writes them to the same
 -- file): a cursor size of the user's own (0 leaves Omarchy's / the user's,
 -- and only newly started apps take a new size), and XWayland's zero scaling
 -- ("auto" leaves it). Lines in looknfeel.lua after this file's dofile win.
-local function omacale_display(s)
+local function omashell_display(s)
   s = type(s) == "table" and s or {}
   local size = tonumber(s.cursorSize) or 0
   if size >= 8 and size <= 128 then
@@ -121,12 +121,12 @@ local function omacale_display(s)
     hl.config({ xwayland = { force_zero_scaling = s.zeroScaling == "on" } })
   end
 end
-omacale_display(state_ok and state or nil)
+omashell_display(state_ok and state or nil)
 
 -- Global, so the shell can reach it through `hyprctl eval`.
-function omacale_apply(s)
-  omacale_display(s)
-  local v = omacale_scaled(s)
+function omashell_apply(s)
+  omashell_display(s)
+  local v = omashell_scaled(s)
   hl.config({
     general = { gaps_in = v.windowGapsIn, gaps_out = v.windowGapsOut, gaps_workspaces = v.workspaceGaps },
     decoration = { rounding = v.windowRounding },
@@ -185,7 +185,7 @@ hl.config({
 })
 
 -- ── Animations (animations.lua) ─────────────────────────────────────────────
--- Hyprland's windows are given the motion of Omacale's own drawers, so a
+-- Hyprland's windows are given the motion of Omashell's own drawers, so a
 -- window and a blob drawer arriving at the same moment read as one gesture.
 --
 -- The two engines turn out to agree exactly, which is what makes this a port
@@ -202,14 +202,14 @@ hl.config({
 --     overshoot (y > 1) included, which is what gives the spatial curves
 --     their settle.
 --
--- The one curve that cannot cross is `emphasized`: Omacale's is a TWO segment
+-- The one curve that cannot cross is `emphasized`: Omashell's is a TWO segment
 -- spline (12 values), and Hyprland's addBezierWithName only takes two control
 -- points. It is fitted below.
 --
 -- ── Matching the motion, not just the numbers ───────────────────────────────
 --
 -- A curve and a duration alone do NOT make two animations match, because the
--- things being moved are not the same size. Omacale's drawers are small: the
+-- things being moved are not the same size. Omashell's drawers are small: the
 -- sidebar and utilities are 430px wide and slide in by their own width plus
 -- 5px, so 435px over 500ms. A maximised window here is 1824px wide and a
 -- workspace switch crosses the whole 1920px monitor. Handing those the same
@@ -227,7 +227,7 @@ hl.config({
 --      velocity-matched at any duration -- 870 px/s would need 2100ms.
 --      `slidefade P%` / `slidefadevert P%` are the same lever for workspaces,
 --      moving monitor_size * P/100 while cross-fading.
---   2. Stretch the duration, but only as far as Omacale itself does. Its own
+--   2. Stretch the duration, but only as far as Omashell itself does. Its own
 --      tokens imply a strongly sub-linear law: fastSpatial moves ~40px in
 --      350ms and spatial moves 435px in 500ms, so duration = 500 * (d/435)^0.15.
 --      Ten times the distance buys barely half again the time. Every duration
@@ -281,7 +281,7 @@ hl.curve("fastEffects", { type = "bezier", points = { { 0.31, 0.94 }, { 0.34, 1 
 hl.curve("effects", { type = "bezier", points = { { 0.34, 0.8 }, { 0.34, 1 } } })
 hl.curve("slowEffects", { type = "bezier", points = { { 0.34, 0.88 }, { 0.34, 1 } } })
 
--- Windows grow like Settings and the overview. Omacale's floating drawers
+-- Windows grow like Settings and the overview. Omashell's floating drawers
 -- (r4, r7) open by scaling out of a small centred pill -- ScreenScope's
 -- `nw = nfw * (1 - 0.55 * nOff)`, so 45% of full width up to 100%. "popin 50%"
 -- is that same construction: applyPopin seeds size.from at GOALSIZE * 0.5 and
@@ -320,7 +320,7 @@ hl.animation({ leaf = "layersOut", enabled = true, speed = D.normal, bezier = "e
 hl.animation({ leaf = "workspaces", enabled = true, speed = D.spatial, bezier = "spatial", style = "slidefade 25%" })
 hl.animation({ leaf = "specialWorkspace", enabled = true, speed = D.normal, bezier = "spatial", style = "slidefadevert 30%" })
 
--- Fades take Omacale's own opacity curve (ScreenScope's `Anim { type:
+-- Fades take Omashell's own opacity curve (ScreenScope's `Anim { type:
 -- "effects" }`), not the geometry curves: `spatial` would drive alpha past 1.0
 -- on its overshoot, and `emphasizedDecel` has a peak rate of 13.97 -- it snaps
 -- to 70% opacity in the first few frames, which defeats the fade entirely.
@@ -357,12 +357,12 @@ hl.workspace_rule({ workspace = "w[tv1]s[false]", gaps_out = vars.singleWindowGa
 hl.workspace_rule({ workspace = "f[1]s[false]", gaps_out = vars.singleWindowGapsOut })
 
 -- Shell layers: Caelestia fades its drawers/background and never animates the
--- border exclusion zone. Omacale's drawers animate themselves inside the layer.
-hl.layer_rule({ match = { namespace = "omacale-reserve" }, no_anim = true })
+-- border exclusion zone. Omashell's drawers animate themselves inside the layer.
+hl.layer_rule({ match = { namespace = "omashell-reserve" }, no_anim = true })
 -- The unlock overlay draws the lock card above the session lock and plays its
 -- closing (modules/lock/LockUnlockFx.qml); Bar.qml sets this at runtime too.
-hl.layer_rule({ match = { namespace = "^omacale-unlock$" }, no_anim = true, above_lock = 2 })
-hl.layer_rule({ match = { namespace = "^(omacale|omarchy-background)$" }, animation = "fade" })
+hl.layer_rule({ match = { namespace = "^omashell-unlock$" }, no_anim = true, above_lock = 2 })
+hl.layer_rule({ match = { namespace = "^(omashell|omarchy-background)$" }, animation = "fade" })
 
 -- Caelestia's layersIn/layersOut slide would drop Omarchy's own overlays (OSD,
 -- notifications, polkit, the overview plugin, ...) in from the top and pull

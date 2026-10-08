@@ -25,17 +25,17 @@ ColumnLayout {
     if (OsdHandover.fellBack && !OsdHandover.installed)
       return "After an Omarchy update the OSD in the handover stopped working"
         + (OsdHandover.lastReason ? " (" + OsdHandover.lastReason + ")" : "")
-        + ", so Omarchy's own OSD was put back. Install the handover again once Omacale is updated."
+        + ", so Omarchy's own OSD was put back. Install the handover again once Omashell is updated."
     if (OsdHandover.needsRestart)
       return "The shell is still running the OSD it loaded before the handover was patched in, so Omarchy draws every OSD for now. Restart the shell to finish."
     if (OsdHandover.outdated)
-      return "The handover was updated for this Omacale, but the shell is still running the previous one until it restarts. Restart the shell to finish."
+      return "The handover was updated for this Omashell, but the shell is still running the previous one until it restarts. Restart the shell to finish."
     if (OsdHandover.refused)
-      return "Omarchy's OSD has changed shape and Omacale's patch no longer applies, so the handover keeps running the previous one. Update Omacale."
+      return "Omarchy's OSD has changed shape and Omashell's patch no longer applies, so the handover keeps running the previous one. Update Omashell."
     if (OsdHandover.lastAction === "synced")
       return "Omarchy's OSD was updated, and the handover now carries the new one."
     if (OsdHandover.unverified)
-      return "Omarchy's OSD differs from the one this Omacale was tested with. The patch still applies; report anything odd with the volume or brightness keys."
+      return "Omarchy's OSD differs from the one this Omashell was tested with. The patch still applies; report anything odd with the volume or brightness keys."
     return ""
   }
 
@@ -94,9 +94,9 @@ ColumnLayout {
                 if (OsdHandover.needsRestart)
                   return "Restart to finish"
                 if (root.drawing)
-                  return "Drawn by Omacale"
+                  return "Drawn by Omashell"
                 if (OsdHandover.installed)
-                  return "Off in Omacale"
+                  return "Off in Omashell"
                 return "Drawn by Omarchy"
               }
             }

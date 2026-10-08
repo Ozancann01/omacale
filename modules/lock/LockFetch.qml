@@ -8,7 +8,7 @@ import "../.."
 // swatches under it. Lines drop out as the card gets shorter, in Caelestia's
 // order, so a laptop keeps its battery line and a 1080p screen loses "OS".
 //
-// Caelestia's swatch row is the terminal palette; Omacale has no terminal
+// Caelestia's swatch row is the terminal palette; Omashell has no terminal
 // colours of its own, so it shows the scheme's accents instead.
 Rectangle {
   id: root
@@ -60,7 +60,7 @@ Rectangle {
 
       MText {
         Layout.fillWidth: true
-        text: "omacalefetch.sh"
+        text: "omashellfetch.sh"
         font.family: Tk.mono
         font.pointSize: root.bigFont ? Tk.body.medium : Tk.body.small
         elide: Text.ElideRight

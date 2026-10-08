@@ -1,6 +1,6 @@
 .pragma library
 
-// Every Omacale setting and its default. Config.qml builds its JSON adapter
+// Every Omashell setting and its default. Config.qml builds its JSON adapter
 // from these values, and "reset" writes them back.
 var values = {
   appearance: {
@@ -47,10 +47,10 @@ var values = {
     tabs: { dashboard: true, media: true, performance: true, weather: true },
     performance: { showCpu: true, showGpu: true, showMemory: true, showStorage: true, showNetwork: true, showBattery: true }
   },
-  launcher: { enabled: true, maxShown: 7, maxWallpapers: 9, actionPrefix: ">", menuPrefix: ":", vimKeybinds: false, dangerousActions: true, dragThreshold: 50, wallpaperPicker: "omacale", themePicker: "omacale", favouriteApps: [], hiddenApps: [] },
+  launcher: { enabled: true, maxShown: 7, maxWallpapers: 9, actionPrefix: ">", menuPrefix: ":", vimKeybinds: false, dangerousActions: true, dragThreshold: 50, wallpaperPicker: "omashell", themePicker: "omashell", favouriteApps: [], hiddenApps: [] },
   session: {
     enabled: true, gif: true, vimKeybinds: false, dragThreshold: 30, sleepAction: "hibernate",
-    menu: "omacale",        // what the session IPC opens: "omacale" (the drawer) or "omarchy" (its System menu)
+    menu: "omashell",        // what the session IPC opens: "omashell" (the drawer) or "omarchy" (its System menu)
     gifSpeed: 0.7, gifPath: "", extraButtons: true,
     // Caelestia session.icons / session.commands; "" = Omarchy's (or the built-in) default.
     icons: { logout: "", shutdown: "", hibernate: "", reboot: "" },
@@ -61,7 +61,7 @@ var values = {
   // further whenever rows x columns would not fit the screen.
   overview: { enabled: true, position: "middle", detached: false, gap: 48, rows: 2, columns: 5, scale: 0.18, hideEmptyRows: true, previews: true, showIcons: true },
   // Off until the user turns it on: switching it on hands Omarchy's lock
-  // plugin over to Omacale (scripts/lock-screen), and switching
+  // plugin over to Omashell (scripts/lock-screen), and switching
   // it off gives Omarchy's own lock view straight back.
   lock: {
     enabled: false,
@@ -70,15 +70,15 @@ var values = {
     // copy of the screen) behind the card, and no "show password" button.
     hideNotifs: true, recolourLogo: true, blur: true, useWallpaper: true, revealPassword: false,
     // Set when the watchdog gave the lock back to Omarchy after an update
-    // broke it (services/Handover.qml), with the Omacale version it broke
-    // under; reinstalling from Settings clears it, and a newer Omacale
+    // broke it (services/Handover.qml), with the Omashell version it broke
+    // under; reinstalling from Settings clears it, and a newer Omashell
     // tries once more by itself.
     autoFellBack: false, fellBackVersion: ""
   },
   utilities: {
     enabled: true, width: 430,
     // Caelestia utilities.maxToasts and utilities.toasts (utilitiesconfig.hpp),
-    // for the toasts Omacale raises (services/Toaster.qml).
+    // for the toasts Omashell raises (services/Toaster.qml).
     maxToasts: 4,
     toasts: { chargingChanged: true, gameModeChanged: true, dndChanged: true, audioOutputChanged: true, audioInputChanged: true, nowPlaying: false },
     // Caelestia's default quick toggles (utilitiesconfig.hpp), plus Omarchy's
@@ -87,7 +87,7 @@ var values = {
   },
   // Caelestia osdconfig.hpp. Volume and brightness keys only reach it once
   // Omarchy's own OSD has stepped aside for them (scripts/osd-handover);
-  // toasts (Omacale's): every other Omarchy OSD as a utilities toast;
+  // toasts (Omashell's): every other Omarchy OSD as a utilities toast;
   // autoFellBack: as lock's.
   osd: { enabled: true, hideDelay: 2000, enableBrightness: true, enableMicrophone: false, toasts: true, screen: "all", autoFellBack: false, fellBackVersion: "" },
   // Caelestia backgroundconfig.hpp (the wallpaper itself stays Omarchy's).

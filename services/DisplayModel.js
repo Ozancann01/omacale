@@ -173,7 +173,7 @@ function secondsLeft(deadline, now) {
   return isFinite(at) ? Math.max(0, Math.ceil((at - now) / 1000)) : 0
 }
 
-// A preview is Omacale's to confirm only if Omacale started it (its id is in
+// A preview is Omashell's to confirm only if Omashell started it (its id is in
 // the runtime file); hyprmoncfg's own panel confirms its own and the
 // "reclaimable" ones, so both never ask about the same preview.
 function ownsPreview(pending, id) {
@@ -331,7 +331,7 @@ function kelvinPos(k) { return Math.max(0, Math.min(1, (k - 2500) / 3500)) }
 // --------------------------------------------------- workspaces per screen
 // A profile's `workspaces` (hyprmoncfg): `enabled`, `strategy` (manual /
 // sequential / interleave), `max_workspaces`, `group_size`, and `rules`.
-// Only rules for plain workspace numbers are Omacale's to edit; the others
+// Only rules for plain workspace numbers are Omashell's to edit; the others
 // (`f[1]s[false]`, `w[tv1]s[false]`, …) are passed through untouched.
 function wsClone(w) { return JSON.parse(JSON.stringify(w || {})) }
 function wsNumbered(r) { return /^\d+$/.test(String(r.workspace)) }

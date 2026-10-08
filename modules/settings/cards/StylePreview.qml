@@ -6,7 +6,7 @@ import Quickshell.Io
 import "../../.."
 
 // Caelestia's wallpaper card, upgraded: the current wallpaper with a live
-// miniature of Omacale on top, drawn by the same blob shader as the real
+// miniature of Omashell on top, drawn by the same blob shader as the real
 // frame, so every colour/border/rounding change is previewed instantly.
 ColumnLayout {
   id: root
@@ -34,7 +34,7 @@ ColumnLayout {
     Layout.fillWidth: true
     implicitHeight: Math.round(width / root.sw * root.sh)
     readonly property real s: width / root.sw
-    // The miniature UI at Omacale's scale; the frame (border, rounding) is px, so `s`.
+    // The miniature UI at Omashell's scale; the frame (border, rounding) is px, so `s`.
     readonly property real u: s * Tk.uiScale
 
     Rectangle { id: mask; anchors.fill: parent; radius: Tk.rounding.large; visible: false; layer.enabled: true }

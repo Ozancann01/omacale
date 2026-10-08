@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Omacale weather helper — the same data source as Caelestia (Open-Meteo),
+# Omashell weather helper — the same data source as Caelestia (Open-Meteo),
 # located via Open-Meteo geocoding for a named city or ipinfo.io otherwise.
 # Every request is HTTPS and globbing is off (-g), and the coordinates must be
 # plain numbers before they go into the forecast URL.

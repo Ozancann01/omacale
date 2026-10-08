@@ -16,7 +16,7 @@ PanelWindow {
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "omacale-display-quick"
+  WlrLayershell.namespace: "omashell-display-quick"
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
   anchors { top: true; bottom: true; left: true; right: true }
 

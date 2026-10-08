@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import "SettingsModel.js" as Model
 import "../.."
 
-// Omacale settings, modelled on Caelestia's Nexus: a navigation pane with
+// Omashell settings, modelled on Caelestia's Nexus: a navigation pane with
 // search on the left, pages on the right inside a rounded inner frame that is
 // drawn by the same blob shader as the shell (so the pop-out button melts
 // into the frame). Used both as a floating drawer and as a real window.
@@ -17,7 +17,7 @@ Item {
   property string version: ""
   signal closeRequested()
   signal popOutRequested()
-  // A page wants a file (Omacale's own FileDialog, opened by ScreenScope);
+  // A page wants a file (Omashell's own FileDialog, opened by ScreenScope);
   // `pick` gets the chosen path.
   signal fileRequested(string title, var filters, var pick)
   // A page opens a picker ("wallpaper" / "theme"), which Bar.openWallpapers/openThemes route.

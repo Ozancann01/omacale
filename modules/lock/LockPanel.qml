@@ -104,7 +104,7 @@ Item {
     radius: root.closedRadius
     opacity: Colours.transparent ? Colours.trBase : 1
 
-    // Caelestia shadows the card with a MultiEffect; Omacale's Elevation
+    // Caelestia shadows the card with a MultiEffect; Omashell's Elevation
     // is the same shadow without a layer over an item that resizes.
     Elevation {
       anchors.fill: parent

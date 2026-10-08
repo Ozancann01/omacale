@@ -282,7 +282,7 @@ Item {
             MText { Layout.fillWidth: true; text: "Lyrics"; font.pointSize: Tk.title.medium; weight: Font.Medium }
             // Caelestia dashboard/media/LyricsInfo.qml: where the lyrics came
             // from, in a blob that swells out of the button. There is no
-            // timing offset to show: Omacale has none to adjust.
+            // timing offset to show: Omashell has none to adjust.
             BlobPopup {
               popupRadius: Tk.rounding.medium
               Item {

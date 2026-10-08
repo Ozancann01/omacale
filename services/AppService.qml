@@ -7,7 +7,7 @@ import ".."
 
 // The installed-application list, filtered exactly as Omarchy filters its own.
 //
-// Quickshell's DesktopEntries only exposes `noDisplay`, so Omacale listed
+// Quickshell's DesktopEntries only exposes `noDisplay`, so Omashell listed
 // entries the Omarchy menu never shows. Omarchy's AppLibrary drops three more
 // classes of entry: `Hidden=true`, an `OnlyShowIn` that does not name this
 // desktop, and a `NotShowIn` that does -- which is what hides the GNOME/KDE
@@ -41,14 +41,14 @@ QtObject {
   }
 
   // Everything Omarchy would show. Settings › Apps › All apps lists this, so
-  // an app Omacale itself hides is still reachable there to be un-hidden.
+  // an app Omashell itself hides is still reachable there to be un-hidden.
   readonly property var entries: {
     // Touch both maps so the binding re-runs when a scan lands.
     root.desktopHidden; root.configuredHidden
     return (DesktopEntries.applications.values || []).filter(e => !root.hiddenByOmarchy(e))
   }
 
-  // What the launcher and the menu list: the above, minus Omacale's own
+  // What the launcher and the menu list: the above, minus Omashell's own
   // hidden-apps setting.
   readonly property var launchable: {
     const own = (Config.o.launcher && Config.o.launcher.hiddenApps) || []

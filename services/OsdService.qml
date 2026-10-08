@@ -6,7 +6,7 @@ import ".."
 
 // What Caelestia's OSD shows (modules/osd/Wrapper.qml), for every screen's
 // drawer: the speaker and microphone from Pipewire (AudioService), and the
-// display brightness, which Omacale has no model of its own for. Caelestia
+// display brightness, which Omashell has no model of its own for. Caelestia
 // keeps one (services/Brightness.qml); here the level comes from Omarchy, in
 // the payloads its brightness keys send the OSD, passed on by the patched
 // OSD clone (scripts/osd-handover) through a file in the runtime directory,
@@ -27,7 +27,7 @@ QtObject {
   // OSD: no /tmp fallback another user could plant files in.
   readonly property string runtimeDir: Quickshell.env("XDG_RUNTIME_DIR") || ""
 
-  // Omacale's bar claims the OSD for this shell process (Bar.qml, on load and
+  // Omashell's bar claims the OSD for this shell process (Bar.qml, on load and
   // unload); the patched clone only takes payloads while the claim names its
   // own process, so a bar that failed to load, or a claim a crashed shell
   // left behind, gives every OSD back to Omarchy.
@@ -40,7 +40,7 @@ QtObject {
     claimFile.setText(JSON.stringify({ pid: on ? Quickshell.processId : 0 }))
   }
   property FileView claimFile: FileView {
-    path: root.runtimeDir === "" ? "" : root.runtimeDir + "/omacale-osd-claim.json"
+    path: root.runtimeDir === "" ? "" : root.runtimeDir + "/omashell-osd-claim.json"
     atomicWrites: true
     printErrors: false
   }
@@ -207,7 +207,7 @@ QtObject {
     else if (shown && !shown.closed) shown.close()
   }
 
-  // The patched Omarchy OSD writes each payload it leaves to Omacale here
+  // The patched Omarchy OSD writes each payload it leaves to Omashell here
   // instead of drawing it: { seq, at, kind, iconKey, message, hasProgress,
   // value, max, duration }. kind is a slider (volume, microphone,
   // brightness), toast, output (the output switcher with osd.toasts off,
@@ -218,7 +218,7 @@ QtObject {
   // by seq and time together.
   property string lastKey: ""
   property FileView forwarded: FileView {
-    path: root.runtimeDir === "" ? "" : root.runtimeDir + "/omacale-osd.json"
+    path: root.runtimeDir === "" ? "" : root.runtimeDir + "/omashell-osd.json"
     watchChanges: true
     printErrors: false
     onFileChanged: reload()

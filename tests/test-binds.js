@@ -13,21 +13,21 @@ function test(name, fn) {
 const plain = v => JSON.parse(JSON.stringify(v))
 
 test("a plain bind", () => {
-  const b = P.parseBind('o.bind("SUPER + A", "Omacale launcher", "omarchy-shell omacale launcher")')
-  assert.deepStrictEqual(plain(b), { optional: false, rebind: false, keys: "SUPER + A", desc: "Omacale launcher", cmd: "omarchy-shell omacale launcher", opts: "", note: "",
-    line: 'o.bind("SUPER + A", "Omacale launcher", "omarchy-shell omacale launcher")' })
+  const b = P.parseBind('o.bind("SUPER + A", "Omashell launcher", "omarchy-shell omashell launcher")')
+  assert.deepStrictEqual(plain(b), { optional: false, rebind: false, keys: "SUPER + A", desc: "Omashell launcher", cmd: "omarchy-shell omashell launcher", opts: "", note: "",
+    line: 'o.bind("SUPER + A", "Omashell launcher", "omarchy-shell omashell launcher")' })
 })
 test("a commented rebind with a note", () => {
-  const b = P.parseBind('-- o.rebind("SUPER + ESCAPE", "Omacale session menu", "omarchy-shell omacale session")      -- was: System menu')
+  const b = P.parseBind('-- o.rebind("SUPER + ESCAPE", "Omashell session menu", "omarchy-shell omashell session")      -- was: System menu')
   assert.strictEqual(b.optional, true); assert.strictEqual(b.rebind, true)
   assert.strictEqual(b.note, "was: System menu")
-  assert.strictEqual(b.line, 'o.rebind("SUPER + ESCAPE", "Omacale session menu", "omarchy-shell omacale session")')
+  assert.strictEqual(b.line, 'o.rebind("SUPER + ESCAPE", "Omashell session menu", "omarchy-shell omashell session")')
 })
 test("options are kept in the line", () => {
-  const b = P.parseBind('-- o.rebind("XF86PowerOff", "Omacale power menu", "omarchy-shell omacale session || omarchy-menu toggle system", { locked = true })  -- was: Power menu')
-  assert.strictEqual(b.cmd, "omarchy-shell omacale session || omarchy-menu toggle system")
+  const b = P.parseBind('-- o.rebind("XF86PowerOff", "Omashell power menu", "omarchy-shell omashell session || omarchy-menu toggle system", { locked = true })  -- was: Power menu')
+  assert.strictEqual(b.cmd, "omarchy-shell omashell session || omarchy-menu toggle system")
   assert.strictEqual(b.opts, "{ locked = true }")
-  assert.strictEqual(b.line, 'o.rebind("XF86PowerOff", "Omacale power menu", "omarchy-shell omacale session || omarchy-menu toggle system", { locked = true })')
+  assert.strictEqual(b.line, 'o.rebind("XF86PowerOff", "Omashell power menu", "omarchy-shell omashell session || omarchy-menu toggle system", { locked = true })')
   assert.strictEqual(b.note, "was: Power menu")
 })
 test("anything else is not a bind", () => {

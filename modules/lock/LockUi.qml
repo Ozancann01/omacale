@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import "../.."
 
-// Omacale's lock screen — a port of Caelestia's modules/lock/LockSurface.qml.
+// Omashell's lock screen — a port of Caelestia's modules/lock/LockSurface.qml.
 //
 // It is loaded by URL from the clone of Omarchy's lock plugin (see
 // assets/lock/LockView.qml and scripts/lock-screen), so everything below is
@@ -15,7 +15,7 @@ import "../.."
 // Caelestia grows a small rounded square holding a lock icon into a 16:9
 // card, spinning both as it goes (LockPanel), and closes it back on unlock.
 // Omarchy's service drops the session lock the moment PAM succeeds, so the
-// card on screen is a mirror of this one drawn above the lock by Omacale's
+// card on screen is a mirror of this one drawn above the lock by Omashell's
 // unlock overlay, which plays the closing (LockFx).
 Item {
   id: root
@@ -325,7 +325,7 @@ Item {
 
   // ---------------------------------------------------------- the closing
   // Omarchy's service tears this surface down in the same call that accepts
-  // the password, so the card is drawn by Omacale's own overlay above the
+  // the password, so the card is drawn by Omashell's own overlay above the
   // lock, which plays the closing (LockFx, LockUnlockFx). Only the real lock
   // arms it: the preview's view never takes input, and an overlay over the
   // preview would cover it.

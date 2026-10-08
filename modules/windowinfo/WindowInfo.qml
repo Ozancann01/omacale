@@ -5,7 +5,7 @@ import "../.."
 
 // Caelestia modules/windowinfo/WindowInfo.qml: the active window's live
 // preview beside a details card and an actions card. It is the bar popout
-// "detached" (bar/popouts/Wrapper.qml detach("winfo")): Omacale shows it as the
+// "detached" (bar/popouts/Wrapper.qml detach("winfo")): Omashell shows it as the
 // held `winfo` popout, so the popout frame supplies the padding.large inset
 // Caelestia puts on its RowLayout, and the height here leaves room for it.
 Item {

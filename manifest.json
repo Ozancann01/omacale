@@ -1,12 +1,14 @@
 {
   "schemaVersion": 1,
-  "id": "omacale.bar",
-  "name": "Omacale",
-  "version": "0.61.0",
-  "author": "AyushKr2003",
+  "id": "omashell.bar",
+  "name": "Omashell",
+  "version": "0.62.0",
+  "author": "Ozancann01 (based on Omacale by AyushKr2003)",
   "license": "GPL-3.0-only",
-  "description": "A Caelestia-style shell for Omarchy: screen frame, slim vertical bar, and slide-out drawers.",
-  "kinds": ["bar"],
+  "description": "Omashell: a Caelestia-style shell for Omarchy (screen frame, bar and slide-out drawers), built on Omacale by AyushKr2003.",
+  "kinds": [
+    "bar"
+  ],
   "entryPoints": {
     "bar": "Bar.qml"
   }

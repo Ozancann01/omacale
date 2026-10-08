@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Omacale GPU helper. Prints: type|name|usage%|tempC|sleeping
+# Omashell GPU helper. Prints: type|name|usage%|tempC|sleeping
 # Never wakes a runtime-suspended NVIDIA dGPU (common on hybrid laptops):
 # polling nvidia-smi would power it up and cost battery.
 #

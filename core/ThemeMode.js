@@ -1,7 +1,7 @@
 .pragma library
 
 // Omarchy's light/dark rule for a theme (bin/omarchy-theme-color,
-// resolve_theme_mode), so Omacale agrees with GTK, the templates and the
+// resolve_theme_mode), so Omashell agrees with GTK, the templates and the
 // shell: the `mode` key, the legacy `theme_type` key, a light.mode file
 // beside colors.toml, the background's brightness (r + g + b > 382), dark.
 // Plain JS, so tests/test-theme-mode.js runs it under node.

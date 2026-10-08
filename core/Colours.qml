@@ -187,8 +187,8 @@ QtObject {
   readonly property var om: {
     // The surfaces Omarchy draws its own panels in (the theme's shell.toml
     // [popups]: the theme's background and foreground unless the theme says
-    // otherwise, as aether's do), so Omacale's match them. Alpha stays
-    // Omacale's (Settings › Transparency).
+    // otherwise, as aether's do), so Omashell's match them. Alpha stays
+    // Omashell's (Settings › Transparency).
     const pb = Color.popups.background
     const bg = Qt.rgba(pb.r, pb.g, pb.b, 1), fg = Color.popups.text
     const raw = themeRaw

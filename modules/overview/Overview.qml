@@ -8,7 +8,7 @@ import "../.."
 // window onto another workspace to move it.
 //
 // No Caelestia original -- the feature is ported from the omarchy-overview
-// plugin (modules/overview/OverviewWidget.qml), redrawn in Omacale's tokens.
+// plugin (modules/overview/OverviewWidget.qml), redrawn in Omashell's tokens.
 // The data is Hyprland's own (Quickshell's Hyprland IPC), not the plugin's
 // `hyprctl` polling service.
 Item {
@@ -27,7 +27,7 @@ Item {
 
   // ------------------------------------------------------------ geometry
   // A tile stands for the monitor's usable area: Hyprland's reserved edges
-  // are Omacale's own frame, and no window is ever drawn under it.
+  // are Omashell's own frame, and no window is ever drawn under it.
   function res(i) { return mon && mon.reserved ? (mon.reserved[i] || 0) : 0 }
   readonly property real monScale: mon && mon.scale ? mon.scale : 1
   readonly property bool swapped: mon ? (mon.transform % 2 === 1) : false

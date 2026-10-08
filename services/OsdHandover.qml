@@ -4,7 +4,7 @@ import Quickshell
 import ".."
 
 // The OSD handover (scripts/osd-handover): Omarchy's OSD, cloned and patched
-// so that it lets Omacale draw volume and brightness the way Caelestia does
+// so that it lets Omashell draw volume and brightness the way Caelestia does
 // and keeps drawing everything else. Installed from Settings › Panels › OSD
 // (or by the installer); this keeps the clone in step with Omarchy and gives
 // the OSD back if an update breaks it.
@@ -26,16 +26,16 @@ Handover {
   readonly property bool refused: fields.patch === "refused"
   readonly property string refusedReason: fields.refused || ""
   readonly property bool unverified: installed && fields.verified === "no"
-  // The shell compiled the clone before it was patched (an older Omacale
+  // The shell compiled the clone before it was patched (an older Omashell
   // installed it, or it was your own clone) and runs Omarchy's stock OSD
   // under its name until it restarts; `running` is only probed while the
   // clone is enabled.
   readonly property bool needsRestart: installed && cloneEnabled
     && (fields.running === "stock" || lastAction === "restart-pending")
-  // An older patch is running (the clone was re-synced to this Omacale's
+  // An older patch is running (the clone was re-synced to this Omashell's
   // while the shell ran): the sliders work, the rest takes a restart.
   readonly property bool outdated: installed && cloneEnabled && fields.running === "outdated"
-  // The volume and brightness keys reach Omacale: the patched OSD is the one
+  // The volume and brightness keys reach Omashell: the patched OSD is the one
   // running, so Omarchy's draws none of them.
   readonly property bool active: installed && cloneEnabled && !needsRestart
 

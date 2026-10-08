@@ -5,7 +5,7 @@ Both handovers go through `omarchy plugin clone`, which copies a first-party
 plugin into ~/.config/omarchy/plugins/ once. Left alone, that copy freezes at
 the Omarchy it was made from, and upstream fixes (PAM, the stranded-lock
 recovery, the notification server) never reach it. So every sync rebuilds the
-clone from the installed plugin plus Omacale's small delta:
+clone from the installed plugin plus Omashell's small delta:
 
   * every stock file is copied verbatim, except the ones a handover overrides;
   * files upstream removed are removed from the clone, apart from our own;
@@ -244,7 +244,7 @@ def checked(probe, tries=None):
     nothing can be said about the plugin)."""
     if tries is None:
         # Overridable so the sandboxed tests don't sit through the waits.
-        raw = os.environ.get("OMACALE_HEALTH_TRIES", "0,3,8")
+        raw = os.environ.get("OMASHELL_HEALTH_TRIES", "0,3,8")
         tries = [float(t) for t in raw.split(",")]
     reason = ""
     start = time.monotonic()

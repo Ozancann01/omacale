@@ -6,7 +6,7 @@ import ".."
 
 // Settings › Wallpaper & style › "Colour Omarchy's menus too": with the
 // Material palette, Omarchy's own menus, popups, notifications, launcher,
-// polkit prompt and image picker are drawn in Omacale's colours too. Omacale
+// polkit prompt and image picker are drawn in Omashell's colours too. Omashell
 // keeps one marked block in Omarchy's user shell.toml (scripts/shell-toml),
 // which Omarchy watches live and lets win over the theme (Color.qml
 // mergeShell). Off, or with the Omarchy palette (the theme's own colours
@@ -24,10 +24,10 @@ QtObject {
   }
   // section.key=value lines, Omarchy's shell.toml names; alpha keys stay the
   // theme's. Laid out as Omarchy's own template is (selection as a light
-  // veil of the text colour with primary text), in Omacale's roles.
+  // veil of the text colour with primary text), in Omashell's roles.
   readonly property string spec: {
     if (!on) return ""
-    // Surfaces from the opaque palette (the m3surface* roles carry Omacale's
+    // Surfaces from the opaque palette (the m3surface* roles carry Omashell's
     // transparency); the rest are opaque roles already.
     const p = Colours.palette
     const S = hex(p.m3surfaceContainer), B = hex(p.m3surface)

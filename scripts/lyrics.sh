@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Omacale lyrics helper — synced (LRC) lyrics from lrclib.net, the same
+# Omashell lyrics helper — synced (LRC) lyrics from lrclib.net, the same
 # primary source Caelestia uses. Prints the LRC text, or nothing.
 # usage: lyrics.sh <artist> <title> [album] [duration-seconds]
 set -uo pipefail
 uri() { jq -rn --arg s "$1" '$s|@uri'; }
-ua="omacale (Omarchy shell; https://github.com/caelestia-dots/shell design)"
+ua="omashell (Omarchy shell; https://github.com/caelestia-dots/shell design)"
 artist="${1:-}"; title="${2:-}"; album="${3:-}"; dur="${4:-}"
 [[ -n $title ]] || exit 0
 

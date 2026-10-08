@@ -24,13 +24,13 @@ ColumnLayout {
     if (NotifHandover.fellBack && !NotifHandover.installed)
       return "After an Omarchy update the notification daemon in the handover stopped working"
         + (NotifHandover.lastReason ? " (" + NotifHandover.lastReason + ")" : "")
-        + ", so Omarchy's own daemon and toasts were put back. Install the handover again once Omacale is updated."
+        + ", so Omarchy's own daemon and toasts were put back. Install the handover again once Omashell is updated."
     if (NotifHandover.refused)
-      return "Omarchy's notification daemon has changed shape and Omacale's patch no longer applies, so the handover keeps running the previous daemon. Update Omacale."
+      return "Omarchy's notification daemon has changed shape and Omashell's patch no longer applies, so the handover keeps running the previous daemon. Update Omashell."
     if (NotifHandover.lastAction === "synced")
       return "Omarchy's notification daemon was updated, and the handover now carries the new one. It applies after the next shell restart."
     if (NotifHandover.unverified)
-      return "Omarchy's notification daemon differs from the one this Omacale was tested with. The patch still applies; report anything odd with the toasts."
+      return "Omarchy's notification daemon differs from the one this Omashell was tested with. The patch still applies; report anything odd with the toasts."
     return ""
   }
 
@@ -87,7 +87,7 @@ ColumnLayout {
                 if (NotifHandover.fellBack && !NotifHandover.installed)
                   return "Handed back to Omarchy"
                 if (root.drawing)
-                  return "Drawn by Omacale"
+                  return "Drawn by Omashell"
                 if (NotifHandover.installed)
                   return "Handover not running"
                 return "Drawn by Omarchy"
@@ -99,7 +99,7 @@ ColumnLayout {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: Colours.m3onSurfaceVariant
-            text: "Omarchy's notification daemon keeps the D-Bus server, do not disturb and history. The handover clones it and takes out only its toast window, so Omacale can draw the toasts; removing it gives Omarchy's own toasts back."
+            text: "Omarchy's notification daemon keeps the D-Bus server, do not disturb and history. The handover clones it and takes out only its toast window, so Omashell can draw the toasts; removing it gives Omarchy's own toasts back."
           }
         }
       }

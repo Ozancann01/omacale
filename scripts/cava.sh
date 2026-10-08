@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Omacale visualiser helper: runs cava in raw ASCII mode and streams one line
+# Omashell visualiser helper: runs cava in raw ASCII mode and streams one line
 # of ";"-separated bar values (0-1000) per frame. Exits 127 without cava.
 # usage: cava.sh [bars]
 command -v cava >/dev/null 2>&1 || exit 127
-cfg="${XDG_RUNTIME_DIR:-/tmp}/omacale-cava.conf"
+cfg="${XDG_RUNTIME_DIR:-/tmp}/omashell-cava.conf"
 cat >"$cfg" <<CONF
 [general]
 bars = ${1:-60}

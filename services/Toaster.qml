@@ -11,10 +11,10 @@ import ".."
 //
 // The toasts themselves come from all over Caelestia's services (Notifs,
 // Audio, GameMode, Players, BatteryMonitor); here they are raised in one
-// place, from Omacale's services, under Caelestia's utilities.toasts
+// place, from Omashell's services, under Caelestia's utilities.toasts
 // settings. Not ported: battery level warnings (Omarchy's battery service
-// already notifies), VPN (Omacale has none) and the keyboard layout limit
-// (Omacale adds no layouts).
+// already notifies), VPN (Omashell has none) and the keyboard layout limit
+// (Omashell adds no layouts).
 QtObject {
   id: root
 
@@ -34,7 +34,7 @@ QtObject {
     return n === "success" ? success : n === "warning" || n === "warn" ? warning : n === "error" ? error : info
   }
 
-  // `key` is Omacale's: an open toast with the same key is updated and its
+  // `key` is Omashell's: an open toast with the same key is updated and its
   // timer restarted instead of a new one stacking under it, so a key that
   // repeats (keyboard backlight, media) keeps one toast. Caelestia's
   // Toaster has no such thing; nothing it raises repeats that fast.

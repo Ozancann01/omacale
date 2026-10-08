@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Dev-only: which parts of Omarchy that Omacale depends on changed?
+"""Dev-only: which parts of Omarchy that Omashell depends on changed?
 
-Omacale reaches into a handful of Omarchy's own files (the two plugins it
+Omashell reaches into a handful of Omarchy's own files (the two plugins it
 clones, a few shell components it loads by URL, the menu engine, the bar
 contract the host calls on a custom bar). tests/upstream.lock records the
-sha256 of each as of the last Omarchy Omacale was verified against. Run this
-after `omarchy update` to see which Omacale areas to re-test before a user
+sha256 of each as of the last Omarchy Omashell was verified against. Run this
+after `omarchy update` to see which Omashell areas to re-test before a user
 hits them.
 
   scripts/upstream-check            compare; exit 1 if anything changed
@@ -30,7 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LOCK = os.path.join(HERE, "..", "tests", "upstream.lock")
 OMARCHY = os.environ.get("OMARCHY_PATH", "/usr/share/omarchy")
 
-# (path or glob under OMARCHY_PATH, the Omacale area to re-test when it moves)
+# (path or glob under OMARCHY_PATH, the Omashell area to re-test when it moves)
 DEPENDS = [
     ("shell/plugins/lock/**", "lock handover: lock-screen contract, assets/lock/LockView.qml, LockUi.qml (lock preview)"),
     ("shell/plugins/notifications/**", "notification handover: notif-popups patch (VERIFIED_AGAINST), notifs.py, NotifService toasts"),
@@ -52,7 +52,7 @@ DEPENDS = [
     ("shell/Ui/KeyboardPanel.qml", "hosted widget panels: BarWidgetSlot's gap fix, keyboard focus"),
     ("bin/omarchy-capture-screenrecording", "recording state: RecordService marker location (markerProbe)"),
     ("shell/Commons/Style.qml", "UI scale: Tk.omarchyFont / omarchySpacing (fontScale, spacingScale), Bar.pluginIconScale"),
-    ("default/omarchy/omarchy-menu.jsonc", "menu ids Omacale acts on: style.theme / style.background (Launcher.pickerRows) and the system.* entries the session drawer copies"),
+    ("default/omarchy/omarchy-menu.jsonc", "menu ids Omashell acts on: style.theme / style.background (Launcher.pickerRows) and the system.* entries the session drawer copies"),
     ("default/hypr/bindings/utilities.lua", "session: SUPER+ESCAPE / XF86PowerOff lines keybinds.lua rebinds and Settings › Keybinds restores on undo"),
 ]
 
@@ -160,7 +160,7 @@ def main(argv):
     print(f"verified against: {known.get('omarchy', '?')} ({known.get('recorded', '?')})")
     print(f"installed:        {omarchy_version()}")
     if not changes:
-        print("nothing Omacale depends on has changed")
+        print("nothing Omashell depends on has changed")
         return 0
     for area, lines in changes.items():
         print(f"\nre-test {area}")

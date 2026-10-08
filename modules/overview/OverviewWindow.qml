@@ -8,7 +8,7 @@ import "../.."
 // workspace tile it lives on, with the app icon over it.
 //
 // No Caelestia original -- the feature is ported from the omarchy-overview
-// plugin (modules/overview/OverviewWindow.qml), redrawn in Omacale's tokens.
+// plugin (modules/overview/OverviewWindow.qml), redrawn in Omashell's tokens.
 // Caelestia's own live preview (the active-window popout, PopoutContent.qml)
 // is what the ScreencopyView + rounded mask here follows.
 Item {

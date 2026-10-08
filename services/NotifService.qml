@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import ".."
 
-// Omacale Notification Service.
+// Omashell Notification Service.
 // Synchronizes with Omarchy's notification server by reading the state and history
 // JSON records in ~/.local/state/omarchy/notifications/. This ensures 100% data fidelity
 // with Omarchy's native notification daemon without DBus protocol conflicts.
@@ -63,11 +63,11 @@ QtObject {
       + '  function styled(b, a, i) { return L.styledBody(b, a, i) }\n'
       + '}'
     try {
-      const o = Qt.createQmlObject(src, root, "file://" + omarchyPath + "/shell/plugins/notifications/OmacaleBodyLogic.qml")
+      const o = Qt.createQmlObject(src, root, "file://" + omarchyPath + "/shell/plugins/notifications/OmashellBodyLogic.qml")
       if (o.ok) bodyLogic = o
-      else { o.destroy(); console.warn("Omacale: this Omarchy has no NotificationLogic.styledBody; notification bodies are plain text") }
+      else { o.destroy(); console.warn("Omashell: this Omarchy has no NotificationLogic.styledBody; notification bodies are plain text") }
     } catch (e) {
-      console.warn("Omacale: Omarchy's notification logic could not be loaded; notification bodies are plain text:", e)
+      console.warn("Omashell: Omarchy's notification logic could not be loaded; notification bodies are plain text:", e)
     }
   }
   Component.onCompleted: loadBodyLogic()
@@ -149,9 +149,9 @@ QtObject {
   // The toast stack (NotifPopups / NotifToast), read from the live popup
   // files Omarchy's daemon keeps for exactly as long as a toast is showing.
   //
-  // Omacale may only draw them once the daemon is the patched clone
+  // Omashell may only draw them once the daemon is the patched clone
   // (scripts/notif-popups), which gives up its own toast window while this
-  // bar claims the toasts. Until then popupsSupported is false and Omacale
+  // bar claims the toasts. Until then popupsSupported is false and Omashell
   // draws nothing, so the two can never both be up.
   property bool popupsSupported: false
   onPopupsSupportedChanged: if (!popupsSupported) popups = []
@@ -177,7 +177,7 @@ QtObject {
   // The daemon reads the claim about once a second.
   property Timer probeAfterClaim: Timer { interval: 1500; onTriggered: root.probePopups() }
   property FileView claimFile: FileView {
-    path: root.runtimeDir === "" ? "" : root.runtimeDir + "/omacale-notifs-claim.json"
+    path: root.runtimeDir === "" ? "" : root.runtimeDir + "/omashell-notifs-claim.json"
     atomicWrites: true
     printErrors: false
   }
@@ -413,26 +413,26 @@ QtObject {
 
   readonly property string notifsScript: Qt.resolvedUrl("../scripts/notifs.py").toString().replace("file://", "")
 
-  // Does the daemon still draw its own toasts? Omacale's only answer when it
+  // Does the daemon still draw its own toasts? Omashell's only answer when it
   // does is to stay out of the way. Asked at start and again whenever
   // NotifHandover installs, re-syncs or removes the clone.
   function probePopups() {
     if (!popupSupportProbe.running)
       popupSupportProbe.running = true
   }
-  // Omacale draws only once the daemon says its own window is off
+  // Omashell draws only once the daemon says its own window is off
   // (`popupsHidden`), so the two stacks are never up together. A patched
-  // daemon (`omacalePopups`, the patch since v2) turns its window off about a
+  // daemon (`omashellPopups`, the patch since v2) turns its window off about a
   // second after it reads the claim, so until it does it is asked again.
   property bool popupsPatched: false
   property Process popupSupportProbe: Process {
     running: true
     // Not `-q`: that swallows the answer we are asking for.
-    command: ["bash", "-c", "omarchy-shell notifications omacalePopups 2>/dev/null; echo; omarchy-shell notifications popupsHidden 2>/dev/null || true"]
+    command: ["bash", "-c", "omarchy-shell notifications omashellPopups 2>/dev/null; echo; omarchy-shell notifications popupsHidden 2>/dev/null || true"]
     stdout: StdioCollector {
       onStreamFinished: {
         const lines = String(text).split("\n").map(l => l.trim())
-        root.popupsPatched = lines.some(l => l.indexOf("omacale:headless-popups v") === 0)
+        root.popupsPatched = lines.some(l => l.indexOf("omashell:headless-popups v") === 0)
         root.popupsSupported = lines.indexOf("yes") >= 0
       }
     }
@@ -487,7 +487,7 @@ QtObject {
       const parsed = JSON.parse(t)
       if (!dndFormatWarned && (parsed.version !== 3 || typeof parsed.dnd !== "boolean")) {
         dndFormatWarned = true
-        console.warn("Omacale: notifications.json is version " + parsed.version + ", expected 3; reading dnd as " + !!parsed.dnd)
+        console.warn("Omashell: notifications.json is version " + parsed.version + ", expected 3; reading dnd as " + !!parsed.dnd)
       }
       root.dnd = !!parsed.dnd
     } catch (e) {

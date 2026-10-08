@@ -1,5 +1,5 @@
 #version 440
-// Omacale frame + drawer background. A port of Caelestia's SDF "blob" shader
+// Omashell frame + drawer background. A port of Caelestia's SDF "blob" shader
 // (plugin/src/Caelestia/Blobs/shaders/blob.frag): the screen frame (an
 // inverted rounded rect) and every open drawer are signed distance fields
 // merged with a circular smooth-min, so drawers grow out of the frame with
@@ -250,7 +250,7 @@ void main() {
         float kFrame = clamp(min(k, minThick - 1.0), 1.0, k);
         float dFrame = smaxSharpA(dOuter, -dInner, kFrame);
 
-        // Omacale: between the launcher (r1) and the clipboard preview (r8)
+        // Omashell: between the launcher (r1) and the clipboard preview (r8)
         // the two frame fillets would overlap and meet in a point; in that
         // gap the fillet is half the gap wide, so the two arcs meet flat on
         // the frame as one U.

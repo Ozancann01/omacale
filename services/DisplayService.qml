@@ -9,7 +9,7 @@ import "DisplayModel.js" as Model
 // Settings › Display and the utilities Displays card. No Caelestia original
 // (its nexus has only a TODO stub "Display"). The displays come from
 // hyprmoncfg's daemon when it manages them -- the only writer of monitor
-// config then, so Omacale never writes monitors.lua or its profiles -- and
+// config then, so Omashell never writes monitors.lua or its profiles -- and
 // from hyprctl otherwise; brightness, text size and the laptop panel are
 // Omarchy's own commands. Connected only while something shows displays
 // (hold/release), so it costs nothing otherwise.
@@ -229,11 +229,11 @@ QtObject {
   }
 
   // ----------------------------------------------------------- editing
-  // Only with hyprmoncfg: Omacale edits a copy of the live profile through
+  // Only with hyprmoncfg: Omashell edits a copy of the live profile through
   // the daemon (edit_profile is pure; it snaps and reflows, and applies
   // nothing), then hands the result to `preview`. The daemon applies it,
   // owns the 30-second revert deadline (so a crashed shell still reverts),
-  // and saves it into the profile on Keep. Omacale never writes a profile.
+  // and saves it into the profile on Keep. Omashell never writes a profile.
   property var editorDoc: null
   property var draft: null
   property string savedSig: ""
@@ -298,12 +298,12 @@ QtObject {
     onTriggered: root.seconds = Model.secondsLeft(root.deadline, Date.now())
   }
 
-  // Saved into the profile it came from (a new "Omacale" profile if the
+  // Saved into the profile it came from (a new "Omashell" profile if the
   // layout matched none) when kept; PR 8 adds naming and choosing profiles.
   function apply(settings) {
     if (!editable || !dirty || previewBusy) return
     const profile = JSON.parse(JSON.stringify(draft))
-    profile.name = sourceProfile || "Omacale"
+    profile.name = sourceProfile || "Omashell"
     startPreview({ profile: profile, timeout_seconds: 30, save_on_commit: true }, true, settings !== false)
   }
   // A saved profile, tried the same way (kept as it is, nothing saved).
@@ -362,8 +362,8 @@ QtObject {
   }
 
   // The preview's id, kept in $XDG_RUNTIME_DIR so a shell restarted during
-  // the countdown asks again (only about Omacale's own preview).
-  readonly property string previewPath: Quickshell.env("XDG_RUNTIME_DIR") + "/omacale-display-preview"
+  // the countdown asks again (only about Omashell's own preview).
+  readonly property string previewPath: Quickshell.env("XDG_RUNTIME_DIR") + "/omashell-display-preview"
   property bool reclaiming: false
   property QtObject previewFile: QtObject {
     function write(id) { Quickshell.execDetached(["sh", "-c", 'printf %s "$1" > "$2"', "w", id, root.previewPath]) }
@@ -423,7 +423,7 @@ QtObject {
 
 
   // ---------------------------------------------------------- profiles
-  // hyprmoncfg writes the profiles; Omacale asks it to.
+  // hyprmoncfg writes the profiles; Omashell asks it to.
   property bool profileBusy: false
   function profileCall(method, params) {
     if (!editable || profileBusy || previewBusy) return
@@ -448,7 +448,7 @@ QtObject {
   // they were afterwards. What they were is kept in $XDG_RUNTIME_DIR, so a
   // shell restarted meanwhile wakes everything and restores them.
   property var blanked: []
-  readonly property string blankPath: Quickshell.env("XDG_RUNTIME_DIR") + "/omacale-display-blank"
+  readonly property string blankPath: Quickshell.env("XDG_RUNTIME_DIR") + "/omashell-display-blank"
   function canBlank(name) { return Model.safeOutput(name) && Model.canBlank(monitors, blanked, name) }
   function blank(name) {
     if (!canBlank(name)) return
@@ -467,7 +467,7 @@ QtObject {
       Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.dpms({ action = "enable", monitor = "' + n + '" })'])
     if (!blanked.length) restoreWake()
   }
-  // Puts the two options back as they were (only if Omacale changed them).
+  // Puts the two options back as they were (only if Omashell changed them).
   function restoreWake() {
     Quickshell.execDetached(["sh", "-c", `
       f="$1"; [ -f "$f" ] || exit 0

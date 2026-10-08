@@ -29,7 +29,7 @@ ColumnLayout {
     Layout.fillHeight: true
     clip: true
 
-    // Caelestia's empty state, with Omacale's own wording from the sidebar.
+    // Caelestia's empty state, with Omashell's own wording from the sidebar.
     ColumnLayout {
       anchors.centerIn: parent
       width: parent.width

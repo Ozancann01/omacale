@@ -67,7 +67,7 @@ Scope {
       screen: root.screen
       color: "transparent"
       exclusionMode: ExclusionMode.Ignore
-      WlrLayershell.namespace: "omacale-clock"
+      WlrLayershell.namespace: "omashell-clock"
       WlrLayershell.layer: WlrLayer.Bottom
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
       mask: Region {}
@@ -130,7 +130,7 @@ Scope {
       screen: root.screen
       color: "transparent"
       exclusionMode: ExclusionMode.Ignore
-      WlrLayershell.namespace: "omacale-visualiser"
+      WlrLayershell.namespace: "omashell-visualiser"
       WlrLayershell.layer: WlrLayer.Bottom
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
       mask: Region {}

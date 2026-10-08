@@ -3,12 +3,12 @@ import "../.."
 
 // Caelestia modules/launcher/WallpaperList.qml: the launcher's carousel. The
 // current item sits in the middle at full size; scrolling previews it on the
-// Omarchy background. Omacale also uses it for Omarchy themes, whose preview
+// Omarchy background. Omashell also uses it for Omarchy themes, whose preview
 // images take the place of wallpapers.
 //
 // One deliberate difference: with exactly two entries Caelestia shows only the
 // current one, since a wrapping path can't hold the other on a fixed side of a
-// centred item. Omacale shows both side by side (`pair`): the path stops
+// centred item. Omashell shows both side by side (`pair`): the path stops
 // following the selection, so moving it only changes which one is current.
 PathView {
   id: root

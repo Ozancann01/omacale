@@ -7,7 +7,7 @@ import "../.."
 // temperature and the icon always; feels-like and today's high/low on a taller
 // screen; the daily forecast only on a very tall one, as Caelestia does.
 //
-// Omacale's forecast is Open-Meteo's daily one (Sys.forecast), not Caelestia's
+// Omashell's forecast is Open-Meteo's daily one (Sys.forecast), not Caelestia's
 // hourly, so the row reads as days.
 Rectangle {
   id: root

@@ -5,13 +5,13 @@ import Quickshell.Io
 import "Defaults.js" as D
 import ".."
 
-// Omacale settings, persisted to ~/.config/omacale/settings.json.
+// Omashell settings, persisted to ~/.config/omashell/settings.json.
 // The file only exists once something is changed; edits made by hand are
 // picked up live. Read values with Config.o.<section>.<key>.
 QtObject {
   id: root
 
-  readonly property string dir: Quickshell.env("HOME") + "/.config/omacale"
+  readonly property string dir: Quickshell.env("HOME") + "/.config/omashell"
   readonly property string path: dir + "/settings.json"
   readonly property var o: file.adapter
   property bool loaded: false
@@ -225,10 +225,10 @@ QtObject {
         property bool vimKeybinds: false
         property bool dangerousActions: true
         property int dragThreshold: 50
-        // What `omacale wallpapers` / `themes` (the optional picker binds) open:
-        // "omacale" (the launcher carousel) or "omarchy" (Omarchy's own menu).
-        property string wallpaperPicker: "omacale"
-        property string themePicker: "omacale"
+        // What `omashell wallpapers` / `themes` (the optional picker binds) open:
+        // "omashell" (the launcher carousel) or "omarchy" (Omarchy's own menu).
+        property string wallpaperPicker: "omashell"
+        property string themePicker: "omashell"
         property list<string> favouriteApps: []
         property list<string> hiddenApps: []
       }
@@ -238,7 +238,7 @@ QtObject {
         property bool vimKeybinds: false
         property int dragThreshold: 30
         property string sleepAction: "hibernate"
-        property string menu: "omacale"
+        property string menu: "omashell"
         property real gifSpeed: 0.7
         property string gifPath: ""
         property bool extraButtons: true

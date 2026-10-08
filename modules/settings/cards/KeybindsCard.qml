@@ -5,7 +5,7 @@ import Quickshell.Io
 import "../../.."
 import "BindParse.js" as BindParse
 
-// Omacale keybinds, read from keybinds.lua (the same file `omacale binds`
+// Omashell keybinds, read from keybinds.lua (the same file `omashell binds`
 // prints). Copy one line, copy everything, or try them for this session
 // only: runtime binds via `hyprctl eval`, gone on the next Hyprland reload,
 // and nothing is written to ~/.config/hypr.
@@ -67,7 +67,7 @@ ColumnLayout {
   }
   function tryAll() {
     const todo = binds.filter(b => !b.optional && !active[b.desc])
-    if (!todo.length) { toast = "All Omacale binds are already active"; toastTimer.restart(); return }
+    if (!todo.length) { toast = "All Omashell binds are already active"; toastTimer.restart(); return }
     Quickshell.execDetached(["hyprctl", "eval", todo.map(b => b.line).join("\n")])
     tried = tried.concat(todo.map(b => ({ keys: b.keys, restore: "" })))
     toast = todo.length + " binds active until Hyprland reloads"
@@ -158,7 +158,7 @@ ColumnLayout {
       wrapMode: Text.WordWrap
       color: Colours.m3outline
       font.pointSize: Tk.label.small
-      text: "SUPER + SHIFT + SPACE (Omarchy's “Toggle top bar”) already hides and shows the Omacale frame."
+      text: "SUPER + SHIFT + SPACE (Omarchy's “Toggle top bar”) already hides and shows the Omashell frame."
     }
   }
 
@@ -173,12 +173,12 @@ ColumnLayout {
   }
   // A picker bind is followed by its choice of picker, in the same group.
   readonly property var pickers: ({
-    "omarchy-shell omacale wallpapers": { key: "launcher.wallpaperPicker", what: "wallpaper", menu: "Background switcher" },
-    "omarchy-shell omacale themes": { key: "launcher.themePicker", what: "theme", menu: "Theme menu" },
-    "omarchy-shell omacale session || omarchy-menu toggle system": { key: "session.menu", label: "Menu",
-      subtext: "Omacale's session drawer, or Omarchy's System menu",
+    "omarchy-shell omashell wallpapers": { key: "launcher.wallpaperPicker", what: "wallpaper", menu: "Background switcher" },
+    "omarchy-shell omashell themes": { key: "launcher.themePicker", what: "theme", menu: "Theme menu" },
+    "omarchy-shell omashell session || omarchy-menu toggle system": { key: "session.menu", label: "Menu",
+      subtext: "Omashell's session drawer, or Omarchy's System menu",
       options: [
-        { value: "omacale", label: "Omacale session", icon: "power_settings_new" },
+        { value: "omashell", label: "Omashell session", icon: "power_settings_new" },
         { value: "omarchy", label: "Omarchy menu", icon: "menu" }
       ] }
   })
@@ -191,9 +191,9 @@ ColumnLayout {
       // Binds sharing a command share one picker, after the last of them.
       if (p && !(opt[i + 1] && opt[i + 1].cmd === b.cmd)) out.push({
         type: "select", key: p.key, label: p.label || "Picker",
-        subtext: p.subtext || "Omacale's " + p.what + " carousel, or Omarchy's " + p.menu,
+        subtext: p.subtext || "Omashell's " + p.what + " carousel, or Omarchy's " + p.menu,
         options: p.options || [
-          { value: "omacale", label: "Omacale launcher", icon: "view_carousel" },
+          { value: "omashell", label: "Omashell launcher", icon: "view_carousel" },
           { value: "omarchy", label: "Omarchy default", icon: "menu" }
         ]
       })

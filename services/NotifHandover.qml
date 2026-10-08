@@ -4,7 +4,7 @@ import Quickshell
 import ".."
 
 // The notification-popup handover (scripts/notif-popups): Omarchy's daemon,
-// cloned and patched headless so Omacale draws the toasts. Unlike the lock it
+// cloned and patched headless so Omashell draws the toasts. Unlike the lock it
 // has no setting that installs it -- the installer asks -- so this only keeps
 // an existing clone in step with Omarchy and hands the toasts back if an
 // update breaks it.

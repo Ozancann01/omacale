@@ -20,7 +20,7 @@ QtObject {
   property string busyId: ""        // plugin being enabled/disabled
   property string error: ""
 
-  // Clones Omacale's own handovers made (scripts/lock-screen,
+  // Clones Omashell's own handovers made (scripts/lock-screen,
   // scripts/notif-popups, scripts/osd-handover). They are torn down by those
   // scripts, never here.
   readonly property var managedClones: ["omarchy.lock", "omarchy.notifications", "omarchy.osd"]
@@ -116,13 +116,13 @@ QtObject {
   }
 
   // add / update / remove write into ~/.config/omarchy/plugins, and the shell
-  // answers any write there by reloading every plugin -- Omacale included,
+  // answers any write there by reloading every plugin -- Omashell included,
   // so the Settings window this was started from is gone before it finishes.
   // Run them detached and bring Settings back on this page afterwards.
   function runAndReturn(args) {
     const cmd = args.map(a => "'" + String(a).replace(/'/g, "'\\''") + "'").join(" ")
     Quickshell.execDetached(["bash", "-c",
-      cmd + " >/dev/null 2>&1; sleep 2; omarchy-shell omacale settingsPage plugins"])
+      cmd + " >/dev/null 2>&1; sleep 2; omarchy-shell omashell settingsPage plugins"])
   }
   function remove(id) {
     const p = byId(id)
@@ -169,7 +169,7 @@ QtObject {
         isBar: isBar,
         sourceDir: m.sourceDir || "",
         manifestPath: m.manifestPath || "",
-        // A bar is picked, not enabled; the active one can't go; Omacale's
+        // A bar is picked, not enabled; the active one can't go; Omashell's
         // own clones belong to its handover scripts.
         toggleable: !!p.canDisable && !isBar && !managed,
         removable: !p.firstParty && !p.active && !managed

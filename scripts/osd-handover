@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Hand the volume and brightness OSD over to Omacale (and give it back).
+"""Hand the volume and brightness OSD over to Omashell (and give it back).
 
 Omarchy's on-screen display (`omarchy.osd`) draws every OSD: the volume and
 brightness bars, and the messages (media, keyboard backlight, the input
 toggles, power). Caelestia draws volume and brightness differently -- vertical
 sliders that slide out of the right edge of its frame (modules/osd) -- and
-Omacale draws that too. Two OSDs for one key press would be worse than
+Omashell draws that too. Two OSDs for one key press would be worse than
 either, so the stock one has to step aside for those two, and only those.
 
 Like the notification and lock handovers this is a clone of the stock plugin
@@ -13,23 +13,23 @@ Like the notification and lock handovers this is a clone of the stock plugin
 rebuilds it from the installed Omarchy (see handover.py) with a small patch
 applied to a *fresh* copy of stock `Osd.qml`:
 
-  * `show()` asks Omacale's gate first, and every payload it takes is not
-    drawn but handed to Omacale through a file in the runtime directory.
+  * `show()` asks Omashell's gate first, and every payload it takes is not
+    drawn but handed to Omashell through a file in the runtime directory.
     Volume, display brightness and the microphone become Caelestia's OSD
-    sliders (the last two only with Omacale's slider for them on); every
+    sliders (the last two only with Omashell's slider for them on); every
     other payload -- media, keyboard backlight, mic mute, the output switcher,
     input devices, power, app launches, any `omarchy osd -m` -- becomes one
     of Caelestia's utilities toasts (Settings › Panels › OSD › Other OSD
     messages, `osd.toasts`; off, those stay Omarchy's);
   * `close()` is passed on too, for the OSDs that stay up until closed
     (duration 0, e.g. the app-launch feedback);
-  * the gate is open only while Omacale's bar is running in this shell
+  * the gate is open only while Omashell's bar is running in this shell
     process (its claim in the runtime directory names `Quickshell.processId`),
-    its OSD is on (~/.config/omacale/settings.json `osd.enabled`) and nothing
-    is fullscreen (Omacale's frame lives on the `top` layer, under a
+    its OSD is on (~/.config/omashell/settings.json `osd.enabled`) and nothing
+    is fullscreen (Omashell's frame lives on the `top` layer, under a
     fullscreen window). Otherwise this is Omarchy's OSD again, without a
     restart -- a bar that failed to load included;
-  * IPC `omacaleOsd` answers with the patch's marker, for the health check
+  * IPC `omashellOsd` answers with the patch's marker, for the health check
     (v1 and v2 answered "yes").
 
 Unlike `omarchy plugin clone`, install writes the clone already patched (see
@@ -64,9 +64,9 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, HERE)
 import handover  # noqa: E402
 
-MARKER = "omacale:osd-handover v4"
+MARKER = "omashell:osd-handover v4"
 # Any version: the clone is ours (a stale one is re-synced, never refused).
-MARKER_PREFIX = "omacale:osd-handover "
+MARKER_PREFIX = "omashell:osd-handover "
 # The stock Osd.qml this patch was last checked against. A different one that
 # the patch still applies to is synced, but `status` says `verified: no`.
 VERIFIED_AGAINST = "dc7dc42cddd9c254710f0dd3abc34ac75baf7f3dcd8776abe339f5abf2460876"
@@ -87,13 +87,13 @@ SHOW_ANCHOR = (
 )
 IPC_ANCHOR = '    function ping(): string { return "ok" }'
 CLOSE_ANCHOR = "  function close() { opened = false }\n"
-CLOSE_LINE = "  function close() { opened = false; root.omacaleSend({ kind: \"close\" }) }\n"
+CLOSE_LINE = "  function close() { opened = false; root.omashellSend({ kind: \"close\" }) }\n"
 
-GATE_BLOCK = '''  // ---------------------------------------------------------- Omacale
+GATE_BLOCK = '''  // ---------------------------------------------------------- Omashell
   //
-  // {marker} -- patched by Omacale (scripts/osd-handover).
+  // {marker} -- patched by Omashell (scripts/osd-handover).
   //
-  // Omacale draws Caelestia's OSD for the speaker volume, the microphone and
+  // Omashell draws Caelestia's OSD for the speaker volume, the microphone and
   // the display brightness -- vertical sliders that slide out of the edge of
   // its frame -- and every other OSD as one of Caelestia's toasts. What it
   // takes is passed on through a file in the runtime directory, whole: the
@@ -101,20 +101,20 @@ GATE_BLOCK = '''  // ---------------------------------------------------------- 
   // (volume up at 100%) should still show the sliders, and a toast needs the
   // message. What it doesn't take is drawn here, as stock.
   //
-  // Only while Omacale's bar is running in this very shell process (its
+  // Only while Omashell's bar is running in this very shell process (its
   // claim names this process), its OSD is on and nothing is fullscreen
-  // (Omacale's frame is on the `top` layer, under a fullscreen window), and
-  // only for what Omacale is set to draw. With any of those gone this is
+  // (Omashell's frame is on the `top` layer, under a fullscreen window), and
+  // only for what Omashell is set to draw. With any of those gone this is
   // Omarchy's OSD again, without a restart: a bar that failed to load, a
-  // claim left by a crashed shell, Omacale switched off or uninstalled.
+  // claim left by a crashed shell, Omashell switched off or uninstalled.
   //
   // Both files are read when a payload arrives rather than watched: a watch
   // on a file that doesn't exist yet (settings.json is only written once a
   // setting changes) never sees it appear. They are a few hundred bytes.
-  readonly property string omacaleRuntime: Quickshell.env("XDG_RUNTIME_DIR") || ""
-  property int omacaleSeq: 0
+  readonly property string omashellRuntime: Quickshell.env("XDG_RUNTIME_DIR") || ""
+  property int omashellSeq: 0
 
-  function omacaleRead(view) {{
+  function omashellRead(view) {{
     if (view.path === "") return null
     try {{
       view.reload()
@@ -126,7 +126,7 @@ GATE_BLOCK = '''  // ---------------------------------------------------------- 
     }}
   }}
 
-  function omacaleSetting(settings, path, fallback) {{
+  function omashellSetting(settings, path, fallback) {{
     var node = settings
     var keys = path.split(".")
     for (var i = 0; i < keys.length; i++) {{
@@ -136,7 +136,7 @@ GATE_BLOCK = '''  // ---------------------------------------------------------- 
     return typeof node === typeof fallback ? node : fallback
   }}
 
-  function omacaleFullscreen() {{
+  function omashellFullscreen() {{
     var monitor = Hyprland.focusedMonitor
     var workspace = monitor ? monitor.activeWorkspace : null
     if (!workspace || !workspace.toplevels) return false
@@ -148,41 +148,41 @@ GATE_BLOCK = '''  // ---------------------------------------------------------- 
     return false
   }}
 
-  // What Omacale draws of this payload, or "" when it stays Omarchy's:
+  // What Omashell draws of this payload, or "" when it stays Omarchy's:
   // a slider ("volume", "brightness", "microphone"), "toast", or "output"
-  // (the output switcher, left to the toast Omacale raises on the device
+  // (the output switcher, left to the toast Omashell raises on the device
   // change itself).
-  function omacaleKind(next, settings) {{
+  function omashellKind(next, settings) {{
     var key = String(next.iconKey || "")
-    var toasts = root.omacaleSetting(settings, "osd.toasts", true)
+    var toasts = root.omashellSetting(settings, "osd.toasts", true)
     if (key.indexOf("volume") === 0 && next.hasProgress) return "volume"
     if ((key === "brightness" || key === "display") && next.hasProgress
-        && root.omacaleSetting(settings, "osd.enableBrightness", true)) return "brightness"
-    if (key.indexOf("microphone") === 0 && root.omacaleSetting(settings, "osd.enableMicrophone", false)) return "microphone"
+        && root.omashellSetting(settings, "osd.enableBrightness", true)) return "brightness"
+    if (key.indexOf("microphone") === 0 && root.omashellSetting(settings, "osd.enableMicrophone", false)) return "microphone"
     if (key.indexOf("volume") === 0)
-      return toasts ? "toast" : root.omacaleSetting(settings, "utilities.toasts.audioOutputChanged", true) ? "output" : ""
+      return toasts ? "toast" : root.omashellSetting(settings, "utilities.toasts.audioOutputChanged", true) ? "output" : ""
     // An icon alone has nothing a toast could say; Omarchy draws it.
     if (toasts && (next.message !== "" || next.hasProgress)) return "toast"
     return ""
   }}
 
-  function omacaleSend(payload) {{
-    if (omacaleForward.path === "") return
-    root.omacaleSeq++
-    payload.seq = root.omacaleSeq
+  function omashellSend(payload) {{
+    if (omashellForward.path === "") return
+    root.omashellSeq++
+    payload.seq = root.omashellSeq
     payload.at = Date.now()
-    omacaleForward.setText(JSON.stringify(payload))
+    omashellForward.setText(JSON.stringify(payload))
   }}
 
-  // True when Omacale draws this payload instead.
-  function omacaleTakes(next) {{
-    var claim = root.omacaleRead(omacaleClaim)
+  // True when Omashell draws this payload instead.
+  function omashellTakes(next) {{
+    var claim = root.omashellRead(omashellClaim)
     if (!claim || claim.pid !== Quickshell.processId) return false
-    var settings = root.omacaleRead(omacaleSettingsFile) || ({{}})
-    if (!root.omacaleSetting(settings, "osd.enabled", true) || root.omacaleFullscreen()) return false
-    var kind = root.omacaleKind(next, settings)
+    var settings = root.omashellRead(omashellSettingsFile) || ({{}})
+    if (!root.omashellSetting(settings, "osd.enabled", true) || root.omashellFullscreen()) return false
+    var kind = root.omashellKind(next, settings)
     if (kind === "") return false
-    root.omacaleSend({{
+    root.omashellSend({{
       kind: kind,
       iconKey: String(next.iconKey || ""),
       message: String(next.message || ""),
@@ -195,33 +195,33 @@ GATE_BLOCK = '''  // ---------------------------------------------------------- 
   }}
 
   FileView {{
-    id: omacaleForward
-    path: root.omacaleRuntime === "" ? "" : root.omacaleRuntime + "/omacale-osd.json"
+    id: omashellForward
+    path: root.omashellRuntime === "" ? "" : root.omashellRuntime + "/omashell-osd.json"
     atomicWrites: true
     printErrors: false
   }}
 
-  // Written by Omacale's bar as it loads ({{ pid }}), released as it unloads.
+  // Written by Omashell's bar as it loads ({{ pid }}), released as it unloads.
   FileView {{
-    id: omacaleClaim
-    path: root.omacaleRuntime === "" ? "" : root.omacaleRuntime + "/omacale-osd-claim.json"
+    id: omashellClaim
+    path: root.omashellRuntime === "" ? "" : root.omashellRuntime + "/omashell-osd-claim.json"
     blockLoading: true
     printErrors: false
   }}
 
   FileView {{
-    id: omacaleSettingsFile
-    path: Quickshell.env("HOME") + "/.config/omacale/settings.json"
+    id: omashellSettingsFile
+    path: Quickshell.env("HOME") + "/.config/omashell/settings.json"
     blockLoading: true
     printErrors: false
   }}
 
 '''
 
-TAKE_LINE = "    if (root.omacaleTakes(next)) return\n"
+TAKE_LINE = "    if (root.omashellTakes(next)) return\n"
 
 IPC_BLOCK = '''    // The health check's sign that this is the patched OSD, and which patch.
-    function omacaleOsd(): string {{ return "{marker}" }}
+    function omashellOsd(): string {{ return "{marker}" }}
 {anchor}'''
 
 
@@ -308,7 +308,7 @@ def desired_tree():
         raise Refused("%s/%s is missing; is this Omarchy?" % (STOCK_DIR, ENTRY))
     check_model(tree)
     tree[ENTRY] = patch_text(stock.decode("utf-8")).encode("utf-8")
-    tree[ENTRY + ".omacale-orig"] = stock
+    tree[ENTRY + ".omashell-orig"] = stock
     return tree
 
 
@@ -335,8 +335,8 @@ def adoptable(directory):
 
 
 EDITED = (
-    "%s is a clone of the OSD with your own edits; Omacale won't overwrite it.\n"
-    "Remove it first (omarchy plugin remove %s) to hand the OSD to Omacale."
+    "%s is a clone of the OSD with your own edits; Omashell won't overwrite it.\n"
+    "Remove it first (omarchy plugin remove %s) to hand the OSD to Omashell."
 )
 
 
@@ -360,11 +360,11 @@ def patched_answer(answer):
 def running():
     """Which OSD the shell is running: "patched" (this patch), "outdated" (an
     older one: the shell keeps the first compilation of the clone until it
-    restarts), "stock" (it answers without `omacaleOsd`), "down", or
+    restarts), "stock" (it answers without `omashellOsd`), "down", or
     "unknown" (the shell is not answering)."""
     if not handover.shell_up():
         return "unknown"
-    answer = handover.ipc("osd", "omacaleOsd")
+    answer = handover.ipc("osd", "omashellOsd")
     if answer == MARKER:
         return "patched"
     if patched_answer(answer):
@@ -389,7 +389,7 @@ def cmd_status(offline=False):
             stale = plan(directory).stale_files()
             print("patch:     applies")
         except Refused as e:
-            orig = handover.read_bytes(entry + ".omacale-orig")
+            orig = handover.read_bytes(entry + ".omashell-orig")
             stale = [ENTRY] if orig != stock else []
             print("patch:     refused")
             print("refused:   %s" % e)
@@ -399,7 +399,7 @@ def cmd_status(offline=False):
         print("verified:  %s" % ("yes" if handover.sha(stock) == VERIFIED_AGAINST else "no"))
         if enabled:
             # "stock" here means the shell compiled the clone before it was
-            # patched (an older Omacale, or a clone of your own that was
+            # patched (an older Omashell, or a clone of your own that was
             # patched later) and keeps that until it restarts.
             print("running:   %s" % running())
     print("expects:   %s" % MARKER)
@@ -409,8 +409,8 @@ def cmd_status(offline=False):
 def probe():
     if handover.ipc("osd", "ping") != "ok":
         return False, "the OSD does not answer (`omarchy-shell osd ping`)"
-    if not patched_answer(handover.ipc("osd", "omacaleOsd")):
-        return False, "the OSD is not the patched clone (no `omacaleOsd`)"
+    if not patched_answer(handover.ipc("osd", "omashellOsd")):
+        return False, "the OSD is not the patched clone (no `omashellOsd`)"
     return True, ""
 
 
@@ -552,7 +552,7 @@ def cmd_remove():
     entry = os.path.join(directory, ENTRY)
     if os.path.isfile(entry) and not patched_on_disk(directory):
         fail(
-            "%s exists but was not patched by Omacale -- it is your own clone.\n"
+            "%s exists but was not patched by Omashell -- it is your own clone.\n"
             "Remove it yourself with: omarchy plugin remove %s" % (directory, clone_id())
         )
 

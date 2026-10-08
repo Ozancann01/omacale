@@ -5,7 +5,7 @@ import ".."
 // indicator, a shape that morphs into the next every 650ms while it turns.
 // Each morph springs (Caelestia: stiffness 180, damping 0.6, which settles
 // in ~350ms): the shape swings a further 60 degrees and swells by up to 14%
-// on the way. Omacale's LoadingIndicator is Caelestia's CircularIndicator.
+// on the way. Omashell's LoadingIndicator is Caelestia's CircularIndicator.
 Item {
   id: root
   property real implicitSize: Tk.px(38)

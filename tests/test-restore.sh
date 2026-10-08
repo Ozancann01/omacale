@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sandboxed proof that install → uninstall restores the exact prior state.
-# Uses a throwaway HOME and OMACALE_OFFLINE=1, so it never touches the real
+# Uses a throwaway HOME and OMASHELL_OFFLINE=1, so it never touches the real
 # desktop, shell, or config.
 set -Eeuo pipefail
 # The scripts under test live in the plugin; bytecode written beside them
@@ -8,12 +8,12 @@ set -Eeuo pipefail
 export PYTHONDONTWRITEBYTECODE=1
 
 here="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-omacale="$here/../scripts/omacale"
-src_shell_json="${OMACALE_TEST_SHELL_JSON:-$HOME/.config/omarchy/shell.json}"
+omashell="$here/../scripts/omashell"
+src_shell_json="${OMASHELL_TEST_SHELL_JSON:-$HOME/.config/omarchy/shell.json}"
 [[ -f $src_shell_json ]] || src_shell_json="${OMARCHY_PATH:-/usr/share/omarchy}/config/omarchy/shell.json"
-# A realistic pre-install shell.json: the user's own, minus any Omacale state.
+# A realistic pre-install shell.json: the user's own, minus any Omashell state.
 real_shell_json="$(mktemp)"
-jq 'if (.bar.id // "") | startswith("omacale.") then del(.bar.id) else . end' "$src_shell_json" > "$real_shell_json"
+jq 'if (.bar.id // "") | startswith("omashell.") then del(.bar.id) else . end' "$src_shell_json" > "$real_shell_json"
 pass=0 failn=0
 
 homes=()
@@ -23,7 +23,7 @@ new_home() {
   H="$(mktemp -d)"; homes+=("$H")
   mkdir -p "$H/.config/omarchy/plugins" "$H/.local/state"
 }
-run() { env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMACALE_OFFLINE=1 "$omacale" "$@" --yes >/dev/null; }
+run() { env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMASHELL_OFFLINE=1 "$omashell" "$@" --yes >/dev/null; }
 check() { # check "name" cond-cmd...
   local name="$1"; shift
   if "$@"; then printf '  \e[32mPASS\e[0m %s\n' "$name"; pass=$((pass+1)); else printf '  \e[31mFAIL\e[0m %s\n' "$name"; failn=$((failn+1)); fi
@@ -35,13 +35,13 @@ echo "A. shell.json exists, no bar.id set — byte-exact restore"
 new_home; cp "$real_shell_json" "$(SJ)"
 before="$(snapshot_tree)"
 run install
-check "bar.id switched"            test "$(jq -r .bar.id "$(SJ)")" = omacale.bar
-check "plugin dir installed"       test -f "$H/.config/omarchy/plugins/omacale.bar/manifest.json"
-check "state recorded"             test -f "$H/.local/state/omacale/state.json"
+check "bar.id switched"            test "$(jq -r .bar.id "$(SJ)")" = omashell.bar
+check "plugin dir installed"       test -f "$H/.config/omarchy/plugins/omashell.bar/manifest.json"
+check "state recorded"             test -f "$H/.local/state/omashell/state.json"
 run uninstall
 check "shell.json byte-identical"  cmp -s "$real_shell_json" "$(SJ)"
-check "plugin dir gone"            test ! -e "$H/.config/omarchy/plugins/omacale.bar"
-check "state dir gone"             test ! -e "$H/.local/state/omacale"
+check "plugin dir gone"            test ! -e "$H/.config/omarchy/plugins/omashell.bar"
+check "state dir gone"             test ! -e "$H/.local/state/omashell"
 check "whole tree identical"       test "$before" = "$(snapshot_tree)"
 
 echo "B. user edits shell.json after install — their edit survives"
@@ -51,7 +51,7 @@ jq '.idle.lock = 777' "$(SJ)" > "$(SJ).t" && mv "$(SJ).t" "$(SJ)"
 run uninstall
 check "idle.lock edit kept"        test "$(jq -r .idle.lock "$(SJ)")" = 777
 check "bar.id reverted"            test "$(jq -r '.bar.id // "unset"' "$(SJ)")" = unset
-check "no omacale entries left"    test "$(grep -c omacale "$(SJ)" || true)" = 0
+check "no omashell entries left"    test "$(grep -c omashell "$(SJ)" || true)" = 0
 
 echo "C. no shell.json before install — absent again after"
 new_home; rm -f "$(SJ)"
@@ -63,30 +63,30 @@ check "shell.json absent again"    test ! -e "$(SJ)"
 echo "D. a different bar was active — it is re-selected"
 new_home; jq '.bar.id = "local.neon-bar"' "$real_shell_json" > "$(SJ)"; keep="$(cat "$(SJ)")"
 run install
-check "switched to omacale"        test "$(jq -r .bar.id "$(SJ)")" = omacale.bar
+check "switched to omashell"        test "$(jq -r .bar.id "$(SJ)")" = omashell.bar
 run uninstall
 check "previous bar restored"      test "$(jq -r .bar.id "$(SJ)")" = local.neon-bar
 check "file byte-identical"        test "$keep" = "$(cat "$(SJ)")"
 
 echo "E. a pre-existing plugin directory is set aside and put back"
 new_home; cp "$real_shell_json" "$(SJ)"
-mkdir -p "$H/.config/omarchy/plugins/omacale.bar"; echo '{"id":"omacale.bar","mine":true}' > "$H/.config/omarchy/plugins/omacale.bar/manifest.json"
+mkdir -p "$H/.config/omarchy/plugins/omashell.bar"; echo '{"id":"omashell.bar","mine":true}' > "$H/.config/omarchy/plugins/omashell.bar/manifest.json"
 run install
-check "ours replaced it"           test "$(jq -r .version "$H/.config/omarchy/plugins/omacale.bar/manifest.json")" = "$(jq -r .version "$here/../manifest.json")"
+check "ours replaced it"           test "$(jq -r .version "$H/.config/omarchy/plugins/omashell.bar/manifest.json")" = "$(jq -r .version "$here/../manifest.json")"
 run uninstall
-check "theirs is back"             test "$(jq -r .mine "$H/.config/omarchy/plugins/omacale.bar/manifest.json")" = true
+check "theirs is back"             test "$(jq -r .mine "$H/.config/omarchy/plugins/omashell.bar/manifest.json")" = true
 
 echo "F. dry-run changes nothing"
 new_home; cp "$real_shell_json" "$(SJ)"; before="$(snapshot_tree)"
-env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMACALE_OFFLINE=1 "$omacale" install --dry-run >/dev/null
+env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMASHELL_OFFLINE=1 "$omashell" install --dry-run >/dev/null
 check "tree unchanged"             test "$before" = "$(snapshot_tree)"
 
 echo "G. --dev symlink install and uninstall"
 new_home; cp "$real_shell_json" "$(SJ)"; before="$(snapshot_tree)"
 run install --dev
-check "plugin is a symlink"        test -L "$H/.config/omarchy/plugins/omacale.bar"
+check "plugin is a symlink"        test -L "$H/.config/omarchy/plugins/omashell.bar"
 run uninstall
-check "symlink removed, source intact" bash -c "test ! -e '$H/.config/omarchy/plugins/omacale.bar' && test -f '$here/../manifest.json'"
+check "symlink removed, source intact" bash -c "test ! -e '$H/.config/omarchy/plugins/omashell.bar' && test -f '$here/../manifest.json'"
 check "tree identical"             test "$before" = "$(snapshot_tree)"
 
 echo "H. uninstall with nothing installed is a no-op"
@@ -97,45 +97,45 @@ check "tree unchanged"             test "$before" = "$(snapshot_tree)"
 echo "I. failed install rolls back"
 new_home; cp "$real_shell_json" "$(SJ)"; before="$(snapshot_tree)"
 chmod 500 "$H/.config/omarchy/plugins"    # plugin copy will fail
-env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMACALE_OFFLINE=1 "$omacale" install --yes >/dev/null 2>&1 || true
+env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMASHELL_OFFLINE=1 "$omashell" install --yes >/dev/null 2>&1 || true
 chmod 700 "$H/.config/omarchy/plugins"
 check "shell.json untouched"       cmp -s "$real_shell_json" "$(SJ)"
-check "no plugin left behind"      test ! -e "$H/.config/omarchy/plugins/omacale.bar"
-check "no state left behind"       test ! -e "$H/.local/state/omacale"
+check "no plugin left behind"      test ! -e "$H/.config/omarchy/plugins/omashell.bar"
+check "no state left behind"       test ! -e "$H/.local/state/omashell"
 
 echo "J. settings created while installed are removed on uninstall"
 new_home; cp "$real_shell_json" "$(SJ)"; before="$(snapshot_tree)"
 run install
-mkdir -p "$H/.config/omacale"; echo '{"bar":{"persistent":false}}' > "$H/.config/omacale/settings.json"
+mkdir -p "$H/.config/omashell"; echo '{"bar":{"persistent":false}}' > "$H/.config/omashell/settings.json"
 run uninstall
-check "settings dir removed"       test ! -e "$H/.config/omacale"
+check "settings dir removed"       test ! -e "$H/.config/omashell"
 check "tree identical"             test "$before" = "$(snapshot_tree)"
 
 echo "K. settings that existed before install are restored exactly"
 new_home; cp "$real_shell_json" "$(SJ)"
-mkdir -p "$H/.config/omacale"; echo '{"appearance":{"variant":"vibrant"}}' > "$H/.config/omacale/settings.json"
+mkdir -p "$H/.config/omashell"; echo '{"appearance":{"variant":"vibrant"}}' > "$H/.config/omashell/settings.json"
 before="$(snapshot_tree)"
 run install
-echo '{"appearance":{"variant":"monochrome"}}' > "$H/.config/omacale/settings.json"
+echo '{"appearance":{"variant":"monochrome"}}' > "$H/.config/omashell/settings.json"
 run uninstall
-check "pre-install settings back"  test "$(jq -r .appearance.variant "$H/.config/omacale/settings.json")" = vibrant
+check "pre-install settings back"  test "$(jq -r .appearance.variant "$H/.config/omashell/settings.json")" = vibrant
 check "tree identical"             test "$before" = "$(snapshot_tree)"
 
 echo "L. --keep-settings keeps the user's settings"
 new_home; cp "$real_shell_json" "$(SJ)"
 run install
-mkdir -p "$H/.config/omacale"; echo '{"x":1}' > "$H/.config/omacale/settings.json"
-env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMACALE_OFFLINE=1 "$omacale" uninstall --keep-settings --yes >/dev/null
-check "settings kept"              test -f "$H/.config/omacale/settings.json"
-check "plugin still removed"       test ! -e "$H/.config/omarchy/plugins/omacale.bar"
+mkdir -p "$H/.config/omashell"; echo '{"x":1}' > "$H/.config/omashell/settings.json"
+env -u XDG_CONFIG_HOME -u XDG_STATE_HOME HOME="$H" OMASHELL_OFFLINE=1 "$omashell" uninstall --keep-settings --yes >/dev/null
+check "settings kept"              test -f "$H/.config/omashell/settings.json"
+check "plugin still removed"       test ! -e "$H/.config/omarchy/plugins/omashell.bar"
 
 echo "M. keybinds file is valid Omarchy Lua"
-check "has o.bind lines"           bash -c "grep -cE '^o\\.bind\\(\"[A-Z +]+\", \"Omacale [^\"]+\", \"omarchy-shell omacale [a-zA-Z ]+\"\\)$' '$here/../keybinds.lua' | grep -qx 8"
+check "has o.bind lines"           bash -c "grep -cE '^o\\.bind\\(\"[A-Z +]+\", \"Omashell [^\"]+\", \"omarchy-shell omashell [a-zA-Z ]+\"\\)$' '$here/../keybinds.lua' | grep -qx 8"
 
 echo "N. an old switcher menu block is removed on uninstall"
 EXT() { echo "$H/.config/omarchy/extensions/omarchy-menu.jsonc"; }
-# What Omacale <= 0.6 wrote to the menu extension (it no longer writes it).
-old_block() { printf '  // >>> omacale switcher%s — managed by Omacale\n  "style.theme": {"action":"true"},\n  // <<< omacale switcher\n' "$1"; }
+# What Omashell <= 0.6 wrote to the menu extension (it no longer writes it).
+old_block() { printf '  // >>> omashell switcher%s — managed by Omashell\n  "style.theme": {"action":"true"},\n  // <<< omashell switcher\n' "$1"; }
 new_home; cp "$real_shell_json" "$(SJ)"
 mkdir -p "$(dirname "$(EXT)")"; printf '{\n  // mine\n  "about": {"label":"Me"},\n}\n' > "$(EXT)"
 before="$(snapshot_tree)"
@@ -151,20 +151,20 @@ mkdir -p "$(dirname "$(EXT)")"; { echo '{'; old_block " (created, dir)"; echo '}
 run uninstall
 check "created file removed again" test "$before" = "$(snapshot_tree)"
 
-echo "V. Omacale's colour block in Omarchy's shell.toml goes on uninstall"
+echo "V. Omashell's colour block in Omarchy's shell.toml goes on uninstall"
 ST() { echo "$H/.config/omarchy/shell.toml"; }
 new_home; cp "$real_shell_json" "$(SJ)"
 printf '[font]\nbase-size = 10\n' > "$(ST)"
 before="$(snapshot_tree)"
 run install
 env HOME="$H" python3 "$here/../scripts/shell-toml" set $'popups.background=#112233\nmenu.text=#eeeeee'
-check "block written"                 grep -q 'omacale:surfaces' "$(ST)"
+check "block written"                 grep -q 'omashell:surfaces' "$(ST)"
 run uninstall
 check "shell.toml restored exactly"   test "$before" = "$(snapshot_tree)"
 check "scripts/shell-toml unit tests" bash -c "bash '$here/test-shell-toml.sh' >/dev/null"
 
 echo "O. look'n'feel file is valid Lua"
-check "omacale.lua parses"         luac -p "$here/../omacale.lua"
+check "omashell.lua parses"         luac -p "$here/../omashell.lua"
 
 echo "P. the notification daemon patch"
 # scripts/notif-popups edits a clone of Omarchy's notification plugin. It must
@@ -177,17 +177,17 @@ SourceFileLoader('np', '$here/../scripts/notif-popups').load_module().patch_serv
 if [[ -f $stock ]]; then
   work="$(mktemp -d)"; cp "$stock" "$work/Service.qml"
   patch_copy "$work/Service.qml" >/dev/null 2>&1
-  # The toast window stays, gated: no screens while Omacale's claim names
+  # The toast window stays, gated: no screens while Omashell's claim names
   # this process, Omarchy's own toasts again the moment it doesn't.
   check "popup window kept"        grep -q 'NotificationCard {' "$work/Service.qml"
-  check "popup window gated"       grep -q 'model: service.omacaleDraws ? \[\] : Quickshell.screens' "$work/Service.qml"
-  check "  by Omacale's claim"     grep -q 'omacale-notifs-claim.json' "$work/Service.qml"
+  check "popup window gated"       grep -q 'model: service.omashellDraws ? \[\] : Quickshell.screens' "$work/Service.qml"
+  check "  by Omashell's claim"     grep -q 'omashell-notifs-claim.json' "$work/Service.qml"
   check "  for this process only"  grep -q 'claim.pid === Quickshell.processId' "$work/Service.qml"
   check "lifetime timer kept"      grep -q 'sweepPopupLifetimes' "$work/Service.qml"
-  check "  only while gated"       grep -q 'running: service.omacaleDraws && popupModel.count' "$work/Service.qml"
+  check "  only while gated"       grep -q 'running: service.omashellDraws && popupModel.count' "$work/Service.qml"
   check "IPC added"                grep -q 'function invokeKey' "$work/Service.qml"
   check "daemon left intact"       grep -q 'NotificationServer' "$work/Service.qml"
-  check "original backed up"       test -f "$work/Service.qml.omacale-orig"
+  check "original backed up"       test -f "$work/Service.qml.omashell-orig"
   check "braces still balanced"    bash -c "test \$(tr -cd '{' < '$work/Service.qml' | wc -c) -eq \$(tr -cd '}' < '$work/Service.qml' | wc -c)"
   cp "$work/Service.qml" "$work/again.qml"
   patch_copy "$work/again.qml" >/dev/null 2>&1
@@ -238,10 +238,10 @@ PY
   check "wrapper loads on a v4.0.x view"       grep -qx 'onold=' <<<"$lock_out"
   check "a wrapper setting a missing property is caught" grep -qx 'onbad=brandNew' <<<"$lock_out"
   check "wrapper keeps Omarchy's view as the fallback" grep -q 'StockLockView' "$wrapper"
-  # A relative directory import of omacale.bar would make a removed or broken
-  # Omacale a lock screen that cannot load; the wrapper loads it by URL.
-  check "wrapper imports nothing from Omacale" bash -c "! grep -q '^import \"' '$wrapper'"
-  check "wrapper carries its version marker"   grep -q 'omacale:lock-view v' "$wrapper"
+  # A relative directory import of omashell.bar would make a removed or broken
+  # Omashell a lock screen that cannot load; the wrapper loads it by URL.
+  check "wrapper imports nothing from Omashell" bash -c "! grep -q '^import \"' '$wrapper'"
+  check "wrapper carries its version marker"   grep -q 'omashell:lock-view v' "$wrapper"
 else
   echo "  - skipped (no Omarchy lock plugin on this machine)"
 fi
@@ -278,7 +278,7 @@ SH
   printf '#!/bin/bash\nexit 0\n' > "$H/bin/omarchy-plugin-enable"
   printf '#!/bin/bash\ntouch "$HOME/restarted"\n' > "$H/bin/omarchy-restart-shell"
   chmod +x "$H/bin/"*
-  hv() { env HOME="$H" USER=tester OMARCHY_PATH="$fake" PATH="$H/bin:$PATH" OMACALE_HEALTH_TRIES=0 OMACALE_HEAL_DELAY=0 "$@"; }
+  hv() { env HOME="$H" USER=tester OMARCHY_PATH="$fake" PATH="$H/bin:$PATH" OMASHELL_HEALTH_TRIES=0 OMASHELL_HEAL_DELAY=0 "$@"; }
   # Clones as `omarchy plugin clone` leaves them: stock files + an identity.
   nclone="$plugins/tester.notifications"; lclone="$plugins/tester.lock"
   cp -r "$fake/shell/plugins/notifications" "$nclone"
@@ -306,10 +306,10 @@ print(','.join(m.stale_files('$lclone')))"; }
   check "and is not the verified one"            grep -qx 'verified:  no' <<<"$(nstatus)"
   hv python3 "$scripts/notif-popups" sync >/dev/null
   check "sync rebuilds from the newer stock"     grep -q 'function newer' "$nclone/Service.qml"
-  check "the patch is re-applied"                grep -q 'omacale:headless-popups' "$nclone/Service.qml"
+  check "the patch is re-applied"                grep -q 'omashell:headless-popups' "$nclone/Service.qml"
   check "the patch is applied once"              test "$(grep -c 'function popupsHidden' "$nclone/Service.qml")" = 1
   check "other files follow stock"               cmp -s "$fake/shell/plugins/notifications/NotificationLogic.js" "$nclone/NotificationLogic.js"
-  check "the pristine copy is the new stock"     cmp -s "$fake/shell/plugins/notifications/Service.qml" "$nclone/Service.qml.omacale-orig"
+  check "the pristine copy is the new stock"     cmp -s "$fake/shell/plugins/notifications/Service.qml" "$nclone/Service.qml.omashell-orig"
   check "clean after the sync"                   grep -qx 'stale:     no' <<<"$(nstatus)"
 
   # Stock reshaped so the patch no longer applies: the old clone stays.
@@ -338,7 +338,7 @@ print(','.join(m.stale_files('$lclone')))"; }
   echo "// my own edit" >> "$nclone/NotificationLogic.js"
   check "an edited clone is not ours to sync"    sync_refused
   check "  (the edit is kept)"                   grep -q 'my own edit' "$nclone/NotificationLogic.js"
-  check "  (and it is not patched)"              bash -c "! grep -q 'omacale:headless-popups' '$nclone/Service.qml'"
+  check "  (and it is not patched)"              bash -c "! grep -q 'omashell:headless-popups' '$nclone/Service.qml'"
   rm -rf "$nclone"
 
   # The lock: a new file upstream reaches the clone, a removed one leaves it,
@@ -354,7 +354,7 @@ print(','.join(m.stale_files('$lclone')))"; }
   check "lock watchdog syncs"                    grep -qx 'action:    synced' <<<"$wd"
   check "a new file upstream reaches the clone"  test -f "$lclone/NewThing.qml"
   check "a file removed upstream leaves it"      test ! -e "$lclone/poster.sh"
-  check "our wrapper is kept"                    grep -q 'omacale:lock-view' "$lclone/LockView.qml"
+  check "our wrapper is kept"                    grep -q 'omashell:lock-view' "$lclone/LockView.qml"
   check "stock view kept as StockLockView"       cmp -s "$fake/shell/plugins/lock/LockView.qml" "$lclone/StockLockView.qml"
   check "capabilities follow stock"              jq -e '.omarchy.capabilities | index("newcap")' "$lclone/manifest.json" >/dev/null
   check "identity stays the clone's"             jq -e '.id == "tester.lock" and .omarchy.clonedFrom == "omarchy.lock"' "$lclone/manifest.json" >/dev/null
@@ -362,7 +362,7 @@ print(','.join(m.stale_files('$lclone')))"; }
   # and only a shell restart loads the repaired one (--heal).
   healed() { for _ in 1 2 3 4 5 6 7 8 9 10; do [[ -f $H/restarted ]] && return 0; sleep 0.1; done; return 1; }
   unhealed() { sleep 0.5; test ! -f "$H/restarted"; }
-  old_wrapper() { sed -i 's/omacale:lock-view v[0-9]*/omacale:lock-view v1/' "$lclone/LockView.qml"; rm -f "$H/restarted"; }
+  old_wrapper() { sed -i 's/omashell:lock-view v[0-9]*/omashell:lock-view v1/' "$lclone/LockView.qml"; rm -f "$H/restarted"; }
   touch "$H/lock-dead"; old_wrapper
   hv python3 "$scripts/lock-screen" install >/dev/null 2>&1
   check "a repair without --heal doesn't restart" unhealed
@@ -388,7 +388,7 @@ print(','.join(m.stale_files('$lclone')))"; }
   check "  (lock clone removed)"                 test ! -e "$lclone"
   rm -f "$H/lock-broken"
 
-  # Only a lock service Omacale was verified against is handed over; after an
+  # Only a lock service Omashell was verified against is handed over; after an
   # update to any other, the watchdog gives the lock back instead of keeping a
   # clone of the old one.
   cp -r "$fake/shell/plugins/lock" "$lclone"
@@ -410,7 +410,7 @@ fi
 
 echo "S. upstream-check names what moved"
 # Dev-only drift report: record a scratch Omarchy, change it, and it must
-# point at the Omacale area to re-test.
+# point at the Omashell area to re-test.
 if [[ -d $real_omarchy/shell/plugins/lock ]]; then
   new_home
   fake="$H/omarchy"; mkdir -p "$fake/shell/Ui" "$fake/shell/plugins" "$fake/default/omarchy"
@@ -476,9 +476,9 @@ case "$1 $2" in
       jq -cn --arg id "$id" --argjson on "$([[ -f $HOME/enabled-$id ]] && echo true || echo false)" '{id:$id,enabled:$on}'
     done | jq -cs . ;;
   "osd ping") [[ -f $HOME/osd-broken ]] && exit 1; echo ok ;;
-  "osd omacaleOsd") [[ -f $HOME/osd-broken || -f $HOME/osd-stale ]] && exit 1
+  "osd omashellOsd") [[ -f $HOME/osd-broken || -f $HOME/osd-stale ]] && exit 1
     [[ -f $HOME/osd-outdated ]] && { echo yes; exit 0; }
-    grep -om1 'omacale:osd-handover v[0-9]*' "$p/tester.osd/Osd.qml" || exit 1 ;;
+    grep -om1 'omashell:osd-handover v[0-9]*' "$p/tester.osd/Osd.qml" || exit 1 ;;
   *) exit 1 ;;
 esac
 SH
@@ -491,7 +491,7 @@ case "$1 $2" in
 esac
 SH
   chmod +x "$H/bin/"*
-  hv() { env HOME="$H" USER=tester OMARCHY_PATH="$fake" PATH="$H/bin:$PATH" OMACALE_HEALTH_TRIES=0 "$@"; }
+  hv() { env HOME="$H" USER=tester OMARCHY_PATH="$fake" PATH="$H/bin:$PATH" OMASHELL_HEALTH_TRIES=0 "$@"; }
   ostatus() { hv python3 "$scripts/osd-handover" status "$@"; }
 
   # Stock reshaped: nothing is cloned at all.
@@ -516,25 +516,25 @@ SH
   # An untouched `omarchy plugin clone` is adopted.
   cp "$fake/shell/plugins/osd/Osd.qml" "$oclone/Osd.qml"
   hv python3 "$scripts/osd-handover" install >/dev/null 2>&1
-  check "a plain clone is adopted and patched"   grep -q 'omacale:osd-handover' "$oclone/Osd.qml"
+  check "a plain clone is adopted and patched"   grep -q 'omashell:osd-handover' "$oclone/Osd.qml"
   rm -rf "$oclone" "$H/enabled-tester.osd"
 
   # $USER becomes the clone's id: never a path.
-  bad_user() { ! env HOME="$H" USER="../evil" OMARCHY_PATH="$fake" PATH="$H/bin:$PATH" OMACALE_HEALTH_TRIES=0 python3 "$scripts/osd-handover" install >/dev/null 2>&1; }
+  bad_user() { ! env HOME="$H" USER="../evil" OMARCHY_PATH="$fake" PATH="$H/bin:$PATH" OMASHELL_HEALTH_TRIES=0 python3 "$scripts/osd-handover" install >/dev/null 2>&1; }
   check "a clone id that is a path is refused"   bad_user
   check "  (nothing written outside)"            test ! -e "$H/.config/omarchy/evil.osd"
 
   out="$(hv python3 "$scripts/osd-handover" install 2>&1)"
   check "install places the clone"               test -f "$oclone/Osd.qml"
-  check "  already patched"                      grep -q 'omacale:osd-handover' "$oclone/Osd.qml"
+  check "  already patched"                      grep -q 'omashell:osd-handover' "$oclone/Osd.qml"
   check "  with no staging dir left behind"      test -z "$(find "$plugins" -maxdepth 1 -name '.clone.*')"
   check "  and enables it"                       test -f "$H/enabled-tester.osd"
   check "  and finds the patched OSD running"    grep -qx 'running:   patched' <<<"$out"
-  check "the gate is patched in once"            test "$(grep -c 'if (root.omacaleTakes(next)) return' "$oclone/Osd.qml")" = 1
+  check "the gate is patched in once"            test "$(grep -c 'if (root.omashellTakes(next)) return' "$oclone/Osd.qml")" = 1
   check "the Hyprland import is added once"      test "$(grep -c '^import Quickshell.Hyprland$' "$oclone/Osd.qml")" = 1
-  check "close() is passed on"                   grep -q 'function close() { opened = false; root.omacaleSend({ kind: "close" }) }' "$oclone/Osd.qml"
+  check "close() is passed on"                   grep -q 'function close() { opened = false; root.omashellSend({ kind: "close" }) }' "$oclone/Osd.qml"
   check "other OSDs become toasts"               grep -q 'osd.toasts' "$oclone/Osd.qml"
-  check "the pristine copy is stock"             cmp -s "$fake/shell/plugins/osd/Osd.qml" "$oclone/Osd.qml.omacale-orig"
+  check "the pristine copy is stock"             cmp -s "$fake/shell/plugins/osd/Osd.qml" "$oclone/Osd.qml.omashell-orig"
   check "identity is the clone's"                jq -e '.id == "tester.osd" and .name == "My On-screen display" and .omarchy.clonedFrom == "omarchy.osd"' "$oclone/manifest.json" >/dev/null
   check "a fresh clone is not stale"             grep -qx 'stale:     no' <<<"$(ostatus --offline)"
   check "sync has nothing to do"                 grep -q 'already matches' <<<"$(hv python3 "$scripts/osd-handover" sync)"

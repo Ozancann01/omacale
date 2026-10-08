@@ -349,7 +349,7 @@ Scope {
   // --------------------------------------------- reserved screen edges
   component Reserve: PanelWindow {
     screen: scope.screen
-    WlrLayershell.namespace: "omacale-reserve"
+    WlrLayershell.namespace: "omashell-reserve"
     mask: Region {}
     implicitWidth: 1
     implicitHeight: 1
@@ -412,7 +412,7 @@ Scope {
       && ((NotifService.popups.length > 0 && !toastStack.suppressed) || toastStack.implicitHeight > 0)
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "omacale-notifications"
+    WlrLayershell.namespace: "omashell-notifications"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // One fixed, full-screen surface, as Omarchy's own popup window uses: a
@@ -456,7 +456,7 @@ Scope {
   }
 
   // Caelestia's facePicker (dashboard/Wrapper.qml): choose an image and copy
-  // it to ~/.face, which the dashboard and the lock screen read. Omacale's own
+  // it to ~/.face, which the dashboard and the lock screen read. Omashell's own
   // FileDialog, not the native one: that one is GTK3's, built inside the shell
   // process, and a fatal in it took the whole shell down (issue #5).
   FileDialog {
@@ -513,8 +513,8 @@ Scope {
     function notify(ok) {
       const shown = src.startsWith(Quickshell.env("HOME") + "/") ? "~" + src.slice(Quickshell.env("HOME").length) : src
       Quickshell.execDetached(ok
-        ? ["notify-send", "-a", "Omacale", "-u", "low", "-h", "STRING:image-path:" + src, "Profile picture changed", "Profile picture changed to " + shown]
-        : ["notify-send", "-a", "Omacale", "-u", "critical", "Unable to change profile picture", "Failed to change profile picture to " + shown])
+        ? ["notify-send", "-a", "Omashell", "-u", "low", "-h", "STRING:image-path:" + src, "Profile picture changed", "Profile picture changed to " + shown]
+        : ["notify-send", "-a", "Omashell", "-u", "critical", "Unable to change profile picture", "Failed to change profile picture to " + shown])
     }
 
     onExited: code => notify(code === 0)
@@ -526,7 +526,7 @@ Scope {
     active: scope.settingsWindow
     FloatingWindow {
       visible: true
-      title: "Omacale Settings"
+      title: "Omashell Settings"
       color: Colours.m3surface
       implicitWidth: winSettings.implicitWidth
       implicitHeight: winSettings.implicitHeight
@@ -553,7 +553,7 @@ Scope {
     screen: scope.screen
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "omacale"
+    WlrLayershell.namespace: "omashell"
     WlrLayershell.layer: win.modal ? WlrLayer.Overlay : WlrLayer.Top
     // A keyboard-opened popout primes Exclusive first, as Omarchy's
     // KeyboardPanel does: this window is always mapped, and Hyprland doesn't

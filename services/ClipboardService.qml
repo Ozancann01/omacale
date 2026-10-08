@@ -9,7 +9,7 @@ import ".."
 // Omarchy's `omarchy.clipboard` plugin owns the recording: its wl-paste
 // watchers run `capture.sh` on every copy and keep the history in
 // ~/.local/state/omarchy/clipboard-history.json (images as files under
-// clipboard-images/). Omacale runs no watcher of its own; it reads that file
+// clipboard-images/). Omashell runs no watcher of its own; it reads that file
 // and, for delete and clear, writes it back the way Omarchy's panel does.
 // The plugin watches the file too, so it picks our writes up.
 //
@@ -83,10 +83,10 @@ QtObject {
       + '}'
     try {
       // The URL never has to exist: it only resolves the relative import.
-      engine = Qt.createQmlObject(src, root, "file://" + omarchyPath + "/shell/plugins/clipboard/OmacaleClipboardEngine.qml")
+      engine = Qt.createQmlObject(src, root, "file://" + omarchyPath + "/shell/plugins/clipboard/OmashellClipboardEngine.qml")
     } catch (e) {
       engine = null
-      console.warn("Omacale: Omarchy's clipboard engine could not be loaded:", e)
+      console.warn("Omashell: Omarchy's clipboard engine could not be loaded:", e)
     }
   }
 

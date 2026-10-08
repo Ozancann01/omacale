@@ -11,7 +11,7 @@ QtObject {
 
   // Scale. Caelestia's appearance.{font,padding,spacing,rounding}.scale
   // (appearanceconfig.cpp: token * scale, cast to int), under a master that
-  // Omacale adds: Omarchy's own shell.toml scale by default ([font] base-size
+  // Omashell adds: Omarchy's own shell.toml scale by default ([font] base-size
   // / 12, and [spacing] scale for gaps), or the user's. Unlike Caelestia the
   // master also scales `sizes` and the bar, so a smaller UI gets narrower
   // drawers. The frame's thickness is user px and doesn't scale; its corner

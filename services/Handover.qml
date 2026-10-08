@@ -3,7 +3,7 @@ import Quickshell
 import Quickshell.Io
 import ".."
 
-// One handover of an Omarchy plugin to Omacale -- a clone that Omacale
+// One handover of an Omarchy plugin to Omashell -- a clone that Omashell
 // rebuilds from the installed Omarchy (scripts/handover.py) -- and the
 // watchdog that keeps it in step with `omarchy update` while the shell runs.
 // LockService and NotifHandover are this with their own script.
@@ -14,7 +14,7 @@ import ".."
 // the check runs again when an update launched from the bar lets go of its
 // lock, and once shortly after the shell starts. Each check is the script's
 // `watchdog`: re-sync a stale clone, then check its health, and hand the
-// plugin back to Omarchy if it is broken. Omacale's look can be lost to a bad
+// plugin back to Omarchy if it is broken. Omashell's look can be lost to a bad
 // update; the lock screen and the notification daemon must never be.
 QtObject {
   id: root
@@ -47,7 +47,7 @@ QtObject {
 
   // The watchdog handed the plugin back to Omarchy. Kept in Config so the
   // next shell start doesn't install it again straight into the same fault;
-  // installing from Settings clears it. It holds only for the Omacale version
+  // installing from Settings clears it. It holds only for the Omashell version
   // it happened under: an upgrade may be the fix (a wrapper that didn't fit
   // this Omarchy), so a new version gets one try, and if that breaks too the
   // watchdog falls back again and records it. Until the manifest is read,
@@ -55,7 +55,7 @@ QtObject {
   readonly property bool fellBack: !!Config.get(configKey + ".autoFellBack")
     && (version === "" || Config.get(configKey + ".fellBackVersion") === version)
 
-  // This Omacale's version, from its manifest.
+  // This Omashell's version, from its manifest.
   property string version: ""
   property FileView manifest: FileView {
     path: String(Qt.resolvedUrl("../manifest.json")).replace("file://", "")
@@ -168,9 +168,9 @@ QtObject {
           Config.set(root.configKey + ".fellBackVersion", root.version)
           // Through whichever daemon is up by then -- after a notification
           // fallback that is Omarchy's own, back a moment after the removal.
-          Quickshell.execDetached(["bash", "-c", "sleep 3; notify-send -a Omacale -u critical \"$1\" \"$2\"", "notify",
+          Quickshell.execDetached(["bash", "-c", "sleep 3; notify-send -a Omashell -u critical \"$1\" \"$2\"", "notify",
             root.title + " handed back to Omarchy",
-            "After an Omarchy update, Omacale's version stopped working (" + root.lastReason + "). Omarchy's own is back; the next Omacale update tries again, or reinstall from Omacale's settings."])
+            "After an Omarchy update, Omashell's version stopped working (" + root.lastReason + "). Omarchy's own is back; the next Omashell update tries again, or reinstall from Omashell's settings."])
         }
       }
     }
@@ -190,7 +190,7 @@ QtObject {
     onTriggered: root.check()
   }
 
-  // A sync the lock watchdog put off because the screen was locked: Omacale
+  // A sync the lock watchdog put off because the screen was locked: Omashell
   // has no lock signal of its own, so ask again every minute until the screen
   // is unlocked and the sync has run.
   property Timer lockedRetry: Timer {

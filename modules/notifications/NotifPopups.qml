@@ -4,7 +4,7 @@ import "../.."
 
 // The toast stack (Caelestia modules/notifications/Content.qml + Wrapper.qml).
 //
-// Caelestia draws this as one more drawer in the blob frame. Omacale can't:
+// Caelestia draws this as one more drawer in the blob frame. Omashell can't:
 // the frame lives on Hyprland's *top* layer, which a fullscreen window covers,
 // and a notification that a video can hide is not a notification. The stack
 // gets its own overlay-layer window in ScreenScope instead, so each toast is

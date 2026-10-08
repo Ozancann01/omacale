@@ -73,7 +73,7 @@ ColumnLayout {
                 if (LockService.fellBack && !root.installed)
                   return "Handed back to Omarchy"
                 if (root.drawing)
-                  return "Drawn by Omacale"
+                  return "Drawn by Omashell"
                 if (root.on)
                   return "Handover missing"
                 return "Drawn by Omarchy"
@@ -134,11 +134,11 @@ ColumnLayout {
     if (LockService.fellBack && !root.installed)
       return "After an Omarchy update the lock service in the handover stopped working"
         + (LockService.lastReason ? " (" + LockService.lastReason + ")" : "")
-        + ", so Omarchy's own lock screen was put back. Install the handover again once Omacale is updated."
+        + ", so Omarchy's own lock screen was put back. Install the handover again once Omashell is updated."
     if (LockService.lastAction === "synced")
       return "Omarchy's lock plugin was updated, and the handover now carries the new one. It applies after the next shell restart."
     if (LockService.lastAction === "refused")
-      return "Omarchy's lock service now drives its view with something Omacale's doesn't have, so the handover kept the previous service. Update Omacale."
+      return "Omarchy's lock service now drives its view with something Omashell's doesn't have, so the handover kept the previous service. Update Omashell."
     if (LockService.installed && LockService.stale)
       return "Omarchy's lock plugin has changed. The handover picks it up by itself while the screen is unlocked, or now with Reinstall."
     return ""

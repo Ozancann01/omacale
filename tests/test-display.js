@@ -121,7 +121,7 @@ test("seconds left until the daemon's deadline", () => {
   assert.strictEqual(D.secondsLeft("2026-10-08T09:59:00Z", now), 0)
   assert.strictEqual(D.secondsLeft("junk", now), 0)
 })
-test("only Omacale's own preview is confirmed by Omacale", () => {
+test("only Omashell's own preview is confirmed by Omashell", () => {
   assert.strictEqual(D.ownsPreview({ transaction_id: "t1" }, "t1"), true)
   assert.strictEqual(D.ownsPreview({ transaction_id: "t1", reclaimable: true }, "t2"), false)
   assert.strictEqual(D.ownsPreview({ transaction_id: "t1" }, ""), false)

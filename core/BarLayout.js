@@ -1,6 +1,6 @@
 .pragma library
 
-// Omacale bar layout (bar.layout, Settings › Taskbar › Layout): which items
+// Omashell bar layout (bar.layout, Settings › Taskbar › Layout): which items
 // sit in the bar's start, center and end sections, and in what order. No
 // Caelestia original -- Caelestia's bar.entries is one list -- the sections
 // follow Noctalia's bar. The default reproduces Caelestia's order exactly.

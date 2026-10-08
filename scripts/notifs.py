@@ -90,7 +90,7 @@ def collect(live_only):
                 seen.add(key)
                 d["_file"] = f
                 # The daemon names each file after the popup it holds; that
-                # stem is how Omacale addresses one popup over IPC.
+                # stem is how Omashell addresses one popup over IPC.
                 d["_key"] = os.path.basename(f)[:-5]
                 notifs.append(d)
         except Exception:

@@ -19,7 +19,7 @@ PanelWindow {
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "omacale-display-confirm"
+  WlrLayershell.namespace: "omashell-display-confirm"
   WlrLayershell.keyboardFocus: keys ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
   anchors { top: true; bottom: true; left: true; right: true }
 

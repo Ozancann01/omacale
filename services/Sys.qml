@@ -15,7 +15,7 @@ QtObject {
 
   // ------------------------------------------------------------ time
   // The one clock-format switch (Settings › Language & region › 12-hour
-  // clock). Every time Omacale shows goes through these.
+  // clock). Every time Omashell shows goes through these.
   readonly property bool h12: !Config.o.general.clock24
   readonly property string timeFormat: h12 ? "h:mm AP" : "HH:mm"
   function time(d) { return d ? Qt.formatTime(d, timeFormat) : "" }

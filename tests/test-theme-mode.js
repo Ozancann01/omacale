@@ -1,5 +1,5 @@
 // node tests/test-theme-mode.js -- unit tests for core/ThemeMode.js, Omarchy's
-// light/dark rule (omarchy-theme-color resolve_theme_mode) as Omacale reads it.
+// light/dark rule (omarchy-theme-color resolve_theme_mode) as Omashell reads it.
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../core/ThemeMode.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}

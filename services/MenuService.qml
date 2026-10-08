@@ -85,10 +85,10 @@ QtObject {
     try {
       // The URL never has to exist: it is only the document URL the relative
       // import is resolved against.
-      root.engine = Qt.createQmlObject(src, root, "file://" + root.omarchyPath + "/shell/plugins/menu/OmacaleMenuEngine.qml")
+      root.engine = Qt.createQmlObject(src, root, "file://" + root.omarchyPath + "/shell/plugins/menu/OmashellMenuEngine.qml")
     } catch (e) {
       root.engine = null
-      console.warn("Omacale: Omarchy's menu engine could not be loaded:", e)
+      console.warn("Omashell: Omarchy's menu engine could not be loaded:", e)
       return
     }
     // The sources may already have arrived while the engine was being built.

@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../../.."
 
-// Omacale look'n'feel, read from omacale.lua (Caelestia's Hyprland styling).
+// Omashell look'n'feel, read from omashell.lua (Caelestia's Hyprland styling).
 // Copy the loader line for ~/.config/hypr/looknfeel.lua, copy one value as
 // its own hl.config() line, or try the whole file for this session only:
 // `hyprctl eval dofile(...)`, undone by `hyprctl reload`, and nothing is
@@ -17,17 +17,17 @@ ColumnLayout {
   property bool last
   spacing: Tk.spacing.extraSmall / 2
 
-  readonly property string file: String(Qt.resolvedUrl("../../../omacale.lua")).replace("file://", "")
+  readonly property string file: String(Qt.resolvedUrl("../../../omashell.lua")).replace("file://", "")
   readonly property string userFile: Quickshell.env("HOME") + "/.config/hypr/looknfeel.lua"
-  readonly property string loader: "-- Omacale look'n'feel (Caelestia styling). Keep your own tweaks below it.\n"
-    + "pcall(dofile, os.getenv(\"HOME\") .. \"/.config/omarchy/plugins/omacale.bar/omacale.lua\")"
+  readonly property string loader: "-- Omashell look'n'feel (Caelestia styling). Keep your own tweaks below it.\n"
+    + "pcall(dofile, os.getenv(\"HOME\") .. \"/.config/omarchy/plugins/omashell.bar/omashell.lua\")"
 
   property string source: ""
   property var groups: []       // { title, vars: [{ name, raw, opt, uses }] }
   property int animations: 0
   property var live: ({})       // hyprland option -> current value
-  property var raws: ({})       // vars name -> its 1x value in omacale.lua
-  property bool loaded: false   // omacale.lua is dofile'd from looknfeel.lua
+  property var raws: ({})       // vars name -> its 1x value in omashell.lua
+  property bool loaded: false   // omashell.lua is dofile'd from looknfeel.lua
   property bool tried: false
   property string toast: ""
 
@@ -54,7 +54,7 @@ ColumnLayout {
     printErrors: false
     watchChanges: true
     onFileChanged: reload()
-    onLoaded: root.loaded = String(text()).split("\n").some(l => /omacale\.lua/.test(l) && !/^\s*--/.test(l))
+    onLoaded: root.loaded = String(text()).split("\n").some(l => /omashell\.lua/.test(l) && !/^\s*--/.test(l))
     onLoadFailed: root.loaded = false
   }
 
@@ -125,7 +125,7 @@ ColumnLayout {
     reprobe.restart()
   }
 
-  // Gaps and window rounding follow the UI scale (HyprLook / omacale_scaled),
+  // Gaps and window rounding follow the UI scale (HyprLook / omashell_scaled),
   // so what Hyprland should run is the scaled value, not the file's 1x one.
   function value(v) {
     if (v.raw === "true") return true
@@ -160,7 +160,7 @@ ColumnLayout {
     if (loaded) { toast = "Already loaded from looknfeel.lua"; toastTimer.restart(); return }
     Quickshell.execDetached(["hyprctl", "eval", "dofile(" + Sys.luaStr(file) + ")"])
     tried = true
-    toast = "Omacale look'n'feel active until Hyprland reloads"
+    toast = "Omashell look'n'feel active until Hyprland reloads"
     toastTimer.restart()
     reprobe.restart()
   }
@@ -207,7 +207,7 @@ ColumnLayout {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: Colours.m3onSurfaceVariant
-            text: "Load omacale.lua from ~/.config/hypr/looknfeel.lua, above your own tweaks so they still win. It is wrapped in pcall, so Hyprland keeps starting after uninstalling."
+            text: "Load omashell.lua from ~/.config/hypr/looknfeel.lua, above your own tweaks so they still win. It is wrapped in pcall, so Hyprland keeps starting after uninstalling."
           }
         }
       }
@@ -217,7 +217,7 @@ ColumnLayout {
         Pill { icon: "content_copy"; label: "Copy loader"; filled: true; onClicked: root.copy(root.loader, "Loader") }
         Pill { icon: "play_arrow"; label: "Try this session"; visible: !root.loaded; onClicked: root.tryIt() }
         Pill { icon: "undo"; label: "Revert"; visible: !root.loaded && (root.tried || root.allApplied); onClicked: root.revert() }
-        Pill { icon: "description"; label: "Copy file"; onClicked: root.copy(root.source, "omacale.lua") }
+        Pill { icon: "description"; label: "Copy file"; onClicked: root.copy(root.source, "omashell.lua") }
         Pill { icon: "edit"; label: "Open looknfeel.lua"; onClicked: Quickshell.execDetached(["omarchy-launch-editor", root.userFile]) }
       }
       MText {
@@ -240,11 +240,11 @@ ColumnLayout {
       wrapMode: Text.WordWrap
       color: Colours.m3outline
       font.pointSize: Tk.label.small
-      text: "Also sets Material 3 curves for " + root.animations + " animations (windows, layers, workspaces) and fade rules for Omacale's own layers. Border colours stay with your Omarchy theme."
+      text: "Also sets Material 3 curves for " + root.animations + " animations (windows, layers, workspaces) and fade rules for Omashell's own layers. Border colours stay with your Omarchy theme."
     }
   }
 
-  // ---- values, grouped as in omacale.lua's vars table
+  // ---- values, grouped as in omashell.lua's vars table
   Repeater {
     model: root.groups
     ColumnLayout {

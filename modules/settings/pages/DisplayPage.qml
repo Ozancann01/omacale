@@ -176,7 +176,7 @@ ColumnLayout {
         text: DisplayService.lastError ? DisplayService.lastError
           : DisplayService.previewBusy ? "Waiting for you to keep or revert"
           : "Changes not applied yet"
-        subtext: DisplayService.previewBusy ? "" : "Applied for 30 seconds first; kept in profile " + (DisplayService.sourceProfile || "Omacale") + " if you keep them"
+        subtext: DisplayService.previewBusy ? "" : "Applied for 30 seconds first; kept in profile " + (DisplayService.sourceProfile || "Omashell") + " if you keep them"
       }
       IconTextButton {
         visible: DisplayService.dirty && !DisplayService.previewBusy

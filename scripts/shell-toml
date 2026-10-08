@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# shell-toml: Omacale's one block in Omarchy's user shell.toml
+# shell-toml: Omashell's one block in Omarchy's user shell.toml
 # (~/.config/omarchy/shell.toml), for Settings › Wallpaper & style ›
 # "Colour Omarchy's menus too". Omarchy watches that file live and lets its
 # keys win over the theme's (Commons/Color.qml mergeShell), so the block
-# paints Omarchy's own menus, popups and notifications in Omacale's palette.
+# paints Omarchy's own menus, popups and notifications in Omashell's palette.
 #
 #   shell-toml set "<section>.<key>=<value>\n..."   write or rewrite the block
 #   shell-toml remove                                 take the block out again
@@ -12,16 +12,16 @@
 # The block is marked, always last (Omarchy's parser lets later lines win),
 # and never sets a key the user set themselves outside it. Removing it gives
 # the file back byte for byte: the marker records the padding it added, and
-# whether it created the file. OMACALE_SHELL_TOML overrides the path (tests).
+# whether it created the file. OMASHELL_SHELL_TOML overrides the path (tests).
 import os
 import re
 import sys
 
 sys.dont_write_bytecode = True
 
-PATH = os.environ.get("OMACALE_SHELL_TOML") or os.path.expanduser("~/.config/omarchy/shell.toml")
-BEGIN = "# >>> omacale:surfaces v1"
-END = "# <<< omacale:surfaces <<<"
+PATH = os.environ.get("OMASHELL_SHELL_TOML") or os.path.expanduser("~/.config/omarchy/shell.toml")
+BEGIN = "# >>> omashell:surfaces v1"
+END = "# <<< omashell:surfaces <<<"
 BLOCK_RE = re.compile(r"(?P<pad>\n*)" + re.escape(BEGIN) + r" pad=(?P<n>\d+) created=(?P<c>[01]) >>>\n.*?" + re.escape(END) + r"\n?", re.S)
 
 
@@ -35,7 +35,7 @@ def read():
 
 def write(text):
     os.makedirs(os.path.dirname(PATH), exist_ok=True)
-    tmp = PATH + ".omacale.tmp"
+    tmp = PATH + ".omashell.tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         f.write(text)
     os.replace(tmp, PATH)
@@ -89,7 +89,7 @@ def cmd_set(spec):
         return
     pad = "" if not rest else ("\n" if rest.endswith("\n") else "\n\n")
     body = [f"{BEGIN} pad={len(pad)} created={1 if created else 0} >>>",
-            "# Written by Omacale (Settings › Wallpaper & style); turning the option off removes it."]
+            "# Written by Omashell (Settings › Wallpaper & style); turning the option off removes it."]
     for section, pairs in sections.items():
         body.append(f"[{section}]")
         body.extend(f'{name} = "{value}"' for name, value in pairs)

@@ -25,7 +25,7 @@ Canvas {
   renderStrategy: Canvas.Immediate
 
   // Omarchy swaps the `current/background` symlink; resolve it on a slow
-  // timer and whenever Omacale's own switcher sets a background.
+  // timer and whenever Omashell's own switcher sets a background.
   Process {
     id: resolve
     command: ["readlink", "-f", root.link]

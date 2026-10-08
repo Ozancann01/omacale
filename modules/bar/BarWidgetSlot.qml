@@ -7,12 +7,12 @@ import "../.."
 // barWidgetRegistry, injecting the PluginBarFacade as `bar`.
 // Includes a compatibility adapter that repairs positioning and geometry for
 // widgets using Omarchy's KeyboardPanel or PopupCard, ensuring the popup opens
-// directly next to Omacale's bar, on whichever edge it is, and matches
+// directly next to Omashell's bar, on whichever edge it is, and matches
 // Caelestia M3 styling.
 //
 // Sizing. The widget is laid out in Omarchy's own units (barSize, iconSlot,
 // iconCanvas) and scaled by host.pluginIconScale, so its mark is drawn at the
-// size of Omacale's status icons whatever the plugin hardcodes. Three shapes:
+// size of Omashell's status icons whatever the plugin hardcodes. Three shapes:
 //   icon    - fits the bar's breadth: one status-icon cell (cellLen), or
 //             its own length when it is a longer stack.
 //   rotated - a short horizontal label (e.g. "ELIZA ▮") on a column: drawn
@@ -237,7 +237,7 @@ Item {
 
   // Host panel popup placement correction for screen-sized window:
   // Omarchy KeyboardPanel/PopupCard derive their perpendicular offset from
-  // anchorWindow.width. Because Omacale's window spans the full screen (1920px),
+  // anchorWindow.width. Because Omashell's window spans the full screen (1920px),
   // KeyboardPanel mistook the whole screen for the bar and projected the card
   // off-screen to the right (x: 1928px) while crushing its width to 120px.
   // These bindings repair x, y, width, and style the card with Caelestia tokens.
@@ -337,7 +337,7 @@ Item {
   readonly property bool cardSurfaceActive: compatibilityPanel !== null && compatibilityCard !== null && (compatibilityPanel.open || compatibilityCard.opacity > 0)
 
   // KeyboardPanel takes the anchor window's width for the bar's width, and
-  // Omacale's window is the whole screen. Every sum it builds on that is then
+  // Omashell's window is the whole screen. Every sum it builds on that is then
   // wrong: the card's own x (barW + gap), the room it thinks is left for the
   // card (screenW - barW - gap - margin, which clamps to its 120px floor and
   // cuts the content off), and the "bar strip" it forwards clicks in (the
@@ -358,7 +358,7 @@ Item {
     restoreMode: Binding.RestoreNone
   }
 
-  // Anchor the popup card directly next to Omacale's bar, and along the bar
+  // Anchor the popup card directly next to Omashell's bar, and along the bar
   // with the widget icon
   Binding {
     target: root.compatibilityCard
@@ -445,7 +445,7 @@ Item {
     vertical: root.vertical
   }
 
-  // The fallback is deliberately owned by Omacale rather than inferred from
+  // The fallback is deliberately owned by Omashell rather than inferred from
   // a plugin's text tree. That avoids hiding arbitrary plugin state or
   // hardcoding special cases while ensuring no label can bleed outside the
   // Caelestia pill.
@@ -527,7 +527,7 @@ Item {
         settings: root.moduleSettings
       })
     } catch (e) {
-      console.warn("omacale: bar widget " + root.moduleName + " failed to start: " + e)
+      console.warn("omashell: bar widget " + root.moduleName + " failed to start: " + e)
     }
     if (!item) return
     item.anchors.fill = stage

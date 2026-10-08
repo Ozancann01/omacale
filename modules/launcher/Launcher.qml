@@ -100,7 +100,7 @@ Item {
   }
 
   // ------------------------------------------------------------ calculator
-  // Caelestia hands the expression to libqalculate; Omacale evaluates it with
+  // Caelestia hands the expression to libqalculate; Omashell evaluates it with
   // its own small engine (services/Calc.js), since Omarchy has no calculator.
   // The one row is a constant object, so typing re-evaluates in place rather
   // than recreating the row on every key.
@@ -163,7 +163,7 @@ Item {
   readonly property var actions: [
     { name: "Calculator", comment: "Do simple maths equations", icon: "calculate", autocomplete: "calc" },
     { name: "Clipboard", comment: "Browse the clipboard history", icon: "content_paste", autocomplete: "clipboard" },
-    { name: "Settings", comment: "Open Omacale settings", icon: "settings", settings: true },
+    { name: "Settings", comment: "Open Omashell settings", icon: "settings", settings: true },
     { name: "Lock", comment: "Lock the screen", icon: "lock", cmd: "omarchy system lock", dangerous: true },
     { name: "Logout", comment: "End this session", icon: "logout", cmd: "omarchy system logout", dangerous: true },
     { name: "Shutdown", comment: "Power off", icon: "power_settings_new", cmd: "omarchy system shutdown", dangerous: true },

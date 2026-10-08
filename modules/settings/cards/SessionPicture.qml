@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import "../../.."
 
 // Settings › Session › Picture: Caelestia's paths.sessionGif. A GIF or image
-// of the user's own between the session buttons, picked with Omacale's own
+// of the user's own between the session buttons, picked with Omashell's own
 // FileDialog (Settings.fileRequested); empty is the bundled kurukuru.
 ConnectedRect {
   id: root

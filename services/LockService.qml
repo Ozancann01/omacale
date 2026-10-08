@@ -27,14 +27,14 @@ Handover {
     Quickshell.env("OMARCHY_PATH") + "/shell/plugins/lock/LockView.qml"
   ]
 
-  readonly property string view: fields.view || "omarchy"   // "omacale vN" | "omarchy" | "missing"
-  readonly property string expects: fields.expects || ""    // the wrapper this Omacale would write
+  readonly property string view: fields.view || "omarchy"   // "omashell vN" | "omarchy" | "missing"
+  readonly property string expects: fields.expects || ""    // the wrapper this Omashell would write
 
-  // An older wrapper still says "omacale", but loads Omacale's UI from a path
+  // An older wrapper still says "omashell", but loads Omashell's UI from a path
   // that has since moved, so it would quietly draw the stock view instead.
   // Requiring the current version makes the upgrade re-install itself.
   readonly property bool installed: clone !== "" && cloneEnabled
-    && view === (expects === "" ? view : expects) && view.startsWith("omacale")
+    && view === (expects === "" ? view : expects) && view.startsWith("omashell")
   readonly property bool wanted: Config.o.lock.enabled
 
   function preview() {

@@ -10,7 +10,7 @@ import "../.."
 // One deliberate difference: Caelestia blurs the plate by sampling its own
 // wallpaper item. Omarchy draws the wallpaper in another window, so the
 // plate's blur is Hyprland's, on this window's layer (Bar.applyDesktopBlur),
-// which costs Omacale no textures at all.
+// which costs Omashell no textures at all.
 Item {
   id: root
 

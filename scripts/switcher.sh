@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Omacale wallpaper/theme switcher helper.
+# Omashell wallpaper/theme switcher helper.
 #
 # Omarchy's pickers (omarchy-theme-bg-switcher, omarchy-theme-switcher) only
 # hand their lists to their own image menu, and Omarchy has no command that
-# prints them. This script lists the same sources so Omacale's launcher
+# prints them. This script lists the same sources so Omashell's launcher
 # carousel can show them.
 #
 # usage:
 #   switcher.sh walls       current:<path>, then <image>\t<thumbnail> per background
 #   switcher.sh themes      current:<name>, then <name>\t<label>\t<preview> per theme
-#   switcher.sh menu off    remove the menu-route block older Omacale versions
+#   switcher.sh menu off    remove the menu-route block older Omashell versions
 #                           wrote to Omarchy's omarchy-menu.jsonc
 set -uo pipefail
 
@@ -64,12 +64,12 @@ themes() {
 }
 
 # ------------------------------------------------------ old menu-route block
-# Omacale no longer writes Omarchy's menu extension. Older versions added a
+# Omashell no longer writes Omarchy's menu extension. Older versions added a
 # block (between these markers) overriding the "background" and "theme"
-# routes; this removes it, and the file too if Omacale had created it.
+# routes; this removes it, and the file too if Omashell had created it.
 ext="$HOME/.config/omarchy/extensions/omarchy-menu.jsonc"
-begin="// >>> omacale switcher"
-end="// <<< omacale switcher"
+begin="// >>> omashell switcher"
+end="// <<< omashell switcher"
 
 menu_off() {
   [[ -f $ext ]] && grep -qF "$begin" "$ext" || return 0
@@ -77,7 +77,7 @@ menu_off() {
   grep -qF "$begin (created" "$ext" && created=1
   grep -qF "$begin (created, dir)" "$ext" && dir=1
   sed -i "\|$begin|,\|$end|d" "$ext"
-  # Created by Omacale and now empty again: put things back as they were.
+  # Created by Omashell and now empty again: put things back as they were.
   if (( created )) && [[ -z $(tr -d '{} \n\t' <"$ext") ]]; then
     rm -f "$ext"
     (( dir )) && rmdir "${ext%/*}" 2>/dev/null
