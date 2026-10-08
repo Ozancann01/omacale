@@ -2,6 +2,25 @@
 
 Omashell is a fork of [Omacale](https://github.com/AyushKr2003/omacale) by [AyushKr2003](https://github.com/AyushKr2003). Everything up to 0.45.4 is Omacale as AyushKr2003 made it; the versions below are what this fork adds. Each version has a [release on GitHub](https://github.com/Ozancann01/omashell/releases).
 
+## Unreleased
+
+- **App icons show again with a missing icon theme.** Omarchy's vantablack theme names the `Yaru-gray` icon theme, which the current Yaru package no longer has, and Qt then found no app icons at all: the launcher, Settings › Apps and notifications showed blanks. Omashell now finds the icon files itself when the theme can't.
+
+## 1.0.0 — Omashell
+
+The first release under Omashell's own name and version line. From here on, versions follow semver: a minor version per released feature set, a patch version for fixes, and changes between releases collect under **Unreleased** above.
+
+Everything Omashell adds over [Omacale](https://github.com/AyushKr2003/omacale) 0.45.4, as listed in the pre-releases below:
+
+- **Its own name**: plugin `omashell.bar`, command and IPC `omashell`, settings in `~/.config/omashell`; moving over from Omacale is automatic.
+- **The bar, your way**: start/center/end sections with drag and drop, a chevron to tuck any item away, neighbouring icons joined in one pill, plugin widgets hidden or shown, and Omarchy's own bar widgets hosted, all in one Settings › Taskbar page.
+- **Settings › Display**: arrange and change screens, profiles, brightness, night light, workspaces per screen and the shell on each screen.
+- **Omarchy integrated**: the session menu, Omarchy's menus and pickers in your colours, a theme from your wallpaper.
+
+## Before 1.0
+
+The 0.46–0.63 versions were this fork's pre-releases; their tags and releases stay on GitHub.
+
 ## 0.63.0 — One Taskbar, Omarchy's widgets
 
 - **Settings › Taskbar shows the whole bar in one place**: a small picture of the bar on top (click an icon to jump to its row), then each section with its items grouped the way the bar groups them (neighbours that share a pill in one card), in compact one-line rows with the eye, settings and remove buttons in the same columns. Only Omarchy's widgets and plugins carry a chip. The chevron's row opens to what is behind it and the "at most N icons" limit; "Not shown" and "Add a widget" fold away. The separate Layout and Bar plugins pages are gone; Logo and Power share a small page.
