@@ -29,6 +29,23 @@ Everything Omacale does, plus (details per version in the [changelog](CHANGELOG.
 | **Session menu** | Super+Esc / power key open the session drawer, with Lock, Screensaver and your own picture. |
 | **Text and cursor** | Omarchy's text size and a cursor size that match on every screen. |
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Settings › Display: arrangement and the selected screen](docs/screenshots/display.webp) | ![Settings › Display: brightness, turn off for now, and the sub-pages](docs/screenshots/display-more.webp) |
+| **Display**: the arrangement (drag to move, Identify) and the selected screen | Brightness, *Turn off for now*, and every other screen setting one row away |
+| ![Keep these display settings?](docs/screenshots/keep-or-revert.webp) | ![The display menu: Extend, Mirror, Only laptop, Only external](docs/screenshots/display-menu.webp) |
+| Every change is tried for 30 seconds, then reverts unless you keep it | The display menu, from a key or when a screen is plugged in |
+| ![Display › Profiles](docs/screenshots/display-profiles.webp) | ![Display › Brightness](docs/screenshots/display-brightness.webp) |
+| **Profiles**: apply, save, delete, automatic switching | **Brightness**: every screen, one brightness for all, the bar's scroll |
+| ![Display › Night light](docs/screenshots/display-night.webp) | ![Display › Shell on each screen](docs/screenshots/display-shell.webp) |
+| **Night light**: warmth and a schedule | **Shell on each screen**: bar and its edge, desktop clock, popups |
+| ![Display › Workspaces](docs/screenshots/display-workspaces.webp) | ![Display › Text and cursor](docs/screenshots/display-text.webp) |
+| **Workspaces** per screen | **Text and cursor** |
+| ![Taskbar › Layout](docs/screenshots/bar-layout.webp) | |
+| **Bar layout**: drag items between start, center and end | |
+
 ## Features
 
 - **Frame and drawers**: Caelestia's shader-drawn screen frame, with dashboard, launcher, sidebar, utilities, session and settings sliding out of it.
