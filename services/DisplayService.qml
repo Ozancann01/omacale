@@ -186,6 +186,19 @@ QtObject {
   }
   property Process brightWrite: Process { onExited: root.brightFlush() }
 
+  // A brightness step (+5% / 5%-) from the bar's wheel or the brightness keys
+  // (IPC `brightness`): that screen steps with Omarchy's OSD; with "Same
+  // brightness on every display" the others then follow to its level.
+  function stepBrightness(screenName, step) {
+    const others = Quickshell.screens.map(s => s.name).filter(n => n !== screenName)
+    if (!linked || !others.length) {
+      Quickshell.execDetached(["omarchy-brightness-display", "--monitor", screenName, step])
+      return
+    }
+    Quickshell.execDetached(["sh", "-c", 'omarchy-brightness-display --monitor "$1" "$2" >/dev/null; v=$(omarchy-brightness-display --monitor "$1"); shift 2; for m in "$@"; do omarchy-brightness-display --no-osd --monitor "$m" "$v%" >/dev/null 2>&1; done',
+      "step", screenName, step].concat(others))
+  }
+
   // -------------------------------------------------------- text size
   property int textSize: 0
   property Process textRead: Process {
@@ -419,6 +432,73 @@ QtObject {
   }
   function deleteProfile(name) { profileCall("delete", { name: name }) }
   function setAuto(on) { profileCall("set_profile_auto", { enabled: on }) }
+
+  // ------------------------------------------------ turn a screen off for now
+  // DPMS off for one screen (Omarchy's own dispatch), not a layout change.
+  // Hyprland wakes every screen on the first mouse move or key press
+  // (misc:mouse_move_enables_dpms / key_press_enables_dpms), which would undo
+  // it at once, so both are off while anything is blanked and put back as
+  // they were afterwards. What they were is kept in $XDG_RUNTIME_DIR, so a
+  // shell restarted meanwhile wakes everything and restores them.
+  property var blanked: []
+  readonly property string blankPath: Quickshell.env("XDG_RUNTIME_DIR") + "/omacale-display-blank"
+  function canBlank(name) { return Model.safeOutput(name) && Model.canBlank(monitors, blanked, name) }
+  function blank(name) {
+    if (!canBlank(name)) return
+    blanked = blanked.concat([name])
+    Quickshell.execDetached(["sh", "-c", `
+      f="$1"; m="$2"
+      [ -f "$f" ] || printf '%s %s\n' "$(hyprctl getoption misc:mouse_move_enables_dpms -j | jq -r .bool)" "$(hyprctl getoption misc:key_press_enables_dpms -j | jq -r .bool)" > "$f"
+      hyprctl eval 'hl.config({ misc = { mouse_move_enables_dpms = false, key_press_enables_dpms = false } })' >/dev/null 2>&1
+      hyprctl dispatch "hl.dsp.dpms({ action = \\"disable\\", monitor = \\"$m\\" })" >/dev/null 2>&1
+    `, "blank", blankPath, name])
+  }
+  function wake(name) {
+    const names = name ? [name] : blanked
+    blanked = blanked.filter(n => names.indexOf(n) < 0)
+    for (const n of names) if (Model.safeOutput(n))
+      Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.dpms({ action = "enable", monitor = "' + n + '" })'])
+    if (!blanked.length) restoreWake()
+  }
+  // Puts the two options back as they were (only if Omacale changed them).
+  function restoreWake() {
+    Quickshell.execDetached(["sh", "-c", `
+      f="$1"; [ -f "$f" ] || exit 0
+      read -r mouse key < "$f"
+      case "$mouse" in true|false) ;; *) mouse=true ;; esac
+      case "$key" in true|false) ;; *) key=true ;; esac
+      hyprctl eval "hl.config({ misc = { mouse_move_enables_dpms = $mouse, key_press_enables_dpms = $key } })" >/dev/null 2>&1
+      rm -f "$f"
+    `, "restore", blankPath])
+  }
+  // A blanked screen woken some other way (lock, resume, Omarchy's own
+  // brightness "on") is no longer ours to keep dark.
+  property Timer blankPoll: Timer {
+    running: root.blanked.length > 0
+    interval: 2000
+    repeat: true
+    onTriggered: root.dpmsRead.running = true
+  }
+  property Process dpmsRead: Process {
+    command: ["hyprctl", "monitors", "-j"]
+    stdout: StdioCollector {
+      onStreamFinished: {
+        let list = []
+        try { list = JSON.parse(text) } catch (e) { return }
+        const awake = list.filter(m => m.dpmsStatus).map(m => m.name)
+        const still = root.blanked.filter(n => awake.indexOf(n) < 0)
+        if (still.length === root.blanked.length) return
+        root.blanked = still
+        if (!still.length) root.restoreWake()
+      }
+    }
+  }
+  // A shell (re)started with screens left dark by a previous one.
+  property Process blankRecover: Process {
+    running: true
+    command: ["sh", "-c", '[ -f "$1" ] || exit 0; hyprctl dispatch \'hl.dsp.dpms({ action = "enable" })\' >/dev/null 2>&1; echo stale', "recover", root.blankPath]
+    stdout: StdioCollector { onStreamFinished: if (text.trim() === "stale") root.restoreWake() }
+  }
 
   // ---------------------------------------------------------- identify
   // A big name on each screen for a moment (modules/display/DisplayIdentify).

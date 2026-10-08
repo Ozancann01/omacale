@@ -380,12 +380,9 @@ Item {
     // handover is in; Omarchy's own otherwise).
     const svc = Config.o.services
     if (a < alen(root) / 2) { if (cfg.scroll.volume) Quickshell.execDetached(["omarchy-audio-output-volume", (dy > 0 ? "+" : "-") + svc.volumeStep]) }
-    // The screen this bar is on, not the focused one (each display has its own).
-    else if (cfg.scroll.brightness && Config.o.display.linkBrightness && Quickshell.screens.length > 1)
-      // Linked: this screen steps (with its OSD), the others follow to the same level.
-      Quickshell.execDetached(["sh", "-c", 'omarchy-brightness-display --monitor "$1" "$2" >/dev/null; v=$(omarchy-brightness-display --monitor "$1"); shift 2; for m in "$@"; do omarchy-brightness-display --no-osd --monitor "$m" "$v%" >/dev/null 2>&1; done',
-        "scroll", screen.name, dy > 0 ? "+" + svc.brightnessStep + "%" : svc.brightnessStep + "%-"].concat(Quickshell.screens.map(s => s.name).filter(n => n !== screen.name)))
-    else if (cfg.scroll.brightness) Quickshell.execDetached(["omarchy-brightness-display", "--monitor", screen.name, dy > 0 ? "+" + svc.brightnessStep + "%" : svc.brightnessStep + "%-"])
+    // The screen this bar is on, not the focused one; DisplayService brings
+    // the others along when the displays share one brightness.
+    else if (cfg.scroll.brightness) DisplayService.stepBrightness(screen.name, dy > 0 ? "+" + svc.brightnessStep + "%" : svc.brightnessStep + "%-")
   }
 
   // Shared by the clock entry (ClockEntry reads bar.sysClock).

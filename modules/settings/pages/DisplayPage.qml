@@ -251,6 +251,40 @@ ColumnLayout {
     }
   }
 
+  // ---- this screen dark for now (DPMS), until "Turn on", a lock or a resume
+  ConnectedRect {
+    id: offRow
+    Layout.fillWidth: true
+    Layout.topMargin: Tk.spacing.small
+    first: true
+    last: true
+    visible: !!root.sel && root.sel.enabled
+    readonly property bool off: !!root.sel && DisplayService.blanked.indexOf(root.sel.name) >= 0
+    implicitHeight: bo.implicitHeight + Tk.padding.medium * 2
+    RowLayout {
+      id: bo
+      anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+      anchors.leftMargin: Tk.padding.largeIncreased; anchors.rightMargin: Tk.padding.medium
+      spacing: Tk.spacing.medium
+      MIcon { text: offRow.off ? "monitor" : "desktop_access_disabled"; size: Tk.iconSize.medium; color: Colours.m3onSurfaceVariant }
+      RowLabel {
+        Layout.fillWidth: true
+        text: offRow.off ? (root.sel ? root.sel.name : "") + " is off" : "Turn off for now"
+        subtext: offRow.off ? "It stays dark until you turn it on here, lock the screen or resume"
+          : root.sel && !DisplayService.canBlank(root.sel.name) ? "Another display has to stay on"
+          : "The screen goes dark; your layout and windows stay as they are"
+      }
+      IconTextButton {
+        type: offRow.off ? "filled" : "tonal"; isRound: true
+        icon: "power_settings_new"
+        text: offRow.off ? "Turn on" : "Turn off"
+        fontSize: Tk.body.small
+        disabled: !offRow.off && !(root.sel && DisplayService.canBlank(root.sel.name))
+        onClicked: offRow.off ? DisplayService.wake(root.sel.name) : DisplayService.blank(root.sel.name)
+      }
+    }
+  }
+
   DisplayProfiles {
     Layout.fillWidth: true
     visible: DisplayService.editable

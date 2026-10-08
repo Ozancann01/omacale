@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi, quickMode, quickEdits }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi, quickMode, quickEdits, canBlank, safeOutput }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -226,6 +226,21 @@ test("only the laptop / only the external turn the others off, never all", () =>
   // the turned-on one goes first, so no edit ever leaves zero displays on
   assert.strictEqual(l[0].enabled, true); assert.strictEqual(x[0].enabled, true)
   assert.deepStrictEqual(plain(D.quickEdits([m[0]], "external")), [])
+})
+
+// ---- turn a screen off for now (PR 10)
+test("a screen can be turned off while another stays lit", () => {
+  const m = ed()
+  assert.strictEqual(D.canBlank(m, [], "eDP-1"), true)
+  assert.strictEqual(D.canBlank(m, ["HDMI-A-1"], "eDP-1"), false)   // it would be the last one lit
+  assert.strictEqual(D.canBlank(m, ["eDP-1"], "eDP-1"), false)      // already off
+  const d = ed(); d[1].enabled = false
+  assert.strictEqual(D.canBlank(d, [], "eDP-1"), false)              // the other is disabled
+  assert.strictEqual(D.canBlank(d, [], "HDMI-A-1"), false)           // a disabled one isn't lit
+})
+test("only plain connector names reach a Hyprland command", () => {
+  assert.strictEqual(D.safeOutput("eDP-1"), true); assert.strictEqual(D.safeOutput("HDMI-A-1"), true)
+  assert.strictEqual(D.safeOutput('x" }) os.execute("rm'), false); assert.strictEqual(D.safeOutput(""), false)
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

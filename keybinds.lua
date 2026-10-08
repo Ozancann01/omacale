@@ -72,5 +72,9 @@ o.bind("SUPER + CTRL + code:19", "Omacale bar focus", "omarchy-shell omacale bar
 -- display key, and/or Super+P as on other desktops (it replaces Omarchy's pseudo-tile bind).
 -- o.bind("XF86Display", "Omacale display menu", "omarchy-shell omacale display menu")
 -- o.rebind("SUPER + P", "Omacale display menu", "omarchy-shell omacale display menu")          -- was: Pseudo window
+-- Brightness keys that move every display together when Settings › Display › "Same brightness
+-- on every display" is on (otherwise the focused one, as Omarchy's do).
+-- o.rebind("XF86MonBrightnessUp", "Omacale brightness up", "omarchy-shell omacale brightness +5% || omarchy-brightness-display +5%", { locked = true, repeating = true })    -- was: Brightness up
+-- o.rebind("XF86MonBrightnessDown", "Omacale brightness down", "omarchy-shell omacale brightness 5%- || omarchy-brightness-display 5%-", { locked = true, repeating = true })  -- was: Brightness down
 -- Details and actions for the focused window (also the chevron in the bar's active-window popout).
 -- o.bind("SUPER + ALT + I", "Omacale window info", "omarchy-shell omacale windowInfo")

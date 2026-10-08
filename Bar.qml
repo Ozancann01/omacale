@@ -48,7 +48,7 @@ Item {
   readonly property bool capsLock: Sys.capsLock
   readonly property bool numLock: Sys.numLock
 
-  readonly property string version: manifest && manifest.version ? manifest.version : "0.57.0"
+  readonly property string version: manifest && manifest.version ? manifest.version : "0.58.0"
 
   signal toggleRequested(string name, string screenName, string arg)
 
@@ -504,6 +504,13 @@ Item {
     function windowInfo(): void { root.toggle("windowInfo") }
     function dashboardTab(tab: string): void { root.toggle("dashboard", tab) }
     function close(): void { root.toggle("close") }
+    // The brightness keys (optional binds in keybinds.lua): the focused
+    // screen steps; with "Same brightness on every display" all of them do.
+    function brightness(step: string): void {
+      if (!/^(\+\d+%|\d+%-|\d+%)$/.test(step)) return
+      const m = Hyprland.focusedMonitor
+      DisplayService.stepBrightness(m ? m.name : (Quickshell.screens[0] ? Quickshell.screens[0].name : ""), step)
+    }
     // Settings › Display's pending change: keep | revert | status.
     function display(action: string): string {
       if (action === "menu") root.displayMenu()

@@ -286,3 +286,14 @@ function quickEdits(rows, mode) {
   if (mode === "external") return p.outer.map(on).concat([off(p.inner)])
   return []
 }
+
+// ------------------------------------------------- turn a screen off for now
+// A lit screen is on and not blanked; one may go dark while another stays lit.
+function canBlank(rows, blanked, name) {
+  var lit = (rows || []).filter(function (r) { return r.enabled && (blanked || []).indexOf(r.name) < 0 })
+  return lit.some(function (r) { return r.name === name }) && lit.length >= 2
+}
+
+// Names go into Hyprland Lua (dispatch/eval); Omarchy refuses anything but a
+// plain connector name too (omarchy-hyprland-monitor-clamshell).
+function safeOutput(name) { return /^[A-Za-z0-9._-]+$/.test(String(name || "")) }

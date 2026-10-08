@@ -70,6 +70,16 @@ Rectangle {
           onMoved: v => DisplayService.setBrightness(modelData, Math.max(1, v * 100))
         }
         MText { Layout.preferredWidth: Tk.px(36); horizontalAlignment: Text.AlignRight; text: Math.round(root.levels[modelData] || 0) + "%"; color: Colours.m3onSurfaceVariant; font.pointSize: Tk.body.small }
+        // Dark for now (Settings › Display › Turn off for now) and back.
+        IconButton {
+          readonly property bool off: DisplayService.blanked.indexOf(modelData) >= 0
+          type: "text"
+          toggle: true
+          checked: off
+          icon: "power_settings_new"
+          disabled: !off && !DisplayService.canBlank(modelData)
+          onClicked: off ? DisplayService.wake(modelData) : DisplayService.blank(modelData)
+        }
       }
     }
   }
