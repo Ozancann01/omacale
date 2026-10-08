@@ -157,9 +157,15 @@ function flippedOf(t) { return (t || 0) >= 4 }
 // A profile's layout as a string that ignores key order (dirty checks).
 function signature(profile) {
   var keys = ["key", "enabled", "mode", "x", "y", "scale", "transform", "mirror_of", "vrr", "bitdepth", "cm"]
-  return JSON.stringify(((profile && profile.outputs) || []).map(function (o) {
+  // Workspaces too (Settings › Display › Workspaces), keys sorted at every level.
+  function sorted(v) {
+    if (Array.isArray(v)) return v.map(sorted)
+    if (v && typeof v === "object") { var o = {}; Object.keys(v).sort().forEach(function (k) { o[k] = sorted(v[k]) }); return o }
+    return v
+  }
+  return JSON.stringify([((profile && profile.outputs) || []).map(function (o) {
     return keys.map(function (k) { return o[k] === undefined ? null : o[k] })
-  }))
+  }), sorted((profile && profile.workspaces) || null)])
 }
 
 function secondsLeft(deadline, now) {
@@ -321,3 +327,64 @@ function nightWanted(now, schedule, from, to, sunset, sunrise) {
 // The temperature slider: 2500 K (warmest) to 6000 K, 100 K steps.
 function kelvinAt(pos) { return Math.round((2500 + Math.max(0, Math.min(1, pos)) * 3500) / 100) * 100 }
 function kelvinPos(k) { return Math.max(0, Math.min(1, (k - 2500) / 3500)) }
+
+// --------------------------------------------------- workspaces per screen
+// A profile's `workspaces` (hyprmoncfg): `enabled`, `strategy` (manual /
+// sequential / interleave), `max_workspaces`, `group_size`, and `rules`.
+// Only rules for plain workspace numbers are Omacale's to edit; the others
+// (`f[1]s[false]`, `w[tv1]s[false]`, …) are passed through untouched.
+function wsClone(w) { return JSON.parse(JSON.stringify(w || {})) }
+function wsNumbered(r) { return /^\d+$/.test(String(r.workspace)) }
+
+function wsStrategy(w) {
+  if (!w || !w.enabled) return "off"
+  return w.strategy || "manual"
+}
+
+// As hyprmoncfg's own panel (Model.js workspaceStrategyChanges /
+// manualWorkspaceRulesFromPlan): off only disables; switching to manual with
+// no numbered rules of its own starts from the current plan.
+function wsStrategyEdit(w, choice, plan) {
+  var n = wsClone(w)
+  if (choice === "off") { n.enabled = false; return n }
+  n.enabled = true
+  n.strategy = choice
+  n.rules = n.rules || []
+  if (choice === "manual" && !n.rules.some(wsNumbered)) {
+    ;(plan || []).forEach(function (row) {
+      (row.workspaces || []).forEach(function (ws) {
+        n.rules.push({ workspace: String(ws), output_key: row.output_key, output_name: row.output_name })
+      })
+    })
+  }
+  return n
+}
+
+function wsAssigned(w) {
+  var out = {}
+  ;((w && w.rules) || []).forEach(function (r) { if (wsNumbered(r) && r.output_key) out[String(r.workspace)] = r.output_key })
+  return out
+}
+
+// One click on workspace `ws`: the next screen in `outputs` ({key, name}),
+// then none, then the first again. A rule left with nothing but its number
+// is dropped; one with other settings (default, persistent) is kept.
+function wsCycle(w, ws, outputs) {
+  var n = wsClone(w)
+  n.rules = n.rules || []
+  var i = n.rules.findIndex(function (r) { return String(r.workspace) === String(ws) })
+  var rule = i >= 0 ? n.rules[i] : { workspace: String(ws), output_key: "" }
+  var at = outputs.findIndex(function (o) { return o.key === rule.output_key })
+  var next = rule.output_key ? outputs[at + 1] : outputs[0]   // past the last one: none
+  if (next) { rule.output_key = next.key; rule.output_name = next.name }
+  else { rule.output_key = ""; delete rule.output_name }
+  var bare = !rule.output_key && Object.keys(rule).every(function (k) { return k === "workspace" || k === "output_key" })
+  if (i >= 0 && bare) n.rules.splice(i, 1)
+  else if (i >= 0) n.rules[i] = rule
+  else if (!bare) n.rules.push(rule)
+  return n
+}
+
+function wsPlanText(plan) {
+  return (plan || []).map(function (r) { return r.output_name + ": " + ((r.workspaces || []).length ? r.workspaces.join(" ") : "–") }).join(" · ")
+}

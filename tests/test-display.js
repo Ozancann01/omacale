@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi, quickMode, quickEdits, canBlank, safeOutput, nightWanted, clockMinutes, kelvinAt, kelvinPos }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi, quickMode, quickEdits, canBlank, safeOutput, nightWanted, clockMinutes, kelvinAt, kelvinPos, wsStrategy, wsStrategyEdit, wsAssigned, wsCycle, wsPlanText }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -265,6 +265,65 @@ test("sunset to sunrise follows the weather's times, or has no opinion without t
 test("temperature slider: 2500 K warm end to 6000 K, in 100 K steps", () => {
   assert.strictEqual(D.kelvinAt(0), 2500); assert.strictEqual(D.kelvinAt(1), 6000); assert.strictEqual(D.kelvinAt(0.43), 4000)
   assert.strictEqual(D.kelvinPos(4000), 1500 / 3500); assert.strictEqual(D.kelvinPos(9000), 1)
+})
+
+// ---- workspaces per screen (PR 12)
+const E = "boe|0x0910", H = "iiyama|pl2530h|0"
+const outs = [{ key: E, name: "eDP-1" }, { key: H, name: "HDMI-A-1" }]
+const ws = () => ({ enabled: true, strategy: "manual", max_workspaces: 9, group_size: 3, rules: [
+  { workspace: "1", output_key: "" },
+  { workspace: "4", output_key: E, output_name: "eDP-1", default: true, persistent: true },
+  { workspace: "5", output_key: E, output_name: "eDP-1" },
+  { workspace: "f[1]s[false]", output_key: "" }
+] })
+test("the strategy, with disabled meaning off", () => {
+  assert.strictEqual(D.wsStrategy(ws()), "manual")
+  assert.strictEqual(D.wsStrategy(Object.assign(ws(), { enabled: false })), "off")
+  assert.strictEqual(D.wsStrategy({ enabled: true }), "manual")
+  assert.strictEqual(D.wsStrategy(null), "off")
+})
+test("changing the strategy keeps everything else", () => {
+  const off = D.wsStrategyEdit(ws(), "off", [])
+  assert.strictEqual(off.enabled, false); assert.strictEqual(off.rules.length, 4)
+  const seq = D.wsStrategyEdit(Object.assign(ws(), { enabled: false }), "sequential", [])
+  assert.strictEqual(seq.enabled, true); assert.strictEqual(seq.strategy, "sequential"); assert.strictEqual(seq.group_size, 3)
+})
+test("manual from another strategy starts from the plan when it has no rules of its own", () => {
+  const plan = [{ output_key: E, output_name: "eDP-1", workspaces: ["1", "2"] }, { output_key: H, output_name: "HDMI-A-1", workspaces: ["3"] }]
+  const m = D.wsStrategyEdit({ enabled: true, strategy: "sequential", rules: [{ workspace: "w[tv1]", output_key: "" }] }, "manual", plan)
+  assert.deepStrictEqual(plain(D.wsAssigned(m)), { "1": E, "2": E, "3": H })
+  assert.ok(m.rules.some(r => r.workspace === "w[tv1]"), "special rules stay")
+})
+test("which screen each numbered workspace is on", () => {
+  assert.deepStrictEqual(plain(D.wsAssigned(ws())), { "4": E, "5": E })
+})
+test("a click moves a workspace to the next screen, then to none, keeping its other settings and the special rules", () => {
+  let w = D.wsCycle(ws(), "4", outs)                       // eDP-1 -> HDMI-A-1
+  let r4 = w.rules.find(r => r.workspace === "4")
+  assert.strictEqual(r4.output_key, H); assert.strictEqual(r4.output_name, "HDMI-A-1"); assert.strictEqual(r4.default, true)
+  w = D.wsCycle(w, "4", outs)                              // HDMI-A-1 -> none (kept: it has default/persistent)
+  r4 = w.rules.find(r => r.workspace === "4")
+  assert.strictEqual(r4.output_key, ""); assert.strictEqual(r4.output_name, undefined)
+  w = D.wsCycle(w, "4", outs)                              // none -> eDP-1
+  assert.strictEqual(w.rules.find(r => r.workspace === "4").output_key, E)
+  w = D.wsCycle(ws(), "7", outs)                           // a new one gets a rule
+  assert.strictEqual(w.rules.find(r => r.workspace === "7").output_key, E)
+  w = D.wsCycle(D.wsCycle(w, "7", outs), "7", outs)        // ...and loses it again at none (nothing else on it)
+  assert.strictEqual(w.rules.find(r => r.workspace === "7"), undefined)
+  assert.ok(w.rules.some(r => r.workspace === "f[1]s[false]"))
+  assert.strictEqual(ws().rules.find(r => r.workspace === "4").output_key, E, "the input isn't changed")
+})
+test("the plan as text", () => {
+  assert.strictEqual(D.wsPlanText([{ output_name: "eDP-1", workspaces: ["4", "5"] }, { output_name: "HDMI-A-1", workspaces: [] }]), "eDP-1: 4 5 · HDMI-A-1: –")
+})
+
+test("a workspace change counts as a change too (any key order)", () => {
+  const p = fx("editor.json").profile
+  p.workspaces = { enabled: true, strategy: "manual", rules: [{ workspace: "6", output_key: "a" }] }
+  const q = JSON.parse(JSON.stringify(p)); q.workspaces.rules[0].output_key = "b"
+  assert.notStrictEqual(D.signature(p), D.signature(q))
+  const r = JSON.parse(JSON.stringify(p)); r.workspaces = { rules: p.workspaces.rules, strategy: "manual", enabled: true }
+  assert.strictEqual(D.signature(p), D.signature(r))
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

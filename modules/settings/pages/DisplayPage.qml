@@ -289,6 +289,11 @@ ColumnLayout {
     Layout.fillWidth: true
     visible: DisplayService.editable
   }
+  DisplayWorkspaces {
+    Layout.fillWidth: true
+    visible: DisplayService.editable
+    settings: root.settings
+  }
 
   // ---- desktop-wide
   SectionHeader { row: ({ text: "All displays" }) }

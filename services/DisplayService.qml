@@ -272,7 +272,7 @@ QtObject {
   function reset() {
     lastError = ""
     editQueue = []
-    if (editorDoc) { draft = JSON.parse(JSON.stringify(editorDoc.profile)) }
+    if (editorDoc) { draft = JSON.parse(JSON.stringify(editorDoc.profile)); workspacePlan = editorDoc.workspace_plan || [] }
   }
 
   // ------------------------------------------------- preview / keep / revert

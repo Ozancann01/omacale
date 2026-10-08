@@ -190,4 +190,5 @@ DisplayQuick 1.0 modules/display/DisplayQuick.qml
 DisplayPage 1.0 modules/settings/pages/DisplayPage.qml
 DisplayEditor 1.0 modules/settings/pages/DisplayEditor.qml
 DisplayProfiles 1.0 modules/settings/pages/DisplayProfiles.qml
+DisplayWorkspaces 1.0 modules/settings/pages/DisplayWorkspaces.qml
 DisplaysCard 1.0 modules/utilities/DisplaysCard.qml
