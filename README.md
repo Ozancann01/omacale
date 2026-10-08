@@ -5,10 +5,29 @@ A [Caelestia](https://github.com/caelestia-dots/shell)-style desktop shell for [
 > **Omashell is built on [Omacale](https://github.com/AyushKr2003/omacale) by [AyushKr2003](https://github.com/AyushKr2003).** Nearly everything here started as Omacale: the frame, the bar, the drawers, the handovers and the settings app are AyushKr2003's work, which this fork extends (displays, profiles, night light, per-screen shell, theme sync, session menu, bar layout) under the same GPL-3.0 licence. All credit for the original goes to them; please star [the original](https://github.com/AyushKr2003/omacale) too.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/Ozancann01/omacale?label=release)](https://github.com/Ozancann01/omacale/releases/latest)
 
 ![Omashell preview](preview.webp)
 
 Omashell is a single Omarchy bar plugin (`omashell.bar`). It runs inside Omarchy's own shell: no extra daemon, no build step, no required Hyprland changes. Caelestia provides the look; Omarchy stays the engine.
+
+## What Omashell adds to Omacale
+
+Everything Omacale does, plus (details per version in the [changelog](CHANGELOG.md) and the [releases](https://github.com/Ozancann01/omacale/releases)):
+
+| Area | What you get |
+|---|---|
+| **Displays** (Settings › Display) | See and arrange your screens, change resolution, refresh rate, scale, rotation, mirroring, variable refresh, colour and bit depth with a 30-second keep-or-revert, Identify labels, details per screen. Needs [hyprmoncfg](https://github.com/crmne/hyprmoncfg) for changes; read-only without it. |
+| **Profiles** | Apply, save, delete hyprmoncfg layouts, automatic switching on or off. |
+| **Display menu** | Extend / Mirror / Only laptop / Only external, from a key or when a screen is plugged in. |
+| **Brightness** | A slider per screen (external ones over DDC), one brightness for every screen, the bar's scroll on its own screen, optional brightness keys that follow, turn a screen off for now. |
+| **Night light** | Warmth and a schedule (sunset to sunrise, or custom times). |
+| **Workspaces per screen** | Which workspaces live on which screen, saved in the profile. |
+| **Shell on each screen** | Bar on/off and its edge per screen, and where the desktop clock, notifications and OSD show. |
+| **Bar layout** | Drag any item between start, center and end; take items off and add them back; hide plugin widgets. |
+| **Theme** | Pickers everywhere, a whole theme from your wallpaper, colours that match Omarchy exactly, optionally Omarchy's own menus in your colours. |
+| **Session menu** | Super+Esc / power key open the session drawer, with Lock, Screensaver and your own picture. |
+| **Text and cursor** | Omarchy's text size and a cursor size that match on every screen. |
 
 ## Features
 
@@ -47,6 +66,10 @@ cd omashell
 ```
 
 The installer copies the plugin to `~/.config/omarchy/plugins/omashell.bar`, makes it the active bar, and records your previous setup so it can be restored.
+
+**Coming from Omacale?** Run the same `./install.sh`: it carries your Omacale settings, state and Hyprland binds over to Omashell (backups in `~/.local/state/omashell/`), rebuilds the hand-overs and sets the old plugin folder aside.
+
+To install a specific version, pick one from [Releases](https://github.com/Ozancann01/omacale/releases) (`git checkout v0.62.0`, then `./install.sh`).
 
 To update, pull and run the installer again. It upgrades in place: new plugin files, the notification and lock-screen handovers rebuilt for your Omarchy, and a shell restart. Your settings are kept, and `./uninstall.sh` still restores the setup from before the first install.
 
