@@ -217,7 +217,9 @@ Item {
     "omarchy.power": { popout: "battery" },
     "omarchy.keyboard-layout": { popout: "kblayout" },
     "omarchy.system-update": { popout: "update" },
-    "omarchy.active-window": { popout: "activewindow" }
+    "omarchy.active-window": { popout: "activewindow" },
+    // SUPER+CTRL+D (Omarchy's "Display"): Settings › Display.
+    "omarchy.monitor": { settings: "display" }
   })
   function popoutId(name) {
     for (const id in widgetTargets) if (widgetTargets[id].popout === name) return id
@@ -259,6 +261,10 @@ Item {
     if (barHidden) return false
     var t = widgetTargets[id]
     var s = scopeFor(screenName)
+    if (t && t.settings && s) {
+      toggleRequested("settings", s.screen.name, t.settings)
+      return true
+    }
     if (t && s) {
       if (t.onBar && s.statusPopouts().indexOf(t.popout) < 0) return false
       s.openPopoutKeys(t.popout)
@@ -277,6 +283,10 @@ Item {
   }
   function hideBarWidget(id) {
     var t = widgetTargets[id]
+    if (t && t.settings) {
+      for (const s of scopes) if (s.settings && s.nexusPage === t.settings) s.settings = false
+      return true
+    }
     if (t) {
       for (const s of scopes) if (s.popout === t.popout) s.popout = ""
       return true
@@ -293,6 +303,7 @@ Item {
   }
   function isBarWidgetOpen(id) {
     var t = widgetTargets[id]
+    if (t && t.settings) return scopes.some(s => s.settings && s.nexusPage === t.settings)
     if (t) {
       for (const s of scopes) if (s.popout === t.popout) return true
       return false
@@ -556,6 +567,11 @@ Item {
   readonly property string hyprLook: HyprLook.args
   // Omarchy's own menus in Omacale's colours, when chosen (services/OmarchySurfaces.qml).
   readonly property bool omarchySurfaces: OmarchySurfaces.on
+  // Settings › Display › Identify: every screen's name on it for a moment.
+  Variants {
+    model: DisplayService.identifying ? Quickshell.screens : []
+    DisplayIdentify {}
+  }
 
   // Transparency: blur the Omacale layer behind translucent surfaces. This is
   // a runtime Hyprland rule (hyprctl eval) — nothing is written to

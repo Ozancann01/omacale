@@ -19,7 +19,10 @@ QtObject {
 
   readonly property real spacing: Number(Tk.spaceScale.toFixed(4))
   readonly property int frameRounding: Tk.borderRounding
-  readonly property string args: spacing + " " + frameRounding
+  // Settings › Display › Cursor (omacale.lua's omacale_display).
+  readonly property int cursorSize: Config.o.display.cursorSize
+  readonly property string zeroScaling: Config.o.display.zeroScaling
+  readonly property string args: spacing + " " + frameRounding + " " + cursorSize + " " + zeroScaling
 
   // omacale.lua's 1x values and its rule, for Settings to show what Hyprland
   // should be running. Keep in step with omacale_scaled.
@@ -44,9 +47,15 @@ QtObject {
     command: ["bash", "-c", `
       d="\${XDG_STATE_HOME:-$HOME/.local/state}/omacale"
       mkdir -p "$d" || exit 1
-      printf -- '-- Written by Omacale (services/HyprLook.qml), read by omacale.lua.\\nreturn { spacing = %s, frameRounding = %s }\\n' "$1" "$2" > "$d/hypr.lua.tmp" \\
+      printf -- '-- Written by Omacale (services/HyprLook.qml), read by omacale.lua.\\nreturn { spacing = %s, frameRounding = %s, cursorSize = %s, zeroScaling = "%s" }\\n' "$1" "$2" "$3" "$4" > "$d/hypr.lua.tmp" \\
         && mv "$d/hypr.lua.tmp" "$d/hypr.lua"
-      hyprctl eval "if omacale_apply then omacale_apply({ spacing = $1, frameRounding = $2 }) end" >/dev/null 2>&1 || true
-    `, "hyprlook", String(root.spacing), String(root.frameRounding)]
+      hyprctl eval "if omacale_apply then omacale_apply({ spacing = $1, frameRounding = $2, cursorSize = $3, zeroScaling = \\"$4\\" }) end" >/dev/null 2>&1 || true
+      # A cursor size of the user's own, at once: Hyprland's cursor and GTK's.
+      if [ "$3" -gt 0 ]; then
+        theme=$(gsettings get org.gnome.desktop.interface cursor-theme 2>/dev/null | tr -d "'")
+        hyprctl setcursor "\${theme:-default}" "$3" >/dev/null 2>&1 || true
+        gsettings set org.gnome.desktop.interface cursor-size "$3" 2>/dev/null || true
+      fi
+    `, "hyprlook", String(root.spacing), String(root.frameRounding), String(root.cursorSize), root.zeroScaling]
   }
 }

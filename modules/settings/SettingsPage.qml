@@ -26,7 +26,8 @@ ColumnLayout {
     plugins: "pages/PluginsPage.qml", pluginInfo: "pages/PluginInfo.qml",
     trayIcons: "pages/TrayIcons.qml", barPlugins: "pages/PinnedPlugins.qml", barLayout: "pages/LayoutPage.qml",
     sessionPicture: "cards/SessionPicture.qml",
-    screens: "pages/ScreensCard.qml", screenSelect: "rows/ScreenSelect.qml"
+    screens: "pages/ScreensCard.qml", screenSelect: "rows/ScreenSelect.qml",
+    display: "pages/DisplayPage.qml"
   })
 
   RowLayout {

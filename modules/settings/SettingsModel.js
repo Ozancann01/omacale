@@ -93,6 +93,21 @@ var pages = [
     rows: [ { type: "custom", comp: "network" } ]
   },
   {
+    // Caelestia's nexus has a "Display" stub (PageRegistry, TODO); this is Omacale's.
+    id: "display", label: "Display", icon: "monitor", category: "connectivity",
+    description: "Arrangement, brightness, text size",
+    rows: [
+      { type: "custom", comp: "display" },
+      { type: "section", text: "Cursor" },
+      { type: "stepper", key: "display.cursorSize", label: "Cursor size", subtext: "0 keeps Omarchy's (or your own). Hyprland draws it at this size times each display's scale, so it matches on every display; apps started earlier keep the old size until restarted", from: 0, to: 96, step: 4 },
+      { type: "select", key: "display.zeroScaling", label: "X11 app scaling", subtext: "Zero scaling keeps X11 apps sharp but small on scaled displays. Needs omacale.lua loaded; lines after it in looknfeel.lua win", options: [
+        { value: "auto", label: "Leave as set", icon: "sync_alt" },
+        { value: "on", label: "Zero scaling (sharp)", icon: "texture" },
+        { value: "off", label: "Scaled (blurry, right size)", icon: "zoom_in" }
+      ] }
+    ]
+  },
+  {
     id: "bluetooth", label: "Connected devices", icon: "devices_other", noFill: true, category: "connectivity",
     description: "Bluetooth, pairing",
     rows: [ { type: "custom", comp: "bluetooth" } ]

@@ -321,6 +321,10 @@ QtObject {
         property bool autoFellBack: false
         property string fellBackVersion: ""
       }
+      property JsonObject display: JsonObject {
+        property int cursorSize: 0
+        property string zeroScaling: "auto"
+      }
       property JsonObject background: JsonObject {
         // Screens without the desktop clock and visualiser.
         property list<string> excludedScreens: []
