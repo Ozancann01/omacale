@@ -42,6 +42,9 @@ QtObject {
   }
 
   // ------------------------------------------------- hyprmoncfg socket
+  property var statusDoc: null            // hyprmoncfg's last status (profiles, auto switching)
+  readonly property var profiles: Model.profileRows(statusDoc)
+  readonly property var auto: Model.autoMode(statusDoc)
   property int seq: 0
   property var methods: ({})             // request id -> method, for its response
   function send(method, params) {
@@ -58,6 +61,8 @@ QtObject {
     const m = Model.fromStatus(status)
     if (m.length) monitors = m
     activeProfile = status.active_profile ? status.active_profile.name || "" : ""
+    statusDoc = status
+    hyprRead.running = true
     syncPreview(status.daemon ? status.daemon.preview : null)
     // The live layout moved (hotplug, a profile switch, a kept preview):
     // follow it, unless the user is in the middle of an edit.
@@ -71,11 +76,13 @@ QtObject {
       if (method === "edit_profile") { editPending = false; editQueue = []; }
       if (method === "preview") { endPreview(); previewPending = false }
       if (method === "commit" || method === "revert") actionPending = false
+      if (method === "save" || method === "delete" || method === "set_profile_auto") profileBusy = false
       return
     }
     const r = e.result || {}
     if (method === "editor_state") onEditor(r)
-    else if (method === "edit_profile") { draft = r.profile || draft; editPending = false; pump() }
+    else if (method === "edit_profile") { draft = r.profile || draft; workspacePlan = r.workspace_plan || workspacePlan; editPending = false; pump() }
+    else if (method === "save" || method === "delete" || method === "set_profile_auto") { profileBusy = false; send("status", {}); loadEditor() }
     else if (method === "preview") {
       transactionId = String(r.id || "")
       deadline = String(r.deadline || "")
@@ -108,12 +115,19 @@ QtObject {
   property Timer reconnect: Timer { interval: 750; onTriggered: if (root.holds > 0) root.probe.running = true }
 
   // ------------------------------------------------- hyprctl fallback
+  property var hyprInfo: ({})             // name -> serial, colour format, workspace, size
   property Process hyprRead: Process {
     command: ["hyprctl", "monitors", "all", "-j"]
     stdout: StdioCollector {
       onStreamFinished: {
+        let list = []
+        try { list = JSON.parse(text) } catch (e) { return }
+        // Details hyprmoncfg doesn't report (Settings › Display › Details).
+        const info = {}
+        for (const m of list) info[m.name] = { serial: m.serial || "", format: m.currentFormat || "", workspace: m.activeWorkspace ? m.activeWorkspace.name : "", physicalHeight: m.physicalHeight || 0, physicalWidth: m.physicalWidth || 0 }
+        root.hyprInfo = info
         if (root.backend === "hyprmoncfg" && root.sock.connected && root.monitors.length) return
-        try { root.monitors = Model.fromHypr(JSON.parse(text)) } catch (e) {}
+        root.monitors = Model.fromHypr(list)
       }
     }
   }
@@ -208,6 +222,7 @@ QtObject {
   readonly property var draftRows: Model.fromEditor(draft ? { profile: draft, displays: editorDoc ? editorDoc.displays : [] } : null)
   readonly property bool editable: backend === "hyprmoncfg" && sock.connected && !!draft
   readonly property bool dirty: !!draft && Model.signature(draft) !== savedSig
+  property var workspacePlan: []
   property bool editPending: false
   property var editQueue: []
   property string lastError: ""
@@ -218,14 +233,18 @@ QtObject {
     if (!doc || !doc.profile) return
     editorDoc = doc
     sourceProfile = String(doc.source_profile || "")
+    workspacePlan = doc.workspace_plan || []
     draft = JSON.parse(JSON.stringify(doc.profile))
     savedSig = Model.signature(doc.profile)
   }
   // Edits go one at a time, each on the draft the previous one returned.
-  function edit(key, fields) {
+  function edit(key, fields) { editProfile(Object.assign({ output_key: key }, fields)) }
+  // Any edit_profile edit: one output's fields (with output_key) or the
+  // profile's own (workspaces).
+  function editProfile(e) {
     if (!editable || previewBusy) return
     lastError = ""
-    editQueue = editQueue.concat([Object.assign({ output_key: key }, fields)])
+    editQueue = editQueue.concat([e])
     pump()
   }
   function pump() {
@@ -261,13 +280,27 @@ QtObject {
   // layout matched none) when kept; PR 8 adds naming and choosing profiles.
   function apply() {
     if (!editable || !dirty || previewBusy) return
-    lastError = ""
-    fromSettings = true
     const profile = JSON.parse(JSON.stringify(draft))
     profile.name = sourceProfile || "Omacale"
+    startPreview({ profile: profile, timeout_seconds: 30, save_on_commit: true }, true, true)
+  }
+  // A saved profile, tried the same way (kept as it is, nothing saved).
+  function applyProfile(name) {
+    if (!editable || previewBusy) return
+    if (dirty) { lastError = "Apply or reset your changes first"; return }
+    startPreview({ profile_name: name, timeout_seconds: 30 }, false, true)
+  }
+  // Every layout change goes through here: the daemon applies it, owns the
+  // 30-second deadline, and on Keep saves it if `save`.
+  property bool saveOnCommit: false
+  function startPreview(params, save, settings) {
+    if (!editable || previewBusy) return
+    lastError = ""
+    fromSettings = settings
+    saveOnCommit = save
     previewPending = true
     hold()                              // stay connected until it is kept or reverted
-    if (send("preview", { profile: profile, timeout_seconds: 30, save_on_commit: true }) === "") {
+    if (send("preview", params) === "") {
       previewPending = false
       lastError = "hyprmoncfg isn't reachable"
       release()
@@ -276,7 +309,7 @@ QtObject {
   function keep() {
     if (!confirming || actionPending) return
     actionPending = true
-    if (send("commit", { transaction_id: transactionId, save: true }) === "") actionPending = false
+    if (send("commit", { transaction_id: transactionId, save: saveOnCommit }) === "") actionPending = false
   }
   function revert() {
     if (!confirming || actionPending) return
@@ -331,6 +364,24 @@ QtObject {
       }
     }
   }
+
+  // ---------------------------------------------------------- profiles
+  // hyprmoncfg writes the profiles; Omacale asks it to.
+  property bool profileBusy: false
+  function profileCall(method, params) {
+    if (!editable || profileBusy || previewBusy) return
+    lastError = ""
+    profileBusy = true
+    if (send(method, params) === "") profileBusy = false
+  }
+  // The current layout (the draft, so unapplied edits included) under a name.
+  function saveAs(name) {
+    const profile = JSON.parse(JSON.stringify(draft))
+    profile.name = String(name).trim()
+    profileCall("save", { profile: profile })
+  }
+  function deleteProfile(name) { profileCall("delete", { name: name }) }
+  function setAuto(on) { profileCall("set_profile_auto", { enabled: on }) }
 
   // ---------------------------------------------------------- identify
   // A big name on each screen for a moment (modules/display/DisplayIdentify).

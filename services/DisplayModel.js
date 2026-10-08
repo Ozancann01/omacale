@@ -205,3 +205,34 @@ function brightnessTargets(levels, name, value, linked) {
   names.forEach(function (n) { out[n] = v })
   return out
 }
+
+// --------------------------------------------------------------- profiles
+// hyprmoncfg's status `profiles`: the one in use first, then the one it
+// recommends for the displays connected now, then by name. `shown` of
+// `total` is how many of the profile's displays are connected and on.
+function profileRows(status) {
+  var list = (status && status.profiles) || []
+  return list.map(function (p) {
+    return { name: String(p.name || ""), active: !!p.active, recommended: !!p.recommended, fits: !!p.exact_display_match,
+      shown: p.connected_enabled_outputs || 0, total: p.output_count || 0 }
+  }).sort(function (a, b) {
+    return (b.active - a.active) || (b.recommended - a.recommended) || a.name.localeCompare(b.name)
+  })
+}
+
+function nameTaken(status, name) {
+  var n = String(name || "").trim().toLowerCase()
+  return !!n && ((status && status.profiles) || []).some(function (p) { return String(p.name || "").toLowerCase() === n })
+}
+
+// Automatic switching is off while a profile is pinned (daemon.profile_override).
+function autoMode(status) {
+  var pinned = String((status && status.daemon && status.daemon.profile_override) || "")
+  return { auto: pinned === "", pinned: pinned }
+}
+
+// ---------------------------------------------------------------- details
+function diagonalInches(wmm, hmm) {
+  return wmm > 0 && hmm > 0 ? Math.round(Math.sqrt(wmm * wmm + hmm * hmm) / 25.4 * 10) / 10 : 0
+}
+function ppi(width, wmm) { return wmm > 0 ? Math.round(width / (wmm / 25.4)) : 0 }

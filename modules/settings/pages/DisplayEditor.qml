@@ -34,6 +34,46 @@ ColumnLayout {
       MText { Layout.maximumWidth: parent.width * 0.6; horizontalAlignment: Text.AlignRight; elide: Text.ElideRight; text: root.sel ? root.sel.label : ""; color: Colours.m3onSurfaceVariant }
     }
   }
+  // ---- details (collapsed): what the display is, from hyprmoncfg and Hyprland
+  property bool details: false
+  readonly property var info: sel ? (DisplayService.hyprInfo[sel.name] || {}) : ({})
+  readonly property real wmm: sel ? (sel.physicalWidth || info.physicalWidth || 0) : 0
+  readonly property real hmm: info.physicalHeight || 0
+  ConnectedRect {
+    Layout.fillWidth: true
+    implicitHeight: dl.implicitHeight + Tk.padding.medium * 2
+    RowLayout {
+      id: dl
+      anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+      anchors.leftMargin: Tk.padding.largeIncreased; anchors.rightMargin: Tk.padding.medium
+      MText { Layout.fillWidth: true; text: "Details" }
+      MIcon { text: root.details ? "expand_less" : "expand_more"; color: Colours.m3onSurfaceVariant }
+    }
+    StateLayer { onClicked: root.details = !root.details }
+  }
+  Repeater {
+    model: root.details && root.sel ? [
+      { label: "Connector", value: root.sel.name + (root.sel.internal ? " (built in)" : "") },
+      { label: "Serial", value: root.info.serial || "–" },
+      { label: "Size", value: root.wmm && root.hmm ? Model.diagonalInches(root.wmm, root.hmm) + "″ · " + root.wmm + " × " + root.hmm + " mm" : "–" },
+      { label: "Pixel density", value: root.wmm ? Model.ppi(root.sel.width, root.wmm) + " ppi" : "–" },
+      { label: "Colour format", value: root.info.format || "–" },
+      { label: "Workspace", value: root.info.workspace || "–" },
+      { label: "Mirrored by", value: root.monitors.filter(m => m.mirrorOf === root.key || m.mirrorOf === root.sel.name).map(m => m.name).join(", ") || "–" }
+    ] : []
+    ConnectedRect {
+      required property var modelData
+      Layout.fillWidth: true
+      implicitHeight: dr.implicitHeight + Tk.padding.small * 2
+      RowLayout {
+        id: dr
+        anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: Tk.padding.largeIncreased * 2; anchors.rightMargin: Tk.padding.largeIncreased
+        MText { Layout.fillWidth: true; text: modelData.label; color: Colours.m3onSurfaceVariant; font.pointSize: Tk.body.small }
+        MText { text: modelData.value; font.pointSize: Tk.body.small; color: Colours.m3onSurfaceVariant }
+      }
+    }
+  }
   RowToggle {
     Layout.fillWidth: true
     text: "Use this display"

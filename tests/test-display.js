@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -159,6 +159,37 @@ test("a brightness change goes to its display, or to every display when linked",
   assert.deepStrictEqual(plain(D.brightnessTargets(levels, "HDMI-A-1", 70.4, true)), { "eDP-1": 70, "HDMI-A-1": 70 })
   assert.deepStrictEqual(plain(D.brightnessTargets(levels, "", 0.2, true)), { "eDP-1": 1, "HDMI-A-1": 1 })   // never fully dark
   assert.deepStrictEqual(plain(D.brightnessTargets({}, "DP-2", 50, true)), { "DP-2": 50 })                   // levels not read yet
+})
+
+// ---- profiles and details (PR 8)
+const st = {
+  daemon: { running: true },
+  profiles: [
+    { name: "last", output_count: 2, connected_enabled_outputs: 2, exact_display_match: true, active: false, recommended: true },
+    { name: "llll", output_count: 1, connected_enabled_outputs: 1, exact_display_match: false, active: false, recommended: false },
+    { name: "sss", output_count: 2, connected_enabled_outputs: 2, exact_display_match: true, active: true, recommended: false }
+  ]
+}
+test("profiles: the active one first, then recommended, then by name", () => {
+  const r = D.profileRows(st)
+  assert.deepStrictEqual(plain(r.map(x => x.name)), ["sss", "last", "llll"])
+  assert.deepStrictEqual(plain(r[0]), { name: "sss", active: true, recommended: false, fits: true, shown: 2, total: 2 })
+  assert.strictEqual(r[2].fits, false)
+  assert.deepStrictEqual(plain(D.profileRows(null)), [])
+})
+test("a profile name is taken regardless of case and spaces around it", () => {
+  assert.strictEqual(D.nameTaken(st, " SSS "), true); assert.strictEqual(D.nameTaken(st, "work"), false); assert.strictEqual(D.nameTaken(st, ""), false)
+})
+test("automatic switching is on unless a profile is pinned", () => {
+  assert.deepStrictEqual(plain(D.autoMode(st)), { auto: true, pinned: "" })
+  assert.deepStrictEqual(plain(D.autoMode({ daemon: { profile_override: "llll" } })), { auto: false, pinned: "llll" })
+  assert.deepStrictEqual(plain(D.autoMode(null)), { auto: true, pinned: "" })
+})
+test("physical size as a diagonal in inches, and pixel density", () => {
+  assert.strictEqual(D.diagonalInches(340, 190), 15.3)
+  assert.strictEqual(D.diagonalInches(540, 300), 24.3)
+  assert.strictEqual(D.diagonalInches(0, 0), 0)
+  assert.strictEqual(D.ppi(1920, 340), 143); assert.strictEqual(D.ppi(1920, 0), 0)
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

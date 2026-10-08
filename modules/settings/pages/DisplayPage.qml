@@ -251,6 +251,11 @@ ColumnLayout {
     }
   }
 
+  DisplayProfiles {
+    Layout.fillWidth: true
+    visible: DisplayService.editable
+  }
+
   // ---- desktop-wide
   SectionHeader { row: ({ text: "All displays" }) }
   RowToggle {

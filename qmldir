@@ -187,4 +187,5 @@ DisplayIdentify 1.0 modules/display/DisplayIdentify.qml
 DisplayConfirm 1.0 modules/display/DisplayConfirm.qml
 DisplayPage 1.0 modules/settings/pages/DisplayPage.qml
 DisplayEditor 1.0 modules/settings/pages/DisplayEditor.qml
+DisplayProfiles 1.0 modules/settings/pages/DisplayProfiles.qml
 DisplaysCard 1.0 modules/utilities/DisplaysCard.qml
