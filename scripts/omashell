@@ -459,11 +459,25 @@ migrate_from_omacale() {
     [[ -f $f ]] && grep -qs 'omarchy-shell omacale\|plugins/omacale\.bar/omacale\.lua' "$f" || continue
     act "back up ${f#"$config_home"/}" cp --preserve=mode,timestamps -- "$f" "$state_dir/migrated-$(basename -- "$f")"
     act "point ${f#"$config_home"/} at Omashell" sed -i \
+      -e '/omarchy-shell omacale /s/"Omacale /"Omashell /' \
       -e 's/omarchy-shell omacale /omarchy-shell omashell /g' \
       -e 's#plugins/omacale\.bar/omacale\.lua#plugins/omashell.bar/omashell.lua#g' -- "$f"
   done
   moved_from_omacale=1
 }
+# Omacale's handover clones (notifications, OSD) carry its patch under the
+# old name ("omacale:headless-popups", omacaleDraws, …), so the scripts would
+# take them for clones with edits of their own and leave Omarchy drawing.
+# Rename the patch in the files that carry its marker; the scripts then
+# recognise and rebuild them. Every run, so a half-done move is finished.
+rename_omacale_clones() {
+  local f
+  for f in "$plugins_dir"/*/*.qml; do
+    [[ -f $f ]] && grep -qs 'omacale:' "$f" || continue
+    act "rename Omacale's patch in ${f#"$plugins_dir"/}" sed -i -e 's/omacale/omashell/g' -e 's/Omacale/Omashell/g' -- "$f"
+  done
+}
+
 # After the new plugin is in place: the old folder goes to the state folder
 # (kept, not deleted), so the shell no longer lists two bars.
 finish_omacale_move() {
@@ -482,6 +496,7 @@ cmd_install() {
     shell_running || fail "the Omarchy shell is not running; start it first (omarchy restart shell)"
   fi
   migrate_from_omacale
+  rename_omacale_clones
   if installed_state; then cmd_upgrade; finish_omacale_move; return; fi
   if [[ -f $shell_json ]]; then json_ok "$shell_json" || fail "$shell_json is not valid JSON; refusing to touch it"; fi
 
