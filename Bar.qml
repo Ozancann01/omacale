@@ -48,7 +48,7 @@ Item {
   readonly property bool capsLock: Sys.capsLock
   readonly property bool numLock: Sys.numLock
 
-  readonly property string version: manifest && manifest.version ? manifest.version : "0.58.0"
+  readonly property string version: manifest && manifest.version ? manifest.version : "0.59.0"
 
   signal toggleRequested(string name, string screenName, string arg)
 
@@ -595,6 +595,9 @@ Item {
     target: DisplayService
     function onPreviewEnded(fromSettings) { if (fromSettings) root.toggle("settings", "display") }
   }
+  // Night light's schedule lives in a singleton, created on first use: use
+  // it here so it runs from startup, not only once Settings is opened.
+  readonly property bool nightOn: NightLight.on
   // The display-switch menu, on the screen that had focus when it opened.
   property string quickScreen: ""
   function displayMenu() {

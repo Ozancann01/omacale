@@ -297,3 +297,27 @@ function canBlank(rows, blanked, name) {
 // Names go into Hyprland Lua (dispatch/eval); Omarchy refuses anything but a
 // plain connector name too (omarchy-hyprland-monitor-clamshell).
 function safeOutput(name) { return /^[A-Za-z0-9._-]+$/.test(String(name || "")) }
+
+// ------------------------------------------------------------- night light
+// Minutes since midnight from "HH:MM" or a local ISO time ("…T19:05", as
+// the weather fetch gives sunrise/sunset with timezone=auto); -1 if neither.
+function clockMinutes(t) {
+  var m = /(?:^|T)(\d{1,2}):(\d{2})/.exec(String(t || ""))
+  return m ? Number(m[1]) * 60 + Number(m[2]) : -1
+}
+
+// Whether the schedule wants the night light on at `now` (minutes since
+// midnight): true / false, or null when it has no say (schedule off, times
+// unknown, or an empty window). from..to may run over midnight.
+function nightWanted(now, schedule, from, to, sunset, sunrise) {
+  var a, b
+  if (schedule === "custom") { a = clockMinutes(from); b = clockMinutes(to) }
+  else if (schedule === "sun") { a = clockMinutes(sunset); b = clockMinutes(sunrise) }
+  else return null
+  if (a < 0 || b < 0 || a === b) return null
+  return a < b ? (now >= a && now < b) : (now >= a || now < b)
+}
+
+// The temperature slider: 2500 K (warmest) to 6000 K, 100 K steps.
+function kelvinAt(pos) { return Math.round((2500 + Math.max(0, Math.min(1, pos)) * 3500) / 100) * 100 }
+function kelvinPos(k) { return Math.max(0, Math.min(1, (k - 2500) / 3500)) }

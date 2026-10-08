@@ -183,6 +183,7 @@ singleton OmarchySurfaces 1.0 services/OmarchySurfaces.qml
 ScreensCard 1.0 modules/settings/pages/ScreensCard.qml
 ScreenSelect 1.0 modules/settings/rows/ScreenSelect.qml
 singleton DisplayService 1.0 services/DisplayService.qml
+singleton NightLight 1.0 services/NightLight.qml
 DisplayIdentify 1.0 modules/display/DisplayIdentify.qml
 DisplayConfirm 1.0 modules/display/DisplayConfirm.qml
 DisplayQuick 1.0 modules/display/DisplayQuick.qml

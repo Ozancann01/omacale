@@ -328,6 +328,12 @@ QtObject {
         property bool linkBrightness: false
         // Open the display-switch menu when a display is connected.
         property bool quickOnConnect: false
+        // Night light (services/NightLight.qml): temperature when on, and
+        // the schedule ("off", "sun" = sunset to sunrise, "custom").
+        property int nightTemp: 4000
+        property string nightSchedule: "off"
+        property string nightFrom: "20:00"
+        property string nightTo: "07:00"
       }
       property JsonObject background: JsonObject {
         // Screens without the desktop clock and visualiser.

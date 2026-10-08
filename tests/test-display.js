@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi, quickMode, quickEdits, canBlank, safeOutput }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets, profileRows, nameTaken, autoMode, diagonalInches, ppi, quickMode, quickEdits, canBlank, safeOutput, nightWanted, clockMinutes, kelvinAt, kelvinPos }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -241,6 +241,30 @@ test("a screen can be turned off while another stays lit", () => {
 test("only plain connector names reach a Hyprland command", () => {
   assert.strictEqual(D.safeOutput("eDP-1"), true); assert.strictEqual(D.safeOutput("HDMI-A-1"), true)
   assert.strictEqual(D.safeOutput('x" }) os.execute("rm'), false); assert.strictEqual(D.safeOutput(""), false)
+})
+
+// ---- night light (PR 11)
+test("clock minutes from HH:MM or a local ISO time", () => {
+  assert.strictEqual(D.clockMinutes("20:30"), 1230); assert.strictEqual(D.clockMinutes("2026-10-08T07:12"), 432)
+  assert.strictEqual(D.clockMinutes("junk"), -1); assert.strictEqual(D.clockMinutes(""), -1)
+})
+test("a custom schedule, including one over midnight", () => {
+  assert.strictEqual(D.nightWanted(21 * 60, "custom", "20:00", "07:00", "", ""), true)
+  assert.strictEqual(D.nightWanted(3 * 60, "custom", "20:00", "07:00", "", ""), true)
+  assert.strictEqual(D.nightWanted(12 * 60, "custom", "20:00", "07:00", "", ""), false)
+  assert.strictEqual(D.nightWanted(7 * 60, "custom", "20:00", "07:00", "", ""), false)     // ends at 07:00
+  assert.strictEqual(D.nightWanted(14 * 60, "custom", "13:00", "15:00", "", ""), true)     // same-day window
+  assert.strictEqual(D.nightWanted(14 * 60, "custom", "13:00", "13:00", "", ""), null)     // empty window: no opinion
+})
+test("sunset to sunrise follows the weather's times, or has no opinion without them", () => {
+  assert.strictEqual(D.nightWanted(19 * 60 + 30, "sun", "", "", "2026-10-08T19:05", "2026-10-08T07:40"), true)
+  assert.strictEqual(D.nightWanted(10 * 60, "sun", "", "", "2026-10-08T19:05", "2026-10-08T07:40"), false)
+  assert.strictEqual(D.nightWanted(10 * 60, "sun", "", "", "", ""), null)
+  assert.strictEqual(D.nightWanted(10 * 60, "off", "20:00", "07:00", "", ""), null)
+})
+test("temperature slider: 2500 K warm end to 6000 K, in 100 K steps", () => {
+  assert.strictEqual(D.kelvinAt(0), 2500); assert.strictEqual(D.kelvinAt(1), 6000); assert.strictEqual(D.kelvinAt(0.43), 4000)
+  assert.strictEqual(D.kelvinPos(4000), 1500 / 3500); assert.strictEqual(D.kelvinPos(9000), 1)
 })
 
 console.log(failed ? `${failed} failed` : "all passed")
