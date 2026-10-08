@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt, brightnessTargets }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -151,6 +151,14 @@ test("mirroring off puts the display to the right of the one it mirrored", () =>
   m[0].mirrorOf = m[1].key; m[0].x = m[1].x; m[0].y = m[1].y
   assert.deepStrictEqual(plain(D.unmirrorAt(m, m[0].key)), { x: 2586 + 1536, y: 0 })
   assert.strictEqual(D.unmirrorAt(m, m[1].key), null)   // not mirroring
+})
+
+test("a brightness change goes to its display, or to every display when linked", () => {
+  const levels = { "eDP-1": 38, "HDMI-A-1": 60 }
+  assert.deepStrictEqual(plain(D.brightnessTargets(levels, "HDMI-A-1", 70.4, false)), { "HDMI-A-1": 70 })
+  assert.deepStrictEqual(plain(D.brightnessTargets(levels, "HDMI-A-1", 70.4, true)), { "eDP-1": 70, "HDMI-A-1": 70 })
+  assert.deepStrictEqual(plain(D.brightnessTargets(levels, "", 0.2, true)), { "eDP-1": 1, "HDMI-A-1": 1 })   // never fully dark
+  assert.deepStrictEqual(plain(D.brightnessTargets({}, "DP-2", 50, true)), { "DP-2": 50 })                   // levels not read yet
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

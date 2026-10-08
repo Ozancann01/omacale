@@ -148,12 +148,28 @@ QtObject {
       }
     }
   }
+  readonly property bool linked: Config.o.display.linkBrightness
+  // omarchy-brightness-display holds one lock and quietly exits while another
+  // call runs (a DDC write takes a while), so parallel calls -- two displays,
+  // or a slider dragged over a slow monitor -- lost values, the last one
+  // included. One writer, one display after another, always ending on the
+  // latest value asked for.
+  property var brightPending: ({})
   function setBrightness(name, value) {
-    const b = Object.assign({}, brightness)
-    b[name] = Math.round(value)
-    brightness = b
-    Quickshell.execDetached(["omarchy-brightness-display", "--no-osd", "--monitor", name, Math.round(value) + "%"])
+    const t = Model.brightnessTargets(brightness, name, value, linked)
+    brightness = Object.assign({}, brightness, t)
+    brightPending = Object.assign({}, brightPending, t)
+    if (!brightWrite.running) brightFlush()
   }
+  function brightFlush() {
+    const args = []
+    for (const n in brightPending) args.push(n, String(brightPending[n]))
+    if (!args.length) return
+    brightPending = {}
+    brightWrite.command = ["sh", "-c", 'while [ $# -gt 1 ]; do omarchy-brightness-display --no-osd --monitor "$1" "$2%" >/dev/null 2>&1; shift 2; done', "bright"].concat(args)
+    brightWrite.running = true
+  }
+  property Process brightWrite: Process { onExited: root.brightFlush() }
 
   // -------------------------------------------------------- text size
   property int textSize: 0

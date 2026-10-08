@@ -253,9 +253,19 @@ ColumnLayout {
 
   // ---- desktop-wide
   SectionHeader { row: ({ text: "All displays" }) }
-  ConnectedRect {
+  RowToggle {
+    id: linkRow
     Layout.fillWidth: true
     first: true
+    visible: Object.keys(DisplayService.brightness).length > 1
+    text: "Same brightness on every display"
+    subtext: "One brightness for all: the sliders and scrolling on the bar move every display together"
+    checked: DisplayService.linked
+    onToggled: c => Config.set("display.linkBrightness", c)
+  }
+  ConnectedRect {
+    Layout.fillWidth: true
+    first: !linkRow.visible
     last: !DisplayService.hasInternal || !DisplayService.hasExternal || DisplayService.editable
     implicitHeight: tl.implicitHeight + Tk.padding.medium * 2
     RowLayout {

@@ -193,3 +193,15 @@ function unmirrorAt(rows, key) {
   var t = rows.find(function (r) { return r.key === m.mirrorOf || r.name === m.mirrorOf })
   return t ? { x: t.x + t.lw, y: t.y } : null
 }
+
+// Settings › Display › "Same brightness on every display": a change made on
+// one display goes to every display that reports a brightness. 1 at least,
+// so a slider dragged to the end never turns a backlight off.
+function brightnessTargets(levels, name, value, linked) {
+  var v = Math.max(1, Math.min(100, Math.round(value)))
+  var names = linked ? Object.keys(levels || {}) : []
+  if (name && names.indexOf(name) < 0) names.push(name)
+  var out = {}
+  names.forEach(function (n) { out[n] = v })
+  return out
+}

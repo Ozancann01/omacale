@@ -324,6 +324,8 @@ QtObject {
       property JsonObject display: JsonObject {
         property int cursorSize: 0
         property string zeroScaling: "auto"
+        // One brightness for every display (Settings › Display, the Displays card).
+        property bool linkBrightness: false
       }
       property JsonObject background: JsonObject {
         // Screens without the desktop clock and visualiser.

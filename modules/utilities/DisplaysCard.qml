@@ -33,9 +33,31 @@ Rectangle {
       spacing: Tk.spacing.medium
       MIcon { text: "brightness_6"; size: Tk.iconSize.medium; color: Colours.m3onSurfaceVariant }
       MText { Layout.fillWidth: true; text: "Displays"; font.pointSize: Tk.body.medium }
+      // Same brightness on every display (display.linkBrightness).
+      IconButton {
+        type: "text"
+        toggle: true
+        icon: "link"
+        checked: DisplayService.linked
+        onClicked: Config.set("display.linkBrightness", !DisplayService.linked)
+      }
+    }
+    // Linked: one slider, at the first display's level until it is moved.
+    RowLayout {
+      visible: DisplayService.linked
+      Layout.fillWidth: true
+      spacing: Tk.spacing.medium
+      MText { Layout.preferredWidth: Tk.px(80); text: "All displays"; color: Colours.m3onSurfaceVariant; font.pointSize: Tk.body.small; elide: Text.ElideRight }
+      MSlider {
+        Layout.fillWidth: true
+        implicitHeight: Tk.px(26)
+        value: (root.levels[root.names[0]] || 0) / 100
+        onMoved: v => DisplayService.setBrightness(root.names[0], v * 100)
+      }
+      MText { Layout.preferredWidth: Tk.px(36); horizontalAlignment: Text.AlignRight; text: Math.round(root.levels[root.names[0]] || 0) + "%"; color: Colours.m3onSurfaceVariant; font.pointSize: Tk.body.small }
     }
     Repeater {
-      model: root.names
+      model: DisplayService.linked ? [] : root.names
       RowLayout {
         required property string modelData
         Layout.fillWidth: true
