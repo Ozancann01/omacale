@@ -461,10 +461,11 @@ Item {
   component Section: GridLayout {
     id: box
     property var segList: []
-    // The Repeater's model, kept in step with segList by moving, inserting
-    // and removing rows: an entry that only moves (a drag in Settings, an
-    // icon folding behind the chevron) keeps its delegate, and a hosted
-    // widget its state, instead of the whole section being rebuilt.
+    // The Repeater's model, kept in step with segList row by row: an entry
+    // that stays where it is keeps its delegate (and a hosted widget its
+    // state) when others change, and one that folds behind the chevron or
+    // comes back only has its `drawer` flag changed; only what moved is made
+    // again, never the whole section.
     ListModel { id: segModel }
     function rowOf(seg) {
       return { segId: seg.id, kind: seg.kind, idsStr: seg.ids ? seg.ids.join(",") : "", pluginId: seg.pluginId || "", drawer: !!seg.drawer }
@@ -474,11 +475,12 @@ Item {
       for (let i = 0; i < next.length; i++) {
         let j = -1
         for (let k = i; k < segModel.count; k++) if (segModel.get(k).segId === next[i].id) { j = k; break }
-        if (j < 0) segModel.insert(i, rowOf(next[i]))
-        else {
-          if (j !== i) segModel.move(j, i, 1)
-          if (segModel.get(i).drawer !== !!next[i].drawer) segModel.setProperty(i, "drawer", !!next[i].drawer)
-        }
+        // Out of place: made again where it belongs. A ListModel move()
+        // reorders the Repeater's items but not the GridLayout they sit in,
+        // which kept drawing them in the old order.
+        if (j > i) segModel.remove(j)
+        if (j !== i) segModel.insert(i, rowOf(next[i]))
+        else if (segModel.get(i).drawer !== !!next[i].drawer) segModel.setProperty(i, "drawer", !!next[i].drawer)
       }
       while (segModel.count > next.length) segModel.remove(segModel.count - 1)
     }
