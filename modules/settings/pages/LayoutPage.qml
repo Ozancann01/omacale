@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Services.SystemTray
 import "../../.."
 import "../../../core/BarLayout.js" as BarLayout
 
@@ -70,7 +71,7 @@ Item {
       }
     }
     const it = BarLayout.ITEMS[id] || { label: id, icon: "help", key: "" }
-    const behind = root.layout.drawer.length
+    const behind = root.layout.drawer.length + root.limitFolded.length
     return {
       label: id === "plugins" ? "Plugin pill" : id === "overflow" ? "Chevron" : it.label, icon: it.icon, source: "",
       note: id === "overflow" ? (behind ? behind + " behind it" : "nothing behind it yet")
@@ -78,6 +79,32 @@ Item {
       error: false, key: it.key, page: BarLayout.PAGES[id] || "", plugin: false, pluginId: "", inPill: false, fresh: false
     }
   }
+  // Whether the bar draws an item now, decided as BarContent.onShow does:
+  // an item can be on and still draw nothing (an empty tray, no battery).
+  function drawnOnBar(id) {
+    if (BarLayout.isPlugin(id)) {
+      const pid = BarLayout.pluginOf(id)
+      return PluginService.barWidgets.some(p => p.id === pid) && !(root.pillIds.indexOf(pid) >= 0 && PluginService.barMode(pid) === "hidden")
+    }
+    if (id === "plugins") return root.pillMembers.length > 0 && PluginService.itemShown(id)
+    if (id === "tray") return Config.o.bar.tray.enabled && SystemTray.items.values.some(i => i.status !== Status.Passive
+      && Config.o.bar.tray.hiddenIcons.indexOf(i.id) < 0)
+    if (BarLayout.STATUS.indexOf(id) >= 0) return PluginService.statusOn(id)
+    return PluginService.itemShown(id)
+  }
+  // The items the "at most N icons" limit puts behind the chevron, worked out
+  // by the bar's own BarLayout.render.
+  readonly property var limitFolded: {
+    const max = Config.o.bar.layout.maxShown
+    if (max <= 0) return []
+    const r = BarLayout.render(root.layout, max, id => root.drawnOnBar(id))
+    const drawer = root.layout.drawer
+    const out = []
+    for (const sec of BarLayout.SECTIONS)
+      for (const e of r[sec]) if (e.drawer && drawer.indexOf(e.id) < 0) out.push(e.id)
+    return out
+  }
+
   function openSettings(it) {
     if (it.plugin) { root.settings.selectedPlugin = it.pluginId; root.settings.push("pluginInfo") }
     else if (it.page) root.settings.push(it.page)
@@ -267,7 +294,10 @@ Item {
         MText {
           Layout.fillWidth: true
           readonly property string note: r.it.error ? r.it.note
-            : !r.off && !r.isShown ? "hidden" : r.child && r.mode === "overflow" ? "behind the pill's chevron" : r.it.note
+            : !r.off && !r.isShown ? "hidden" : r.child && r.mode === "overflow" ? "behind the pill's chevron"
+            : r.list !== "drawer" && root.limitFolded.indexOf(r.modelData) >= 0 ? "behind the chevron (icon limit)"
+            : !r.off && !r.child && r.list !== "removed" && !r.it.plugin && !root.drawnOnBar(r.modelData) ? "nothing to show now"
+            : r.it.note
           visible: note !== ""
           text: "· " + note
           color: r.it.error ? Colours.m3error : Colours.m3outline
