@@ -4,6 +4,15 @@ Omashell is a fork of [Omacale](https://github.com/AyushKr2003/omacale) by [Ayus
 
 ## Unreleased
 
+- Settings › Taskbar no longer shows the small picture of the bar above the list: it didn't always match the real bar.
+
+## 1.1.0 — Dock
+
+- **A dock** (Settings › Panels › Dock, off by default): your pinned apps, then the apps with open windows, a dot per window. It grows out of the screen frame on any edge but the bar's (opposite the bar by default). Show it always (windows make room), on hover at its edge (auto-hide), or until a window covers it (smart); SUPER+CTRL+SHIFT+D (keybinds.lua) or `omashell dock` shows or hides it. Click to open or focus an app (again to cycle its windows), middle-click for a new window, right-click for Pin, New window, Move here and Close. Pinned apps can be reordered in Settings, and pinned from Settings › Apps › App info. Its first pins are your launcher favourites.
+- The dock's icons grow as the pointer passes over them, with the app's name beside the one under it (Magnify on hover, Names). Drag an icon along the dock to reorder the pins, or drop an open app among them to pin it.
+- **Window previews in the dock**: rest the pointer on an open app and its windows show live beside the dock, with their titles; click one to go to it, or close it from its corner (Window previews).
+- The dock can count only this screen's windows, or only its current workspace's (Settings › Panels › Dock › Which windows).
+- Settings rows can depend on one of several values (`when: { key, values }`).
 - **App icons show again with a missing icon theme.** Omarchy's vantablack theme names the `Yaru-gray` icon theme, which the current Yaru package no longer has, and Qt then found no app icons at all: the launcher, Settings › Apps and notifications showed blanks. Omashell now finds the icon files itself when the theme can't.
 
 ## 1.0.0 — Omashell

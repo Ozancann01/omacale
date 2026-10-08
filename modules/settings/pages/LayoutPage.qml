@@ -1,15 +1,12 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Services.SystemTray
 import "../../.."
 import "../../../core/BarLayout.js" as BarLayout
 
 // Settings › Taskbar's bar: everything in it (bar.layout), Noctalia-style; no
 // Caelestia original.
 //
-// On top, a small picture of the bar (BarPreview); clicking an icon there
-// shows its row. Below, the sections, and in each the items grouped as the
-// bar draws them: neighbours that share a pill (BarLayout.groups) sit in one
+// The sections, and in each the items grouped as the bar draws them: neighbours that share a pill (BarLayout.groups) sit in one
 // card. Omashell's own items, Omarchy's widgets and plugins are rows alike;
 // only the last two carry a chip. The chevron's row opens to what is behind
 // it (bar.layout.drawer) and the "at most N icons" limit; the plugin pill's
@@ -81,22 +78,6 @@ Item {
       error: false, key: it.key, page: BarLayout.PAGES[id] || "", plugin: false, pluginId: "", inPill: false, fresh: false
     }
   }
-  // For the preview: whether an item is on show, and its icon.
-  function isShown(id) {
-    if (BarLayout.isPlugin(id)) {
-      const pid = BarLayout.pluginOf(id)
-      return PluginService.barWidgets.some(p => p.id === pid) && !(root.pillIds.indexOf(pid) >= 0 && PluginService.barMode(pid) === "hidden")
-    }
-    if (id === "plugins") return root.pillMembers.length > 0 && PluginService.itemShown(id)
-    if (id === "overflow") return root.layout.drawer.length > 0 || Config.o.bar.layout.maxShown > 0
-    // As TrayEntry: on, with an icon that isn't passive or hidden.
-    if (id === "tray") return Config.o.bar.tray.enabled && SystemTray.items.values.some(i => i.status !== Status.Passive
-      && Config.o.bar.tray.hiddenIcons.indexOf(i.id) < 0)
-    if (BarLayout.STATUS.indexOf(id) >= 0) return PluginService.statusOn(id)
-    return PluginService.itemShown(id)
-  }
-  function iconOf(id) { return root.info(id).icon }
-
   function openSettings(it) {
     if (it.plugin) { root.settings.selectedPlugin = it.pluginId; root.settings.push("pluginInfo") }
     else if (it.page) root.settings.push(it.page)
@@ -120,18 +101,6 @@ Item {
     const s = sections[list]
     return s ? rowsOf(s, list, []).sort((a, b) => a.mapToItem(root, 0, 0).y - b.mapToItem(root, 0, 0).y) : []
   }
-  // The preview's click: scroll the row into view and flash it.
-  function showRow(id) {
-    let target = null
-    for (const l of lists) for (const r of rowsFor(l)) if (r.modelData === id) target = r
-    if (id !== "overflow" && root.layout.drawer.indexOf(id) >= 0) chevronOpen = true
-    if (!target || !flick) return
-    const y = target.mapToItem(flick.contentItem, 0, 0).y
-    const max = Math.max(0, flick.contentHeight - flick.height + (flick.bottomMargin || 0))
-    flick.contentY = Math.max(-(flick.topMargin || 0), Math.min(max, y - flick.height / 3))
-    target.flash()
-  }
-
   // ------------------------------------------------------------- add list
   // Every bar widget that is nowhere in the bar: not placed, not in the pill
   // (third-party ones that are on are always there), not taken off. Omarchy's
@@ -256,25 +225,10 @@ Item {
     property bool foldable: false
     property bool folded: false
     signal toggleFold()
-    function flash() { flashAnim.restart() }
 
     Layout.fillWidth: true
     implicitHeight: rl.implicitHeight + Tk.padding.small * 2
     opacity: root.dragId === modelData ? 0.3 : 1
-
-    Rectangle {
-      id: veil
-      anchors.fill: parent
-      radius: Tk.rounding.small
-      color: Colours.m3primary
-      opacity: 0
-      SequentialAnimation {
-        id: flashAnim
-        NumberAnimation { target: veil; property: "opacity"; to: 0.25; duration: 120 }
-        PauseAnimation { duration: 300 }
-        NumberAnimation { target: veil; property: "opacity"; to: 0; duration: 600 }
-      }
-    }
 
     RowLayout {
       id: rl
@@ -440,14 +394,6 @@ Item {
     anchors.left: parent.left
     anchors.right: parent.right
     spacing: Tk.spacing.extraSmall / 2
-
-    BarPreview {
-      Layout.fillWidth: true
-      Layout.bottomMargin: Tk.spacing.small
-      layout: root.layout
-      page: root
-      onPicked: id => root.showRow(id)
-    }
 
     // The three sections, each its groups.
     Repeater {
