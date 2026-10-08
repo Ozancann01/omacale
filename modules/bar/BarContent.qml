@@ -463,6 +463,7 @@ Item {
   component Section: GridLayout {
     id: box
     property var segList: []
+    property string sec
     property alias rep: srep
     readonly property bool any: {
       void root.layoutGen
@@ -476,8 +477,19 @@ Item {
     columns: root.vertical ? 1 : -1
     rows: root.vertical ? -1 : 1
     flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-    rowSpacing: root.gap
-    columnSpacing: root.gap
+    // The gaps are each Loader's leading margin instead (`lead`), so one that
+    // folds behind the chevron takes its gap with it, gradually.
+    rowSpacing: 0
+    columnSpacing: 0
+    // The first entry on show: it has no gap before it.
+    readonly property Item firstShown: {
+      void root.layoutGen
+      for (let i = 0; i < srep.count; i++) {
+        const l = srep.itemAt(i)
+        if (l && l.item && l.item.shown && l.foldProg > 0.001) return l
+      }
+      return null
+    }
     // Neighbouring pills (status icons, widgets) share one pill: runs of
     // shown entries that are `joinable`, as [{ a, b }] (first and last
     // Loader). Each joined entry drops its own background and its padding on
@@ -489,7 +501,7 @@ Item {
       for (let i = 0; i < srep.count; i++) {
         const l = srep.itemAt(i)
         const it = l ? l.item : null
-        if (!it || !it.shown || l.folded) continue      // hidden: takes no room, joins nothing
+        if (!it || !it.shown || l.foldProg <= 0.001) continue      // hidden: takes no room, joins nothing
         if (it.joinable === true) {
           if (cur) { cur.b = l; cur.n++ } else { cur = { a: l, b: l, n: 1 } }
         } else { if (cur) out.push(cur); cur = null }
@@ -513,15 +525,48 @@ Item {
       Loader {
         id: ld
         required property var modelData
+        required property int index
         readonly property var join: { void box.runs; return box.joinOf(ld) }
         Binding { target: ld.item; property: "joinBefore"; value: ld.join.before; when: !!ld.item && ld.item.joinable === true }
         Binding { target: ld.item; property: "joinAfter"; value: ld.join.after; when: !!ld.item && ld.item.joinable === true }
         // Behind the chevron, and it is closed.
         readonly property bool folded: !!modelData.drawer && !root.drawerOpen
+        // How far it is unfolded, 0..1. The chevron's items come out one after
+        // another from the chevron's side (and go back the other way round):
+        // its length, its gap, its opacity and a short slide follow this.
+        readonly property bool drawer: !!modelData.drawer
+        readonly property int drawerCount: box.segList.filter(s => s.drawer).length
+        readonly property int drawerOrder: {
+          if (!drawer) return 0
+          const n = box.segList.slice(0, index).filter(s => s.drawer).length
+          // Counted from the chevron: in the end section it is after them.
+          return box.sec === "end" ? drawerCount - 1 - n : n
+        }
+        property real foldProg: folded ? 0 : 1
+        Behavior on foldProg {
+          SequentialAnimation {
+            PauseAnimation { duration: (ld.folded ? ld.drawerCount - 1 - ld.drawerOrder : ld.drawerOrder) * 35 }
+            Anim { type: "spatial" }
+          }
+        }
+        // A gap before every entry but the first on show.
+        readonly property real lead: box.firstShown === ld ? 0 : root.gap * foldProg
+        Layout.topMargin: root.vertical ? lead : 0
+        Layout.leftMargin: root.vertical ? 0 : lead
+        Layout.preferredHeight: drawer && root.vertical && item ? item.implicitHeight * foldProg : -1
+        Layout.preferredWidth: drawer && !root.vertical && item ? item.implicitWidth * foldProg : -1
+        clip: drawer && foldProg < 1
+        opacity: drawer ? foldProg : 1
+        // Toward the chevron while folding: before it in the end section.
+        transform: Translate {
+          readonly property real d: ld.drawer ? (1 - ld.foldProg) * root.cellLen * (box.sec === "end" ? 1 : -1) : 0
+          x: root.vertical ? 0 : d
+          y: root.vertical ? d : 0
+        }
         Layout.fillWidth: !!item && item.Layout.fillWidth
         Layout.fillHeight: !!item && item.Layout.fillHeight
         Layout.alignment: item ? item.Layout.alignment : 0
-        visible: !!item && item.shown && !folded
+        visible: !!item && item.shown && foldProg > 0.001
         sourceComponent: root.entryComponent(modelData)
         onLoaded: {
           if (modelData.kind === "status") item.ids = modelData.ids
@@ -580,6 +625,7 @@ Item {
     Section {
       id: startBox
       segList: root.segs.start
+      sec: "start"
       x: 0; y: 0
       width: root.vertical ? col.width : root.startLen
       height: root.vertical ? root.startLen : col.height
@@ -587,6 +633,7 @@ Item {
     Section {
       id: centerBox
       segList: root.segs.center
+      sec: "center"
       x: root.vertical ? 0 : root.centerPos
       y: root.vertical ? root.centerPos : 0
       width: root.vertical ? col.width : root.centerLen
@@ -595,6 +642,7 @@ Item {
     Section {
       id: endBox
       segList: root.segs.end
+      sec: "end"
       x: root.vertical ? 0 : col.width - root.endLen
       y: root.vertical ? col.height - root.endLen : 0
       width: root.vertical ? col.width : root.endLen

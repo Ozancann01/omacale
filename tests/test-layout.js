@@ -4,7 +4,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../core/BarLayout.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const L = {}
-vm.runInNewContext(src + "\nthis.L = { SECTIONS, STATUS, ITEMS, defaults, resolve, segments, place, takeOut, putBack, sectionLabel, isPlugin, pluginOf, flexSection, adoptNew, appendEnd, sourceOf, render, foldable, DUPLICATES, NEVER }", L)
+vm.runInNewContext(src + "\nthis.L = { SECTIONS, STATUS, ITEMS, defaults, resolve, segments, place, takeOut, putBack, sectionLabel, isPlugin, pluginOf, flexSection, adoptNew, appendEnd, sourceOf, render, foldable, joinable, groups, DUPLICATES, NEVER }", L)
 const B = L.L
 let failed = 0
 function test(name, fn) {
@@ -220,6 +220,15 @@ test("segments: a drawer item never shares a run with one on the bar", () => {
 test("adoption leaves a widget in the drawer there", () => {
   const l = B.place(B.defaults(), "plugin:omarchy.agents", "drawer", 0, [])
   eq(B.adoptNew(l, [W("omarchy.agents", true)], [], false, []).layout, l)
+})
+
+test("groups: neighbouring joinable items form one pill group", () => {
+  eq(B.groups(["clock", "overflow", "network", "plugin:a.b", "power", "workspaces", "tray"]), [
+    { pill: false, ids: ["clock"] },
+    { pill: true, ids: ["overflow", "network", "plugin:a.b", "power"] },
+    { pill: false, ids: ["workspaces"] },
+    { pill: true, ids: ["tray"] }])
+  eq(B.groups([]), [])
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

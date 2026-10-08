@@ -286,6 +286,24 @@ function appendEnd(layout, id) {
   return place(layout, id, "end", e.length && e[e.length - 1] === "power" && id !== "power" ? e.length - 1 : e.length, [])
 }
 
+// Items that share a pill with their neighbours on the bar (each such
+// entry's `joinable`, BarContent's Section.runs): Settings groups them the
+// same way.
+function joinable(id) {
+  return isPlugin(id) || STATUS.indexOf(id) >= 0 || id === "tray" || id === "plugins" || id === "power" || id === "overflow"
+}
+// A section's ids as Settings shows them: runs of neighbouring joinable ids
+// as one pill group ({ pill: true }), anything else a group of its own.
+function groups(ids) {
+  var out = []
+  for (var i = 0; i < ids.length; i++) {
+    var j = joinable(ids[i]), last = out.length ? out[out.length - 1] : null
+    if (j && last && last.pill) last.ids.push(ids[i])
+    else out.push({ pill: j, ids: [ids[i]] })
+  }
+  return out
+}
+
 // What a widget is in Settings › Taskbar: "omarchy" (Omarchy's own) or
 // "plugin" (third-party); built-ins are "omashell".
 function sourceOf(id, firstPartyIds) {

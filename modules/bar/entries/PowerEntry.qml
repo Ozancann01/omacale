@@ -19,8 +19,11 @@ Item {
   property bool joinBefore: false
   property bool joinAfter: false
   readonly property bool joined: joinBefore || joinAfter
-  readonly property real padStart: joined && !joinBefore ? Tk.padding.medium : 0
-  readonly property real padEnd: joined && !joinAfter ? Tk.padding.medium : 0
+  property real padStart: joined && !joinBefore ? Tk.padding.medium : 0
+  property real padEnd: joined && !joinAfter ? Tk.padding.medium : 0
+  // Joining and parting glide (a Behavior needs a plain property).
+  Behavior on padStart { Anim {} }
+  Behavior on padEnd { Anim {} }
   readonly property real iconLen: powerIcon.implicitHeight + (bar.vertical ? 0 : Tk.padding.small)
   implicitWidth: bar.vertical ? (joined ? Tk.barInner : powerIcon.implicitHeight + Tk.padding.small) : iconLen + padStart + padEnd
   implicitHeight: bar.vertical ? iconLen + padStart + padEnd : powerIcon.implicitHeight

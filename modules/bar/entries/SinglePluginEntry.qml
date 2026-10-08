@@ -29,6 +29,8 @@ Item {
   // Behind a closed chevron (BarContent's Loader): the pill lives on the
   // overlay, outside the Loader, so it has to hide itself.
   readonly property bool folded: !!parent && parent.folded === true
+  // How far its Loader is unfolded (BarContent): the overlay pill follows it.
+  readonly property real fold: !!parent && parent.foldProg !== undefined ? parent.foldProg : 1
   readonly property bool joinable: true
   property bool joinBefore: false
   property bool joinAfter: false
@@ -44,18 +46,22 @@ Item {
     id: pill
     parent: singlePluginEntry.bar.overlay
     // The padding at each end of the pill, along the bar, as the plugin pill's.
-    readonly property real padStart: singlePluginEntry.joinBefore ? 0 : Tk.padding.medium
-    readonly property real padEnd: singlePluginEntry.joinAfter ? 0 : Tk.padding.medium
+    property real padStart: singlePluginEntry.joinBefore ? 0 : Tk.padding.medium
+    property real padEnd: singlePluginEntry.joinAfter ? 0 : Tk.padding.medium
+    // Joining and parting glide (a Behavior needs a plain property).
+    Behavior on padStart { Anim {} }
+    Behavior on padEnd { Anim {} }
     readonly property real slotLen: !singlePluginEntry.slot ? 0
       : singlePluginEntry.bar.vertical ? singlePluginEntry.slot.implicitHeight : singlePluginEntry.slot.implicitWidth
-    visible: slotLoader.active && !singlePluginEntry.folded
-    opacity: singlePluginEntry.shown ? 1 : 0
+    visible: slotLoader.active && singlePluginEntry.fold > 0.001
+    opacity: singlePluginEntry.shown ? singlePluginEntry.fold : 0
     x: singlePluginEntry.ox
     y: singlePluginEntry.oy
     implicitWidth: singlePluginEntry.bar.vertical ? Tk.barInner : (singlePluginEntry.shown ? slotLen + padStart + padEnd : 0)
     implicitHeight: singlePluginEntry.bar.vertical ? (singlePluginEntry.shown ? slotLen + padStart + padEnd : 0) : Tk.barInner
-    width: implicitWidth
-    height: implicitHeight
+    // Drawn as long as its Loader is unfolded; the placeholder keeps the full size.
+    width: singlePluginEntry.bar.vertical ? implicitWidth : implicitWidth * singlePluginEntry.fold
+    height: singlePluginEntry.bar.vertical ? implicitHeight * singlePluginEntry.fold : implicitHeight
     radius: (singlePluginEntry.bar.vertical ? width : height) / 2
     color: singlePluginEntry.joinBefore || singlePluginEntry.joinAfter ? "transparent" : Colours.m3surfaceContainer
     clip: true

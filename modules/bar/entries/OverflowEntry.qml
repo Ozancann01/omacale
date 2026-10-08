@@ -31,8 +31,11 @@ Item {
   property bool joinBefore: false
   property bool joinAfter: false
   readonly property bool joined: joinBefore || joinAfter
-  readonly property real padStart: joinBefore ? 0 : Tk.padding.medium
-  readonly property real padEnd: joinAfter ? 0 : Tk.padding.medium
+  property real padStart: joinBefore ? 0 : Tk.padding.medium
+  property real padEnd: joinAfter ? 0 : Tk.padding.medium
+  // Joining and parting glide (a Behavior needs a plain property).
+  Behavior on padStart { Anim {} }
+  Behavior on padEnd { Anim {} }
   // In the end section the items open on its start side (BarLayout.render).
   readonly property bool opensBack: { const f = BarLayout.find(bar.layout, "overflow"); return !!f && f.sec === "end" }
   readonly property real iconLen: bar.vertical ? icon.implicitHeight : icon.implicitWidth

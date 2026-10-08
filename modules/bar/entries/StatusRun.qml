@@ -37,8 +37,11 @@ Rectangle {
   readonly property bool joinable: true
   property bool joinBefore: false
   property bool joinAfter: false
-  readonly property real padStart: joinBefore ? 0 : Tk.padding.medium
-  readonly property real padEnd: joinAfter ? 0 : Tk.padding.medium
+  property real padStart: joinBefore ? 0 : Tk.padding.medium
+  property real padEnd: joinAfter ? 0 : Tk.padding.medium
+  // Joining and parting glide (a Behavior needs a plain property).
+  Behavior on padStart { Anim {} }
+  Behavior on padEnd { Anim {} }
   implicitWidth: bar.vertical ? Tk.barInner : statusCol.implicitWidth + padStart + padEnd
   implicitHeight: bar.vertical ? statusCol.implicitHeight + padStart + padEnd : Tk.barInner
   radius: (bar.vertical ? width : height) / 2
