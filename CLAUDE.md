@@ -349,6 +349,8 @@ Omarchy's `omarchy.lock` service owns the session lock, PAM, the stranded-lock r
 
 The version lives in `manifest.json`, `scripts/omashell` (`VERSION`) and the fallback in `Bar.qml`; bump all three together (minor for features, patch for fixes).
 
+**Each version also gets a `CHANGELOG.md` entry** (in the same commit as the bump), and once pushed a tag `vX.Y.Z` on that commit and a GitHub release on `Ozancann01/omacale` whose notes are that entry (the newest marked Latest). Patch fixes go into their minor's entry.
+
 **Bump it on every change that reaches the user, without being asked** -- a fix, a feature, anything that changes what the shell does. A docs-only or comment-only change doesn't need one.
 
 ## Git
