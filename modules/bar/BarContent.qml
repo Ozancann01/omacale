@@ -515,8 +515,10 @@ Item {
         readonly property Item box: modelData.box
         readonly property Item first: modelData.a
         readonly property Item last: modelData.b
-        x: box.x + first.x
-        y: box.y + first.y
+        // Across the bar it is centred on the section, whatever each entry's
+        // own breadth; along it, from the first entry to the end of the last.
+        x: box.x + (root.vertical ? Math.round((box.width - width) / 2) : first.x)
+        y: box.y + (root.vertical ? first.y : Math.round((box.height - height) / 2))
         width: root.vertical ? Tk.barInner : last.x + last.width - first.x
         height: root.vertical ? last.y + last.height - first.y : Tk.barInner
         radius: (root.vertical ? width : height) / 2
