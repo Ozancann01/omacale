@@ -191,4 +191,7 @@ DisplayPage 1.0 modules/settings/pages/DisplayPage.qml
 DisplayEditor 1.0 modules/settings/pages/DisplayEditor.qml
 DisplayProfiles 1.0 modules/settings/pages/DisplayProfiles.qml
 DisplayWorkspaces 1.0 modules/settings/pages/DisplayWorkspaces.qml
+DisplayNight 1.0 modules/settings/pages/DisplayNight.qml
+DisplayTextSize 1.0 modules/settings/pages/DisplayTextSize.qml
+DisplayBrightnessList 1.0 modules/settings/pages/DisplayBrightnessList.qml
 DisplaysCard 1.0 modules/utilities/DisplaysCard.qml

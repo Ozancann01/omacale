@@ -9,12 +9,17 @@ import "../../../services/DisplayModel.js" as Model
 // displays. No Caelestia original; Nexus rows, as the rest of the page.
 ColumnLayout {
   id: root
+  property var row
+  property var settings
+  property bool first
+  property bool last
   spacing: Tk.spacing.extraSmall / 2
+  Component.onCompleted: DisplayService.hold()
+  Component.onDestruction: DisplayService.release()
 
   property string confirmDelete: ""       // the profile whose Delete waits for a second click
   readonly property bool busy: DisplayService.profileBusy || DisplayService.previewBusy
 
-  SectionHeader { row: ({ text: "Profiles" }) }
 
   // hyprmoncfg's answer to the last request (a profile that can't be
   // applied, say), here as well as at the top of the page, out of view.

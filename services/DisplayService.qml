@@ -18,8 +18,13 @@ QtObject {
 
   // ---------------------------------------------------------- holders
   property int holds: 0
-  function hold() { holds++; if (holds === 1) start() }
-  function release() { holds = Math.max(0, holds - 1); if (holds === 0) stop() }
+  function hold() { holds++; if (holds === 1 && !stopLater.running) start(); stopLater.stop() }
+  // Settings' sub-pages replace the page that held the service, so the last
+  // release is often followed by a hold a moment later: stop only if nothing
+  // held it again for a while, or reconnecting would reload the editor over
+  // unapplied changes.
+  function release() { holds = Math.max(0, holds - 1); if (holds === 0) stopLater.restart() }
+  property Timer stopLater: Timer { interval: 3000; onTriggered: if (root.holds === 0) root.stop() }
 
   // "hyprmoncfg": its daemon manages the displays; "unmanaged": installed but
   // not managing (daemon off, or `hyprmoncfg unmanage`); "none": not there.
@@ -245,6 +250,8 @@ QtObject {
   function loadEditor() { if (backend === "hyprmoncfg") send("editor_state", {}) }
   function onEditor(doc) {
     if (!doc || !doc.profile) return
+    // A reconnect mustn't throw away changes waiting for Apply.
+    if (dirty && editorDoc && Model.signature(doc.profile) === savedSig) { editorDoc = doc; return }
     editorDoc = doc
     sourceProfile = String(doc.source_profile || "")
     workspacePlan = doc.workspace_plan || []
@@ -498,6 +505,22 @@ QtObject {
     running: true
     command: ["sh", "-c", '[ -f "$1" ] || exit 0; hyprctl dispatch \'hl.dsp.dpms({ action = "enable" })\' >/dev/null 2>&1; echo stale', "recover", root.blankPath]
     stdout: StdioCollector { onStreamFinished: if (text.trim() === "stale") root.restoreWake() }
+  }
+
+  // ------------------------------------------- Settings › Display's rows
+  // The status line under each sub-page row (RowNav `status: "fn:<id>"`).
+  function navStatus(id) {
+    const c = Config.o.display
+    if (id === "profiles") return (activeProfile || "No profile in use") + (auto.auto ? " · switches automatically" : " · kept by hand")
+    if (id === "workspaces") return ({ off: "Off", manual: "Manual", sequential: "Sequential", interleave: "Interleaved" })[Model.wsStrategy(draft ? draft.workspaces : null)]
+    if (id === "brightness") return linked ? "Same on every screen" : "Each screen on its own"
+    if (id === "night") return (NightLight.on ? "On · " + c.nightTemp + " K" : "Off") + (c.nightSchedule === "sun" ? " · sunset to sunrise" : c.nightSchedule === "custom" ? " · " + c.nightFrom + " to " + c.nightTo : "")
+    if (id === "shell") {
+      const bars = Quickshell.screens.map(s => s.name).filter(n => Config.o.bar.excludedScreens.indexOf(n) < 0)
+      return "Bar on " + (bars.join(", ") || "no screen")
+    }
+    if (id === "text") return (textSize ? textSize + " px text" : "Text size") + " · " + (c.cursorSize ? c.cursorSize + " px cursor" : "Omarchy's cursor")
+    return ""
   }
 
   // ---------------------------------------------------------- identify

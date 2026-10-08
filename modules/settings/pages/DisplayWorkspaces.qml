@@ -11,8 +11,13 @@ import "../../../services/DisplayModel.js" as Model
 // are. hyprmoncfg's own panel has a fuller planner; this is the everyday part.
 ColumnLayout {
   id: root
+  property var row
   property var settings
+  property bool first
+  property bool last
   spacing: Tk.spacing.extraSmall / 2
+  Component.onCompleted: DisplayService.hold()
+  Component.onDestruction: DisplayService.release()
 
   readonly property var ws: DisplayService.draft ? (DisplayService.draft.workspaces || {}) : ({})
   readonly property string strategy: Model.wsStrategy(ws)
@@ -30,7 +35,6 @@ ColumnLayout {
     return i < 0 ? Colours.m3onSurfaceVariant : [Colours.m3onPrimaryContainer, Colours.m3onTertiaryContainer, Colours.m3onSecondaryContainer][i % 3]
   }
 
-  SectionHeader { row: ({ text: "Workspaces" }) }
 
   RowSelect {
     Layout.fillWidth: true

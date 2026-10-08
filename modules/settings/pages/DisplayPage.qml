@@ -197,6 +197,7 @@ ColumnLayout {
   // ---- the selected display
   SectionHeader { visible: !!root.sel; row: ({ text: root.sel ? root.sel.name : "" }) }
   Repeater {
+    id: infoRows
     model: root.sel && !DisplayService.editable ? [
       { label: "Model", value: root.sel.label },
       { label: "Resolution", value: root.sel.width + " × " + root.sel.height + " @ " + Math.round(root.sel.refresh) + " Hz" },
@@ -233,7 +234,8 @@ ColumnLayout {
     readonly property var level: root.sel ? DisplayService.brightness[root.sel.name] : undefined
     visible: level !== undefined
     Layout.fillWidth: true
-    last: true
+    first: !DisplayService.editable && !infoRows.count
+    last: !offRow.visible
     implicitHeight: br.implicitHeight + Tk.padding.medium * 2
     RowLayout {
       id: br
@@ -241,6 +243,7 @@ ColumnLayout {
       anchors.leftMargin: Tk.padding.largeIncreased; anchors.rightMargin: Tk.padding.largeIncreased
       spacing: Tk.spacing.medium
       MIcon { text: "brightness_6"; size: Tk.iconSize.medium; color: Colours.m3onSurfaceVariant }
+      MText { text: "Brightness"; Layout.preferredWidth: Tk.px(90) }
       MSlider {
         Layout.fillWidth: true
         implicitHeight: Tk.px(30)
@@ -255,8 +258,7 @@ ColumnLayout {
   ConnectedRect {
     id: offRow
     Layout.fillWidth: true
-    Layout.topMargin: Tk.spacing.small
-    first: true
+    first: !brightRow.visible
     last: true
     visible: !!root.sel && root.sel.enabled
     readonly property bool off: !!root.sel && DisplayService.blanked.indexOf(root.sel.name) >= 0
@@ -271,7 +273,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: offRow.off ? (root.sel ? root.sel.name : "") + " is off" : "Turn off for now"
         subtext: offRow.off ? "It stays dark until you turn it on here, lock the screen or resume"
-          : root.sel && !DisplayService.canBlank(root.sel.name) ? "Another display has to stay on"
+          : root.sel && !DisplayService.canBlank(root.sel.name) ? "Another screen has to stay on"
           : "The screen goes dark; your layout and windows stay as they are"
       }
       IconTextButton {
@@ -285,56 +287,14 @@ ColumnLayout {
     }
   }
 
-  DisplayProfiles {
-    Layout.fillWidth: true
-    visible: DisplayService.editable
-  }
-  DisplayWorkspaces {
-    Layout.fillWidth: true
-    visible: DisplayService.editable
-    settings: root.settings
-  }
-
-  // ---- desktop-wide
-  SectionHeader { row: ({ text: "All displays" }) }
+  // ---- without hyprmoncfg: Omarchy's own laptop-panel switches
   RowToggle {
     Layout.fillWidth: true
-    first: true
-    text: "Ask when a display is connected"
-    subtext: "Opens Extend / Mirror / Only laptop / Only external (also on the optional display key, Settings › Keybinds)"
-    checked: Config.o.display.quickOnConnect
-    onToggled: c => Config.set("display.quickOnConnect", c)
-  }
-  RowToggle {
-    id: linkRow
-    Layout.fillWidth: true
-    visible: Object.keys(DisplayService.brightness).length > 1
-    text: "Same brightness on every display"
-    subtext: "One brightness for all: the sliders and scrolling on the bar move every display together"
-    checked: DisplayService.linked
-    onToggled: c => Config.set("display.linkBrightness", c)
-  }
-  ConnectedRect {
-    Layout.fillWidth: true
-    first: !linkRow.visible
-    last: !DisplayService.hasInternal || !DisplayService.hasExternal || DisplayService.editable
-    implicitHeight: tl.implicitHeight + Tk.padding.medium * 2
-    RowLayout {
-      id: tl
-      anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-      anchors.leftMargin: Tk.padding.largeIncreased; anchors.rightMargin: Tk.padding.medium
-      spacing: Tk.spacing.medium
-      RowLabel { Layout.fillWidth: true; text: "Text size"; subtext: "Omarchy's text size for the shell, GTK and the terminal" }
-      IconButton { type: "text"; icon: "remove"; disabled: DisplayService.textSize <= 9; onClicked: DisplayService.setTextSize(DisplayService.textSize - 1) }
-      MText { Layout.preferredWidth: Tk.px(48); horizontalAlignment: Text.AlignHCenter; text: DisplayService.textSize ? DisplayService.textSize + " px" : "–" }
-      IconButton { type: "text"; icon: "add"; disabled: DisplayService.textSize >= 20; onClicked: DisplayService.setTextSize(DisplayService.textSize + 1) }
-    }
-  }
-  RowToggle {
-    Layout.fillWidth: true
+    Layout.topMargin: Tk.spacing.small
     visible: DisplayService.hasInternal && DisplayService.hasExternal && !DisplayService.editable
-    text: "Laptop display"
-    subtext: "Turn off to use only the external displays"
+    first: true
+    text: "Laptop screen"
+    subtext: "Turn off to use only the external screens"
     checked: root.monitors.some(m => m.internal && m.enabled)
     onToggled: c => DisplayService.setInternal(c)
   }
@@ -342,63 +302,31 @@ ColumnLayout {
     Layout.fillWidth: true
     visible: DisplayService.hasInternal && DisplayService.hasExternal && !DisplayService.editable
     last: true
-    text: "Mirror the laptop display"
-    subtext: "Show the same picture on the external display"
+    text: "Mirror the laptop screen"
+    subtext: "Show the same picture on the external screen"
     checked: root.monitors.some(m => !!m.mirrorOf)
     onToggled: c => DisplayService.setMirror(c)
   }
 
-  // ---- night light (services/NightLight.qml): Omarchy's hyprsunset, every screen
-  SectionHeader { row: ({ text: "Night light" }) }
-  RowToggle {
-    Layout.fillWidth: true
-    first: true
-    text: "Night light"
-    subtext: "Warmer colours on every display (hyprsunset can't tint one screen alone)"
-    checked: NightLight.on
-    onToggled: c => NightLight.set(c)
-  }
-  ConnectedRect {
-    Layout.fillWidth: true
-    implicitHeight: nt.implicitHeight + Tk.padding.medium * 2
-    RowLayout {
-      id: nt
-      anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-      anchors.leftMargin: Tk.padding.largeIncreased; anchors.rightMargin: Tk.padding.largeIncreased
-      spacing: Tk.spacing.medium
-      MIcon { text: "thermostat"; size: Tk.iconSize.medium; color: Colours.m3onSurfaceVariant }
-      MText { text: "Warmth"; Layout.preferredWidth: Tk.px(70) }
-      MSlider {
-        id: warmth
-        Layout.fillWidth: true
-        implicitHeight: Tk.px(30)
-        // Left is warm: the slider runs 6000 K -> 2500 K.
-        value: 1 - Model.kelvinPos(Config.o.display.nightTemp)
-        onMoved: v => NightLight.setTemperature(Model.kelvinAt(1 - v))
-      }
-      MText { Layout.preferredWidth: Tk.px(56); horizontalAlignment: Text.AlignRight; text: Config.o.display.nightTemp + " K"; color: Colours.m3onSurfaceVariant }
+  // ---- everything else, one sub-page each (SettingsModel.js display*)
+  SectionHeader { row: ({ text: "More" }) }
+  Repeater {
+    model: [
+      { icon: "bookmarks", label: "Profiles", page: "displayProfiles", status: "fn:profiles", managed: true },
+      { icon: "space_dashboard", label: "Workspaces", page: "displayWorkspaces", status: "fn:workspaces", managed: true },
+      { icon: "brightness_6", label: "Brightness", page: "displayBrightness", status: "fn:brightness" },
+      { icon: "nightlight", label: "Night light", page: "displayNight", status: "fn:night" },
+      { icon: "dock_to_bottom", label: "Shell on each screen", page: "displayShell", status: "fn:shell" },
+      { icon: "format_size", label: "Text and cursor", page: "displayText", status: "fn:text" }
+    ].filter(r => !r.managed || DisplayService.editable)
+    RowNav {
+      required property var modelData
+      required property int index
+      Layout.fillWidth: true
+      row: modelData
+      settings: root.settings
+      first: index === 0
+      last: index === (DisplayService.editable ? 5 : 3)
     }
   }
-  RowSelect {
-    Layout.fillWidth: true
-    last: Config.o.display.nightSchedule !== "custom"
-    settings: root.settings
-    row: ({ key: "display.nightSchedule", label: "Schedule", icon: "schedule",
-      subtext: Config.o.display.nightSchedule === "sun" ? (Sys.sunsetIso ? "Sunset " + Sys.sunset + " to sunrise " + Sys.sunrise + ", from the weather location" : "Needs the weather (Language & region › weather location)") : "A manual switch holds until the schedule's next change",
-      options: [{ value: "off", label: "Off" }, { value: "sun", label: "Sunset to sunrise" }, { value: "custom", label: "Custom times" }] })
-  }
-  RowSelect {
-    Layout.fillWidth: true
-    visible: Config.o.display.nightSchedule === "custom"
-    settings: root.settings
-    row: ({ key: "display.nightFrom", label: "From", icon: "bedtime", options: root.halfHours })
-  }
-  RowSelect {
-    Layout.fillWidth: true
-    visible: Config.o.display.nightSchedule === "custom"
-    last: true
-    settings: root.settings
-    row: ({ key: "display.nightTo", label: "To", icon: "wb_sunny", options: root.halfHours })
-  }
-  readonly property var halfHours: [{ value: "00:00", label: "00:00" }, { value: "00:30", label: "00:30" }, { value: "01:00", label: "01:00" }, { value: "01:30", label: "01:30" }, { value: "02:00", label: "02:00" }, { value: "02:30", label: "02:30" }, { value: "03:00", label: "03:00" }, { value: "03:30", label: "03:30" }, { value: "04:00", label: "04:00" }, { value: "04:30", label: "04:30" }, { value: "05:00", label: "05:00" }, { value: "05:30", label: "05:30" }, { value: "06:00", label: "06:00" }, { value: "06:30", label: "06:30" }, { value: "07:00", label: "07:00" }, { value: "07:30", label: "07:30" }, { value: "08:00", label: "08:00" }, { value: "08:30", label: "08:30" }, { value: "09:00", label: "09:00" }, { value: "09:30", label: "09:30" }, { value: "10:00", label: "10:00" }, { value: "10:30", label: "10:30" }, { value: "11:00", label: "11:00" }, { value: "11:30", label: "11:30" }, { value: "12:00", label: "12:00" }, { value: "12:30", label: "12:30" }, { value: "13:00", label: "13:00" }, { value: "13:30", label: "13:30" }, { value: "14:00", label: "14:00" }, { value: "14:30", label: "14:30" }, { value: "15:00", label: "15:00" }, { value: "15:30", label: "15:30" }, { value: "16:00", label: "16:00" }, { value: "16:30", label: "16:30" }, { value: "17:00", label: "17:00" }, { value: "17:30", label: "17:30" }, { value: "18:00", label: "18:00" }, { value: "18:30", label: "18:30" }, { value: "19:00", label: "19:00" }, { value: "19:30", label: "19:30" }, { value: "20:00", label: "20:00" }, { value: "20:30", label: "20:30" }, { value: "21:00", label: "21:00" }, { value: "21:30", label: "21:30" }, { value: "22:00", label: "22:00" }, { value: "22:30", label: "22:30" }, { value: "23:00", label: "23:00" }, { value: "23:30", label: "23:30" }]
 }

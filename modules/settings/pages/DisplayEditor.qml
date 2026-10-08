@@ -76,8 +76,8 @@ ColumnLayout {
   }
   RowToggle {
     Layout.fillWidth: true
-    text: "Use this display"
-    subtext: root.sel && !Model.canDisable(root.monitors, root.key) ? "The only display in use can't be turned off" : ""
+    text: "Use this screen"
+    subtext: root.sel && !Model.canDisable(root.monitors, root.key) ? "The only screen in use can't be turned off" : ""
     checked: !!root.sel && root.sel.enabled
     disabled: !!root.sel && root.sel.enabled && !Model.canDisable(root.monitors, root.key)
     onToggled: c => root.set({ enabled: c })
@@ -141,14 +141,31 @@ ColumnLayout {
     Layout.fillWidth: true
     visible: !!root.sel && root.sel.enabled && root.monitors.length > 1
     settings: root.settings
-    row: ({ label: "Mirror", icon: "screen_share", subtext: "Show another display's picture here", options: [{ value: "", label: "Off" }].concat(
+    row: ({ label: "Mirror", icon: "screen_share", subtext: "Show another screen's picture here", options: [{ value: "", label: "Off" }].concat(
       root.monitors.filter(m => m.key !== root.key && m.enabled).map(m => ({ value: m.key, label: m.name }))) })
     value: root.sel ? root.sel.mirrorOf : ""
     onPicked: v => root.set(v ? { mirror_of: v } : Object.assign({ mirror_of: "" }, Model.unmirrorAt(root.monitors, root.key) || {}))
   }
-  RowSelect {
+  // ---- advanced (collapsed): variable refresh, colour, bit depth
+  property bool advanced: false
+  ConnectedRect {
     Layout.fillWidth: true
     visible: !!root.sel && root.sel.enabled
+    last: root.last && !root.advanced
+    implicitHeight: al.implicitHeight + Tk.padding.medium * 2
+    RowLayout {
+      id: al
+      anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+      anchors.leftMargin: Tk.padding.largeIncreased; anchors.rightMargin: Tk.padding.medium
+      MText { Layout.fillWidth: true; text: "Advanced" }
+      MText { text: root.sel ? ["VRR " + (["off", "on", "fullscreen"][root.sel.vrr] || "off"), root.sel.cm || "srgb", root.sel.bitdepth + "-bit"].join(" · ") : ""; color: Colours.m3onSurfaceVariant; font.pointSize: Tk.body.small }
+      MIcon { text: root.advanced ? "expand_less" : "expand_more"; color: Colours.m3onSurfaceVariant }
+    }
+    StateLayer { onClicked: root.advanced = !root.advanced }
+  }
+  RowSelect {
+    Layout.fillWidth: true
+    visible: !!root.sel && root.sel.enabled && root.advanced
     settings: root.settings
     row: ({ label: "Variable refresh rate", icon: "sync", options: [
       { value: "0", label: "Off" }, { value: "1", label: "On" }, { value: "2", label: "Fullscreen" }
@@ -158,7 +175,7 @@ ColumnLayout {
   }
   RowSelect {
     Layout.fillWidth: true
-    visible: !!root.sel && root.sel.enabled
+    visible: !!root.sel && root.sel.enabled && root.advanced
     settings: root.settings
     row: ({ label: "Colour", icon: "palette", options: [
       { value: "srgb", label: "sRGB (SDR)" }, { value: "auto", label: "Automatic" }, { value: "wide", label: "BT.2020 (SDR)" },
@@ -170,7 +187,7 @@ ColumnLayout {
   }
   RowSelect {
     Layout.fillWidth: true
-    visible: !!root.sel && root.sel.enabled
+    visible: !!root.sel && root.sel.enabled && root.advanced
     last: root.last
     settings: root.settings
     row: ({ label: "Bit depth", icon: "gradient", options: [{ value: "8", label: "8-bit" }, { value: "10", label: "10-bit" }] })
