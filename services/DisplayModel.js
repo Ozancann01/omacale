@@ -60,8 +60,12 @@ function fromHypr(list) {
 
 // Scale and offset that fit every enabled display's logical rect into a
 // w x h canvas with `pad` around, centred.
+// A display that mirrors another takes that one's place, so the canvas
+// leaves it out (its box would sit exactly under the other's).
+function placed(m) { return m.enabled && !m.mirrorOf }
+
 function fit(monitors, w, h, pad) {
-  var on = monitors.filter(function (m) { return m.enabled })
+  var on = monitors.filter(placed)
   if (!on.length) return { k: 1, ox: 0, oy: 0 }
   var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
   on.forEach(function (m) { x0 = Math.min(x0, m.x); y0 = Math.min(y0, m.y); x1 = Math.max(x1, m.x + m.lw); y1 = Math.max(y1, m.y + m.lh) })
@@ -71,7 +75,7 @@ function fit(monitors, w, h, pad) {
 }
 
 function rects(monitors, f) {
-  return monitors.filter(function (m) { return m.enabled }).map(function (m) {
+  return monitors.filter(placed).map(function (m) {
     return { key: m.key, name: m.name, x: m.x * f.k + f.ox, y: m.y * f.k + f.oy, w: m.lw * f.k, h: m.lh * f.k }
   })
 }
@@ -177,4 +181,15 @@ function canDisable(rows, key) {
 // Canvas point (a box's top-left) back to layout coordinates.
 function toLayout(x, y, f) {
   return { x: Math.round((x - f.ox) / f.k), y: Math.round((y - f.oy) / f.k) }
+}
+
+// Turning mirroring off alone leaves the display on top of the one it
+// mirrored, which hyprmoncfg rejects ("layout overlaps"); put it to that
+// one's right in the same edit. null when the display mirrors nothing.
+// mirrorOf is a key from the editor and a name from status/hyprctl.
+function unmirrorAt(rows, key) {
+  var m = rows.find(function (r) { return r.key === key })
+  if (!m || !m.mirrorOf) return null
+  var t = rows.find(function (r) { return r.key === m.mirrorOf || r.name === m.mirrorOf })
+  return t ? { x: t.x + t.lw, y: t.y } : null
 }

@@ -5,7 +5,7 @@
 const fs = require("fs"), vm = require("vm"), path = require("path"), assert = require("assert")
 const src = fs.readFileSync(path.join(__dirname, "../services/DisplayModel.js"), "utf8").replace(/^\.pragma.*$/m, "")
 const ctx = {}
-vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel }", ctx)
+vm.runInNewContext(src + "\nthis.D = { parseEnvelope, request, fromStatus, fromHypr, logicalSize, fit, rects, scaleLabel, fromEditor, modeGroups, modeFor, recommendedScale, transformOf, rotationOf, flippedOf, signature, secondsLeft, ownsPreview, canDisable, toLayout, refreshLabel, unmirrorAt }", ctx)
 const D = ctx.D
 const fx = n => JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/display", n), "utf8"))
 let failed = 0
@@ -138,6 +138,19 @@ test("a dragged box lands at layout coordinates", () => {
   const r = D.rects(m, f).find(x => x.name === "eDP-1")
   assert.deepStrictEqual(plain(D.toLayout(r.x, r.y, f)), { x: 4122, y: 0 })
   assert.deepStrictEqual(plain(D.toLayout(r.x + 10 * f.k, r.y - 5 * f.k, f)), { x: 4132, y: -5 })
+})
+
+test("a display that mirrors another stays off the arrangement (it would sit under it)", () => {
+  const m = ed()
+  m[0].mirrorOf = m[1].key; m[0].x = m[1].x; m[0].y = m[1].y
+  const r = D.rects(m, D.fit(m, 600, 300, 20))
+  assert.deepStrictEqual(plain(r.map(x => x.name)), ["HDMI-A-1"])
+})
+test("mirroring off puts the display to the right of the one it mirrored", () => {
+  const m = ed()
+  m[0].mirrorOf = m[1].key; m[0].x = m[1].x; m[0].y = m[1].y
+  assert.deepStrictEqual(plain(D.unmirrorAt(m, m[0].key)), { x: 2586 + 1536, y: 0 })
+  assert.strictEqual(D.unmirrorAt(m, m[1].key), null)   // not mirroring
 })
 
 console.log(failed ? `${failed} failed` : "all passed")

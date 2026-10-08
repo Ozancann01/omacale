@@ -99,6 +99,28 @@ ColumnLayout {
             color: Colours.m3onSurfaceVariant
           }
         }
+        // Displays mirroring this one are left off the canvas (they'd sit
+        // under it); a chip each, to select them.
+        Column {
+          z: 2
+          anchors.horizontalCenter: parent.horizontalCenter
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: Tk.padding.small
+          spacing: Tk.spacing.extraSmall
+          Repeater {
+            model: root.monitors.filter(m => m.mirrorOf && (m.mirrorOf === modelData.key || m.mirrorOf === modelData.name)).map(m => m.name)
+            IconTextButton {
+              required property string modelData
+              type: root.selected === modelData || (root.sel && root.sel.name === modelData) ? "filled" : "tonal"
+              isRound: true
+              icon: "screen_share"
+              text: modelData + " mirrors this"
+              fontSize: Tk.label.small
+              verticalPadding: Tk.padding.extraSmall
+              onClicked: DisplayService.selected = modelData
+            }
+          }
+        }
         // Click selects; with the editor, drag moves it (the daemon snaps it
         // to its neighbours on edit_profile).
         MouseArea {
@@ -234,7 +256,7 @@ ColumnLayout {
   ConnectedRect {
     Layout.fillWidth: true
     first: true
-    last: !DisplayService.hasInternal || !DisplayService.hasExternal
+    last: !DisplayService.hasInternal || !DisplayService.hasExternal || DisplayService.editable
     implicitHeight: tl.implicitHeight + Tk.padding.medium * 2
     RowLayout {
       id: tl
@@ -249,7 +271,7 @@ ColumnLayout {
   }
   RowToggle {
     Layout.fillWidth: true
-    visible: DisplayService.hasInternal && DisplayService.hasExternal
+    visible: DisplayService.hasInternal && DisplayService.hasExternal && !DisplayService.editable
     text: "Laptop display"
     subtext: "Turn off to use only the external displays"
     checked: root.monitors.some(m => m.internal && m.enabled)
@@ -257,7 +279,7 @@ ColumnLayout {
   }
   RowToggle {
     Layout.fillWidth: true
-    visible: DisplayService.hasInternal && DisplayService.hasExternal
+    visible: DisplayService.hasInternal && DisplayService.hasExternal && !DisplayService.editable
     last: true
     text: "Mirror the laptop display"
     subtext: "Show the same picture on the external display"

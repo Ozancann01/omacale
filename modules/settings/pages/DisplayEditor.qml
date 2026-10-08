@@ -104,7 +104,7 @@ ColumnLayout {
     row: ({ label: "Mirror", icon: "screen_share", subtext: "Show another display's picture here", options: [{ value: "", label: "Off" }].concat(
       root.monitors.filter(m => m.key !== root.key && m.enabled).map(m => ({ value: m.key, label: m.name }))) })
     value: root.sel ? root.sel.mirrorOf : ""
-    onPicked: v => root.set({ mirror_of: v })
+    onPicked: v => root.set(v ? { mirror_of: v } : Object.assign({ mirror_of: "" }, Model.unmirrorAt(root.monitors, root.key) || {}))
   }
   RowSelect {
     Layout.fillWidth: true
