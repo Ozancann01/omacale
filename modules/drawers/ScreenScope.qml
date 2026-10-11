@@ -803,8 +803,9 @@ Scope {
     readonly property real dockFh: dockLoader.item ? dockLoader.item.implicitHeight : 0
     property real dockW: dockFw
     property real dockH: dockFh
-    Behavior on dockW { enabled: win.dockVis; Anim {} }
-    Behavior on dockH { enabled: win.dockVis; Anim {} }
+    // As its slide: no overshoot, or the icons bob while a panel opens.
+    Behavior on dockW { enabled: win.dockVis; Anim { type: "emphasized" } }
+    Behavior on dockH { enabled: win.dockVis; Anim { type: "emphasized" } }
     readonly property real dockX: scope.dockEdge === "left" ? ax + (-dockW - 5) * dockOff
       : scope.dockEdge === "right" ? ax + aw - dockW + (dockW + 5) * dockOff
       : ax + Math.round((aw - dockW) / 2)

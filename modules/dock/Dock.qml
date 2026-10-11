@@ -99,8 +99,13 @@ Item {
   // the entries' resting positions, which the growth doesn't move, so the
   // pointer never chases its own effect.
   readonly property real magnify: Math.max(1, Config.o.dock.magnify)
-  readonly property real hoverPos: hover.hovered && dragKey === "" && !menuOpen
+  // Where the pointer is along the dock (-1 off it), and the same for the
+  // magnification, which settles back while the menu or the previews are
+  // open: an icon still growing as the drawer grows for its windows was two
+  // motions at once.
+  readonly property real pointerPos: hover.hovered && dragKey === "" && !menuOpen
     ? (vertical ? hover.point.position.y : hover.point.position.x) : -1
+  readonly property real hoverPos: previewOpen ? -1 : pointerPos
   // 0 at rest, 1 under the pointer: eases the growth in and out as the
   // pointer arrives and leaves, but follows it directly in between.
   property real magOn: hoverPos >= 0 ? 1 : 0
@@ -131,9 +136,9 @@ Item {
   }
   // The app under the pointer, for its name label.
   readonly property int hoveredIndex: {
-    if (hoverPos < 0) return -1
+    if (pointerPos < 0) return -1
     for (let i = 0; i < entries.length; i++)
-      if (entries[i].kind === "app" && Math.abs(hoverPos - centres[i]) <= cell / 2 + gap / 2) return i
+      if (entries[i].kind === "app" && Math.abs(pointerPos - centres[i]) <= cell / 2 + gap / 2) return i
     return -1
   }
 
@@ -193,6 +198,13 @@ Item {
   // Its breadth with neither panel open: what an always-out dock reserves,
   // so opening the menu or the previews doesn't move the windows.
   readonly property real restBreadth: (vertical ? iconsW : iconsH) + pad * 2
+  // How far the drawer has grown towards holding the panel (0..1): the panel
+  // fades in with it, so it never shows before there is room for it.
+  readonly property real grown: {
+    const full = (vertical ? implicitWidth : implicitHeight) - restBreadth
+    const now = (vertical ? width : height) - restBreadth
+    return full > 0 ? Math.max(0, Math.min(1, now / full)) * Math.max(0, Math.min(1, now / full)) : 1
+  }
 
   implicitWidth: (vertical ? iconsW + menuGap + menuW : Math.max(iconsW, menuW)) + pad * 2
   implicitHeight: (vertical ? Math.max(iconsH, menuH) : iconsH + menuGap + menuH) + pad * 2
@@ -211,8 +223,12 @@ Item {
     rows: root.vertical ? 0 : 1
     columns: root.vertical ? 1 : 0
     spacing: root.gap
-    x: root.vertical ? (root.edge === "left" ? root.pad : root.pad + root.menuW + root.menuGap) : Math.round((root.width - width) / 2)
-    y: root.vertical ? Math.round((root.height - height) / 2) : (root.edge === "top" ? root.pad : root.pad + root.menuH + root.menuGap)
+    // Measured from the dock's edge, so they stay put while the drawer
+    // grows away from it for the menu or the previews (its size animates;
+    // placing them from the panel's final size made them jump out of the
+    // still-small drawer and back).
+    x: root.vertical ? (root.edge === "left" ? root.pad : root.width - root.pad - width) : Math.round((root.width - width) / 2)
+    y: root.vertical ? Math.round((root.height - height) / 2) : (root.edge === "top" ? root.pad : root.height - root.pad - height)
 
     HoverHandler { id: hover }
 
@@ -319,13 +335,13 @@ Item {
     id: previews
     readonly property var app: root.previewApp || ({ windows: [] })
     visible: root.previewOpen
-    opacity: root.previewOpen ? 1 : 0
-    Behavior on opacity { Anim { type: "effects" } }
+    opacity: root.previewOpen ? root.grown : 0
     rows: root.vertical ? 0 : 1
     columns: root.vertical ? 1 : 0
     spacing: root.gap
-    x: root.vertical ? (root.edge === "left" ? root.pad + root.iconsW + root.menuGap : root.pad) : Math.round((root.width - width) / 2)
-    y: root.vertical ? Math.round((root.height - height) / 2) : (root.edge === "top" ? root.pad + root.iconsH + root.menuGap : root.pad)
+    // Right past the icons, away from the edge, uncovered as the drawer grows.
+    x: root.vertical ? (root.edge === "left" ? icons.x + root.iconsW + root.gap : icons.x - root.gap - width) : Math.round((root.width - width) / 2)
+    y: root.vertical ? Math.round((root.height - height) / 2) : (root.edge === "top" ? icons.y + root.iconsH + root.gap : icons.y - root.gap - height)
 
     Repeater {
       // At most five; the rest are a click away (cycling).
@@ -343,11 +359,11 @@ Item {
   Column {
     id: menu
     visible: root.menuOpen
-    opacity: root.menuOpen ? 1 : 0
-    Behavior on opacity { Anim { type: "effects" } }
+    opacity: root.menuOpen ? root.grown : 0
     width: Tk.px(220)
-    x: root.vertical ? (root.edge === "left" ? root.pad + root.iconsW + root.menuGap : root.pad) : Math.round((root.width - width) / 2)
-    y: root.vertical ? Math.round((root.height - height) / 2) : (root.edge === "top" ? root.pad + root.iconsH + root.menuGap : root.pad)
+    // Right past the icons, away from the edge, uncovered as the drawer grows.
+    x: root.vertical ? (root.edge === "left" ? icons.x + root.iconsW + root.gap : icons.x - root.gap - width) : Math.round((root.width - width) / 2)
+    y: root.vertical ? Math.round((root.height - height) / 2) : (root.edge === "top" ? icons.y + root.iconsH + root.gap : icons.y - root.gap - height)
     spacing: Tk.px(2)
 
     MText {
