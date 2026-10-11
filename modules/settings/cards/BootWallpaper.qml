@@ -108,7 +108,7 @@ ConnectedRect {
           }
           Rectangle {
             anchors.fill: parent
-            radius: parent.radius
+            radius: wt.radius
             color: "transparent"
             border.width: wt.isCurrent ? 3 : 0
             border.color: Colours.m3primary
