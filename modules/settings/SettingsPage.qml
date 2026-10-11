@@ -15,7 +15,7 @@ ColumnLayout {
   // sub-page opened from the bottom of a long one scrolled out of view.
   onPageChanged: flick.contentY = -flick.topMargin
 
-  function groupable(r) { return r.type !== "section" && (r.type !== "custom" || r.comp === "seeds" || r.comp === "logoPicker" || r.comp === "sessionPicture" || r.comp === "screenSelect") }
+  function groupable(r) { return r.type !== "section" && (r.type !== "custom" || r.comp === "seeds" || r.comp === "logoPicker" || r.comp === "sessionPicture" || r.comp === "screenSelect" || r.comp === "colour" || r.comp === "bootWallpaper") }
   function isFirst(i) { return i === 0 || !groupable(rows[i - 1]) }
   function isLast(i) { return i === rows.length - 1 || !groupable(rows[i + 1]) }
   readonly property var files: ({
@@ -29,6 +29,7 @@ ColumnLayout {
     plugins: "pages/PluginsPage.qml", pluginInfo: "pages/PluginInfo.qml",
     trayIcons: "pages/TrayIcons.qml", barLayout: "pages/LayoutPage.qml",
     sessionPicture: "cards/SessionPicture.qml",
+    bootPreview: "cards/BootPreview.qml", bootWallpaper: "cards/BootWallpaper.qml", bootActions: "cards/BootActions.qml", colour: "rows/RowColour.qml",
     screens: "pages/ScreensCard.qml", screenSelect: "rows/ScreenSelect.qml",
     display: "pages/DisplayPage.qml", displayProfiles: "pages/DisplayProfiles.qml", displayWorkspaces: "pages/DisplayWorkspaces.qml",
     displayBrightnessList: "pages/DisplayBrightnessList.qml", displayNight: "pages/DisplayNight.qml", displayTextSize: "pages/DisplayTextSize.qml"
