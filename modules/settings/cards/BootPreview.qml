@@ -41,7 +41,7 @@ Item {
       fillMode: root.c.wallpaperStyle === "tiled" ? Image.Tile : root.c.wallpaperStyle === "centered" ? Image.Pad : Image.Stretch
       // Centered and tiled draw the picture at its own size, so at the
       // preview's scale too.
-      sourceSize.width: root.c.wallpaperStyle === "stretched" ? 1024 : undefined
+      sourceSize.width: root.c.wallpaperStyle === "stretched" ? 1024 : 0
       transform: Scale { xScale: root.c.wallpaperStyle === "stretched" ? 1 : root.s; yScale: xScale; origin.x: screen.width / 2; origin.y: screen.height / 2 }
       asynchronous: true
     }
