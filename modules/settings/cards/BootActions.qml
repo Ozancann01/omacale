@@ -27,6 +27,7 @@ ConnectedRect {
       Layout.fillWidth: true
       text: BootMenu.busy ? "Working..." : BootMenu.message ? BootMenu.message
         : !BootMenu.valid ? "A colour isn't a full RRGGBB value yet"
+        : !BootMenu.applied ? "Omacale hasn't changed your boot menu yet"
         : BootMenu.dirty ? "Changes not applied yet" : "Applied"
       subtext: "Only the look of the menu changes; your boot entries and snapshots are left alone. A backup is kept on the boot partition (omacale/backups, the last five)."
     }
