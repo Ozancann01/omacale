@@ -348,6 +348,19 @@ def main(argv):
             look = header_look(header)
             look["omacaleWallpaper"] = any(os.path.exists(os.path.join(esp, "omacale", "wallpaper." + e)) for e in ("png", "jpg", "bmp", "qoi"))
             look["backups"] = len([f for f in os.listdir(backups_dir(esp))]) if os.path.isdir(backups_dir(esp)) else 0
+            # What protects a change: a fallback Limine to boot if the main one
+            # won't, and whether the config is enrolled (then limine-enroll-config
+            # after a change is what keeps it booting).
+            look["fallback"] = os.path.isfile(os.path.join(esp, "EFI", "BOOT", "BOOTX64.EFI"))
+            enrolled = ""
+            for f in ("etc/limine-entry-tool.conf", "etc/default/limine"):
+                try:
+                    for line in open(os.path.join(ROOT, f), encoding="utf-8"):
+                        m = re.match(r'^\s*ENABLE_ENROLL_LIMINE_CONFIG\s*=\s*"?(\w*)"?', line)
+                        if m: enrolled = m.group(1)
+                except FileNotFoundError:
+                    pass
+            look["enrollConfig"] = enrolled == "yes"
             print(json.dumps(look))
             return 0
         wallpaper = None
