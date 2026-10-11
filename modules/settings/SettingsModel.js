@@ -190,8 +190,9 @@ var pages = [
     // Nothing reaches /boot until Apply, which asks for your password.
     id: "boot", label: "Boot menu", icon: "settings_power", category: "system",
     description: "Limine's picture, colours, title and timeout",
+    // Pinned above the rows, so every change shows while you scroll to it.
+    header: "bootPreview",
     rows: [
-      { type: "custom", comp: "bootPreview" },
       { type: "section", text: "Picture" },
       { type: "custom", comp: "bootWallpaper" },
       { type: "select", key: "boot.wallpaperStyle", label: "Fit", subtext: "How the picture fills the screen", options: [
@@ -207,7 +208,7 @@ var pages = [
       { type: "custom", comp: "colour", key: "boot.background", label: "Background colour", subtext: "Behind the text; the whole screen without a picture" },
       { type: "slider", key: "boot.backgroundAlpha", label: "Background see-through", icon: "opacity", from: 0, to: 100, step: 5, unit: "%" },
       { type: "section", text: "Behaviour" },
-      { type: "stepper", key: "boot.timeout", label: "Seconds before it starts", subtext: "0 keeps Limine's own (5). Never instant, so the menu and your snapshots stay reachable", from: 0, to: 30, step: 1 },
+      { type: "stepper", key: "boot.timeout", label: "Seconds before it starts", subtext: "Limine's own is 5. Never instant, so the menu and your snapshots stay reachable", from: 1, to: 30, step: 1 },
       { type: "toggle", key: "boot.rememberLast", label: "Remember the last choice", subtext: "Start what you picked last time" },
       { type: "toggle", key: "boot.hideHelp", label: "Hide the help line", subtext: "The key hints under the title" },
       { type: "section", text: "Apply" },

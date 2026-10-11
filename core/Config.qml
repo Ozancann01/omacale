@@ -255,7 +255,7 @@ QtObject {
         property string wallpaper: ""
         property string wallpaperStyle: "stretched"
         property string backdrop: "1a1b26"
-        property int timeout: 0
+        property int timeout: 5
         property bool rememberLast: false
         property bool hideHelp: false
         property string applied: ""
