@@ -55,6 +55,19 @@ ColumnLayout {
     }
   }
 
+  // A page's `header` card stays put above the scrolling rows, as wide as
+  // they are, and never taller than a third of the page.
+  Loader {
+    id: header
+    readonly property real maxW: Math.min(Tk.sizes.nexusMaxContentWidth, root.width)
+    Layout.alignment: Qt.AlignHCenter
+    Layout.preferredWidth: Math.round(Math.min(maxW, root.height / 3 * 16 / 9))
+    visible: active
+    active: !!(root.page && root.page.header)
+    source: active ? Qt.resolvedUrl(root.files[root.page.header]) : ""
+    onLoaded: item.settings = root.settings
+  }
+
   FadeFlickable {
     id: flick
     Layout.fillWidth: true
