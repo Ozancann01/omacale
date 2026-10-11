@@ -28,6 +28,7 @@ Everything [upstream Omacale](https://github.com/AyushKr2003/omacale) does, plus
 | **Theme** | Pickers everywhere, a whole theme from your wallpaper, colours that match Omarchy exactly, optionally Omarchy's own menus in your colours. |
 | **Session menu** | Super+Esc / power key open the session drawer, with Lock, Screensaver and your own picture. |
 | **Text and cursor** | Omarchy's text size and a cursor size that match on every screen. |
+| **Dock** (Settings › Panels › Dock) | Pinned apps and open windows on any edge but the bar's, growing out of the frame like the other drawers. Always out (windows make room), auto-hide on the edge's hover, or smart (out until a window covers it); SUPER+CTRL+SHIFT+D shows or hides it. Right-click an app to pin it, open a new window, bring its windows here or close them. |
 
 ## Screenshots
 
