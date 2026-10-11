@@ -119,7 +119,6 @@ def build(fields, esp):
             raise Refused("backgroundAlpha: 0-255")
         # Limine's TT is transparency: 00 opaque, ff invisible.
         out["term_background"] = (f"{alpha:02x}" + bg) if alpha else bg
-        out["term_background_bright"] = bg
     elif "backgroundAlpha" in fields:
         raise Refused("backgroundAlpha needs background")
     if "timeout" in fields:
