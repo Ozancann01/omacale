@@ -289,7 +289,7 @@ QtObject {
         property string scope: "all"
         // How much the icon under the pointer grows (1: not at all), and its
         // name shown beside it.
-        property real magnify: 1.5
+        property real magnify: 1
         property bool labels: true
         // Live previews of an app's windows while its icon is hovered.
         property bool previews: true

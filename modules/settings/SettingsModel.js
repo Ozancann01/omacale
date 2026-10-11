@@ -346,7 +346,7 @@ var subpages = {
       ] },
       { type: "slider", key: "dock.hideDelay", when: { key: "dock.visibility", values: ["autohide", "smart"] }, label: "Hide delay", icon: "timer", from: 0, to: 2000, step: 100, unit: "ms" },
       { type: "slider", key: "dock.iconSize", label: "Icon size", icon: "photo_size_select_small", from: 32, to: 72, step: 4, unit: "px" },
-      { type: "slider", key: "dock.magnify", label: "Magnify on hover", icon: "zoom_in", from: 1, to: 2, step: 0.05, unit: "x" },
+      { type: "slider", key: "dock.magnify", label: "Magnify on hover", subtext: "Off at 1x", icon: "zoom_in", from: 1, to: 2, step: 0.05, unit: "x" },
       { type: "toggle", key: "dock.previews", label: "Window previews", subtext: "Hover an open app for a moment to see its windows, live, and pick one" },
       { type: "toggle", key: "dock.labels", label: "Names", subtext: "Show the app's name beside the icon under the pointer" },
       { type: "toggle", key: "dock.showRunning", label: "Open apps", subtext: "Show apps with open windows, not only pinned ones" },
