@@ -166,7 +166,7 @@ test("appendEnd keeps power last, and moves an item already on the bar", () => {
   eq(B.appendEnd(noPower, "plugin:x.y").end.slice(-1), ["plugin:x.y"])
 })
 test("sourceOf tells built-ins, Omarchy widgets and plugins apart", () => {
-  assert.strictEqual(B.sourceOf("clock", []), "omashell")
+  assert.strictEqual(B.sourceOf("clock", []), "omacale")
   assert.strictEqual(B.sourceOf("plugin:omarchy.agents", ["omarchy.agents"]), "omarchy")
   assert.strictEqual(B.sourceOf("plugin:omaplug", ["omarchy.agents"]), "plugin")
 })

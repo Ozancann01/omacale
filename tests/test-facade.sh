@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # tests/test-facade.sh -- every public member of Omarchy's bar widget API
 # (shell/Ui/PluginBarApi.qml: what a hosted widget may read or call on `bar`)
-# exists on Omashell's PluginBarFacade. A member a later Omarchy adds shows up
+# exists on Omacale's PluginBarFacade. A member a later Omarchy adds shows up
 # here, so the widgets that use it can be checked before they break.
 # OMARCHY_PATH picks another Omarchy tree (default /usr/share/omarchy).
 set -euo pipefail

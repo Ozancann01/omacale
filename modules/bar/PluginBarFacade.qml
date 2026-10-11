@@ -22,12 +22,12 @@ QtObject {
   property string position: host ? host.position : "left"
   property bool vertical: host ? host.vertical : true
   // WidgetButton uses barSize as the extent of its icon slot. Widgets are
-  // laid out in Omarchy's units and scaled up to Omashell's icon size (see
+  // laid out in Omarchy's units and scaled up to Omacale's icon size (see
   // Bar.pluginIconScale), so this is the 40px pill measured in those units.
   readonly property int barSize: host ? host.pluginBarSize : Tk.barInner
   readonly property bool transparent: Config.o.appearance.transparency.enabled
   readonly property bool foregroundAnimationEnabled: true
-  // Omashell has no center hover reveal; the setter is accepted and ignored.
+  // Omacale has no center hover reveal; the setter is accepted and ignored.
   readonly property bool centerHoverRevealSuppressed: false
   readonly property bool centerSectionRevealHeld: false
   // Widgets register their trigger buttons here so KeyboardPanel can forward

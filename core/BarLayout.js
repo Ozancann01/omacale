@@ -1,6 +1,6 @@
 .pragma library
 
-// Omashell bar layout (bar.layout, Settings › Taskbar › Layout): which items
+// Omacale bar layout (bar.layout, Settings › Taskbar › Layout): which items
 // sit in the bar's start, center and end sections, and in what order. No
 // Caelestia original -- Caelestia's bar.entries is one list -- the sections
 // follow Noctalia's bar. The default reproduces Caelestia's order exactly.
@@ -63,8 +63,8 @@ var ORDER = {
   end: ["overflow", "plugins", "tray", "clock"].concat(STATUS).concat(["power"])
 }
 
-// Omarchy's own bar widgets that Omashell already draws itself (the value is
-// the Omashell item; "" = covered elsewhere, e.g. Settings › Display). They are
+// Omarchy's own bar widgets that Omacale already draws itself (the value is
+// the Omacale item; "" = covered elsewhere, e.g. Settings › Display). They are
 // offered only behind Settings › Taskbar's "Omarchy's versions" switch and are
 // never put on the bar by themselves.
 var DUPLICATES = {
@@ -74,7 +74,7 @@ var DUPLICATES = {
   "omarchy.keyboard-layout": "kbLayout", "omarchy.system-update": "update",
   "omarchy.active-window": "activeWindow", "omarchy.monitor": ""
 }
-// Widgets that make no sense on their own in Omashell's bar.
+// Widgets that make no sense on their own in Omacale's bar.
 var NEVER = ["omarchy.spacer"]
 
 function isPlugin(id) { return typeof id === "string" && id.indexOf("plugin:") === 0 }
@@ -305,9 +305,9 @@ function groups(ids) {
 }
 
 // What a widget is in Settings › Taskbar: "omarchy" (Omarchy's own) or
-// "plugin" (third-party); built-ins are "omashell".
+// "plugin" (third-party); built-ins are "omacale".
 function sourceOf(id, firstPartyIds) {
-  if (!isPlugin(id)) return "omashell"
+  if (!isPlugin(id)) return "omacale"
   return listOf(firstPartyIds).indexOf(pluginOf(id)) >= 0 ? "omarchy" : "plugin"
 }
 

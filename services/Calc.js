@@ -1,7 +1,7 @@
 .pragma library
 
 // The launcher calculator's built-in engine, used when `qalc` isn't installed.
-// Caelestia evaluates with libqalculate through its C++ Qalculator; Omashell
+// Caelestia evaluates with libqalculate through its C++ Qalculator; Omacale
 // can't load a C++ plugin and Omarchy ships no calculator, so this is a small
 // recursive-descent evaluator (never `eval`) over plain arithmetic:
 //

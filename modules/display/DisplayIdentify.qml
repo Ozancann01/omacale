@@ -13,7 +13,7 @@ PanelWindow {
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   WlrLayershell.layer: WlrLayer.Overlay
-  WlrLayershell.namespace: "omashell-identify"
+  WlrLayershell.namespace: "omacale-identify"
   anchors { top: true; bottom: true; left: true; right: true }
   mask: Region {}
 

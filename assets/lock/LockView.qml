@@ -1,4 +1,4 @@
-// omashell:lock-view v5
+// omacale:lock-view v5
 //
 // Written into the clone of Omarchy's lock plugin by
 // scripts/lock-screen. Omarchy's own view is kept beside it as
@@ -8,8 +8,8 @@
 // call -- is still Omarchy's.
 //
 // This file only chooses who draws. It deliberately imports nothing from
-// Omashell: Omashell's UI is loaded by URL, so a missing, broken or removed
-// Omashell still leaves a working lock screen (the stock one) behind.
+// Omacale: Omacale's UI is loaded by URL, so a missing, broken or removed
+// Omacale still leaves a working lock screen (the stock one) behind.
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -37,50 +37,50 @@ Item {
   signal clearFailureRequested
   signal wakeRequested
 
-  // Omashell's settings file, read directly rather than through Config.qml so
+  // Omacale's settings file, read directly rather than through Config.qml so
   // this file keeps no import of its own. Missing or unreadable means "on":
   // the handover is only ever installed by someone turning the lock on.
-  property bool omashellEnabled: true
-  readonly property url omashellUi: Qt.resolvedUrl("../omashell.bar/modules/lock/LockUi.qml")
-  // OWE's live lock feed, which Omarchy ships beside its view. Omashell's UI
+  property bool omacaleEnabled: true
+  readonly property url omacaleUi: Qt.resolvedUrl("../omacale.bar/modules/lock/LockUi.qml")
+  // OWE's live lock feed, which Omarchy ships beside its view. Omacale's UI
   // loads it from here so it needs no path into this plugin of its own.
   readonly property url feedSurfaceUrl: Qt.resolvedUrl("LockFeedSurface.qml")
 
   function readEnabled(text) {
     try {
       const lock = JSON.parse(text).lock
-      root.omashellEnabled = !lock || lock.enabled !== false
+      root.omacaleEnabled = !lock || lock.enabled !== false
     } catch (e) {
-      root.omashellEnabled = true
+      root.omacaleEnabled = true
     }
   }
 
   FileView {
-    path: Quickshell.env("HOME") + "/.config/omashell/settings.json"
+    path: Quickshell.env("HOME") + "/.config/omacale/settings.json"
     watchChanges: true
     printErrors: false
     onFileChanged: reload()
     onLoaded: root.readEnabled(text())
-    onLoadFailed: root.omashellEnabled = true
+    onLoadFailed: root.omacaleEnabled = true
   }
 
-  // Omashell's lock UI resolves its imports from its own plugin directory, so
-  // it gets Omashell's tokens, palette and services (the same singletons the
+  // Omacale's lock UI resolves its imports from its own plugin directory, so
+  // it gets Omacale's tokens, palette and services (the same singletons the
   // bar runs on) without this plugin importing any of them.
   Loader {
-    id: omashell
+    id: omacale
 
     anchors.fill: parent
-    active: root.omashellEnabled
-    source: active ? root.omashellUi : ""
+    active: root.omacaleEnabled
+    source: active ? root.omacaleUi : ""
     onLoaded: item.view = root
   }
 
-  // Anything that stops Omashell drawing -- turned off, not installed, a QML
+  // Anything that stops Omacale drawing -- turned off, not installed, a QML
   // error in the UI -- falls back to the view Omarchy shipped.
   Loader {
     anchors.fill: parent
-    active: !omashell.active || omashell.status === Loader.Error
+    active: !omacale.active || omacale.status === Loader.Error
     sourceComponent: stock
   }
 

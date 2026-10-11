@@ -8,7 +8,7 @@ import "../../../core/BarLayout.js" as BarLayout
 // Caelestia original.
 //
 // The sections, and in each the items grouped as the bar draws them: neighbours that share a pill (BarLayout.groups) sit in one
-// card. Omashell's own items, Omarchy's widgets and plugins are rows alike;
+// card. Omacale's own items, Omarchy's widgets and plugins are rows alike;
 // only the last two carry a chip. The chevron's row opens to what is behind
 // it (bar.layout.drawer) and the "at most N icons" limit; the plugin pill's
 // row to its widgets. "Not shown" (bar.layout.removed) and "Add a widget"
@@ -146,7 +146,7 @@ Item {
   // ------------------------------------------------------------- add list
   // Every bar widget that is nowhere in the bar: not placed, not in the pill
   // (third-party ones that are on are always there), not taken off. Omarchy's
-  // versions of Omashell's own items only with the switch on.
+  // versions of Omacale's own items only with the switch on.
   readonly property var addable: {
     void Config.o.bar.layout.removed
     const dup = Config.o.bar.layout.showDuplicates
@@ -383,7 +383,7 @@ Item {
     }
   }
 
-  // Where a row comes from, when that isn't Omashell itself (or "new").
+  // Where a row comes from, when that isn't Omacale itself (or "new").
   component SourceChip: Rectangle {
     property string source
     readonly property var look: ({
@@ -683,7 +683,7 @@ Item {
               SourceChip { source: ar.modelData.source }
               MText {
                 Layout.fillWidth: true
-                text: "· " + (ar.modelData.duplicateOf !== null ? "Omarchy's version of an Omashell item" : ar.modelData.enabled ? (ar.modelData.description || "") : "off; adding turns it on")
+                text: "· " + (ar.modelData.duplicateOf !== null ? "Omarchy's version of an Omacale item" : ar.modelData.enabled ? (ar.modelData.description || "") : "off; adding turns it on")
                 color: Colours.m3outline
                 font.pointSize: Tk.label.small
                 elide: Text.ElideRight
@@ -700,8 +700,8 @@ Item {
       visible: root.addOpen && (root.duplicateCount > 0 || Config.o.bar.layout.showDuplicates)
       first: true
       last: true
-      text: "Show Omarchy's versions of Omashell items"
-      subtext: "Its own volume, network, clock, ... to use instead of or beside Omashell's"
+      text: "Show Omarchy's versions of Omacale items"
+      subtext: "Its own volume, network, clock, ... to use instead of or beside Omacale's"
       checked: Config.o.bar.layout.showDuplicates
       onToggled: c => Config.set("bar.layout.showDuplicates", c)
     }

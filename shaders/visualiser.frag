@@ -1,7 +1,7 @@
 #version 440
-// Omashell desktop visualiser. Caelestia paints these bars with QPainter in
+// Omacale desktop visualiser. Caelestia paints these bars with QPainter in
 // C++ (plugin/src/Caelestia/Components/visualiserbars.cpp: drawSide/paint);
-// Omashell has no C++, and one fragment shader over a single quad is cheaper
+// Omacale has no C++, and one fragment shader over a single quad is cheaper
 // than a scene-graph item per bar: a frame only updates the uniforms below.
 //
 // The item is the bars' full reach (Caelestia's maxBarHeight, 40% of the

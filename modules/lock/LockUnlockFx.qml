@@ -32,13 +32,13 @@ PanelWindow {
   readonly property bool playing: !!fx && fx.playing
   // Mirroring the lock, until the closing starts.
   readonly property bool following: !!ui && !playing
-  // `omashell unlockFx`: no lock to mirror, just the card and its closing.
+  // `omacale unlockFx`: no lock to mirror, just the card and its closing.
   property bool test: false
 
   screen: shellScreen
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
-  WlrLayershell.namespace: "omashell-unlock"
+  WlrLayershell.namespace: "omacale-unlock"
   WlrLayershell.layer: WlrLayer.Overlay
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
   anchors { top: true; bottom: true; left: true; right: true }

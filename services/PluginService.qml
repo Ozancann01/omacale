@@ -21,7 +21,7 @@ QtObject {
   property string busyId: ""        // plugin being enabled/disabled
   property string error: ""
 
-  // Clones Omashell's own handovers made (scripts/lock-screen,
+  // Clones Omacale's own handovers made (scripts/lock-screen,
   // scripts/notif-popups, scripts/osd-handover). They are torn down by those
   // scripts, never here.
   readonly property var managedClones: ["omarchy.lock", "omarchy.notifications", "omarchy.osd"]
@@ -41,7 +41,7 @@ QtObject {
   }
 
   // Every enabled bar widget, Omarchy's own included (Settings › Taskbar):
-  // `source` "omarchy" or "plugin", `duplicateOf` the Omashell item an Omarchy
+  // `source` "omarchy" or "plugin", `duplicateOf` the Omacale item an Omarchy
   // widget would stand in for (BarLayout.DUPLICATES; null if none).
   // widgetCatalog is every bar widget, enabled or not (Settings › Taskbar's
   // add list).
@@ -162,7 +162,7 @@ QtObject {
     const names = placed.map(id => { const w = widgets.find(x => x.id === id); return w && w.name ? w.name : id })
     Toaster.toast(placed.length === 1 ? "New bar widget" : "New bar widgets",
       names.join(", ") + (placed.length === 1 ? " is" : " are") + " on the bar now. Move or remove it in Settings › Taskbar",
-      "widgets", Toaster.info, 0, "omashell:new-widgets")
+      "widgets", Toaster.info, 0, "omacale:new-widgets")
   }
   // Settings › Taskbar's reset: the default layout, and a first adoption
   // again (Bar.qml answers adoptRequested), so Omarchy's widgets come back as
@@ -231,13 +231,13 @@ QtObject {
   }
 
   // add / update / remove write into ~/.config/omarchy/plugins, and the shell
-  // answers any write there by reloading every plugin -- Omashell included,
+  // answers any write there by reloading every plugin -- Omacale included,
   // so the Settings window this was started from is gone before it finishes.
   // Run them detached and bring Settings back on this page afterwards.
   function runAndReturn(args) {
     const cmd = args.map(a => "'" + String(a).replace(/'/g, "'\\''") + "'").join(" ")
     Quickshell.execDetached(["bash", "-c",
-      cmd + " >/dev/null 2>&1; sleep 2; omarchy-shell omashell settingsPage plugins"])
+      cmd + " >/dev/null 2>&1; sleep 2; omarchy-shell omacale settingsPage plugins"])
   }
   function remove(id) {
     const p = byId(id)
@@ -284,7 +284,7 @@ QtObject {
         isBar: isBar,
         sourceDir: m.sourceDir || "",
         manifestPath: m.manifestPath || "",
-        // A bar is picked, not enabled; the active one can't go; Omashell's
+        // A bar is picked, not enabled; the active one can't go; Omacale's
         // own clones belong to its handover scripts.
         toggleable: !!p.canDisable && !isBar && !managed,
         removable: !p.firstParty && !p.active && !managed

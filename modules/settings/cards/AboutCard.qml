@@ -56,7 +56,7 @@ ColumnLayout {
         }
       }
       // Caelestia AboutPage: the name in headline.large, widened (wdth 110).
-      MText { Layout.alignment: Qt.AlignHCenter; Layout.topMargin: Tk.spacing.small; text: "Omashell"; font.pointSize: Tk.headline.large; weight: Font.Medium; axes: ({ "ROND": 25, "wdth": 110 }) }
+      MText { Layout.alignment: Qt.AlignHCenter; Layout.topMargin: Tk.spacing.small; text: "Omacale"; font.pointSize: Tk.headline.large; weight: Font.Medium; axes: ({ "ROND": 25, "wdth": 110 }) }
       MText { Layout.alignment: Qt.AlignHCenter; text: "Caelestia's look, Omarchy's engine · v" + (root.settings ? root.settings.version : ""); color: Colours.m3onSurfaceVariant; font.pointSize: Tk.body.medium }
     }
   }
@@ -80,7 +80,7 @@ ColumnLayout {
     danger: true
     icon: root.confirmReset ? "warning" : "restart_alt"
     label: root.confirmReset ? "Click again to reset everything" : "Reset all settings"
-    sub: "Restore every Omashell option to its default"
+    sub: "Restore every Omacale option to its default"
     onClicked: {
       if (root.confirmReset) { Config.resetAll(); root.confirmReset = false }
       else { root.confirmReset = true; confirmTimer.restart() }
@@ -88,9 +88,8 @@ ColumnLayout {
   }
 
   Header { text: "Credits" }
-  Action { first: true; icon: "code"; label: "Omashell by Ozancann01"; sub: "github.com/Ozancann01/omashell"; onClicked: Qt.openUrlExternally("https://github.com/Ozancann01/omashell") }
-  // The original this fork is built on; GPL-3.0 keeps its notice, and so do we.
-  Action { icon: "volunteer_activism"; label: "Based on Omacale by AyushKr2003"; sub: "github.com/AyushKr2003/omacale · the original shell"; onClicked: Qt.openUrlExternally("https://github.com/AyushKr2003/omacale") }
+  Action { first: true; icon: "code"; label: "Made by AyushKr2003"; sub: "github.com/AyushKr2003"; onClicked: Qt.openUrlExternally("https://github.com/AyushKr2003") }
+  Action { icon: "call_split"; label: "Fork by Ozancann01"; sub: "github.com/Ozancann01/omacale"; onClicked: Qt.openUrlExternally("https://github.com/Ozancann01/omacale") }
   Action { last: true; icon: "favorite"; label: "Design by Caelestia"; sub: "github.com/caelestia-dots/shell · GPL-3.0"; onClicked: Qt.openUrlExternally("https://github.com/caelestia-dots/shell") }
 
   // The shared section header (Caelestia nexus/common/SectionHeader).

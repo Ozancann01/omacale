@@ -6,7 +6,7 @@ import Quickshell.Wayland
 import qs.Commons
 import "core/Screens.js" as Screens
 
-// Omashell — entry point of the `omashell.bar` bar plugin. The Omarchy shell
+// Omacale — entry point of the `omacale.bar` bar plugin. The Omarchy shell
 // host injects the properties below, exactly as it does for the stock bar.
 Item {
   id: root
@@ -23,7 +23,7 @@ Item {
 
   // The edge the bar is on, which the host (`shell.bar.position`, read for the
   // plugin bar state and by KeyboardPanel / PopupCard) and every hosted widget
-  // (`bar.position` / `bar.vertical`) are told. Omashell's own setting; "omarchy"
+  // (`bar.position` / `bar.vertical`) are told. Omacale's own setting; "omarchy"
   // follows the position Omarchy's Style > Bar > Position writes to shell.json.
   readonly property string position: {
     const p = Config.o.bar.position
@@ -48,7 +48,7 @@ Item {
   readonly property bool capsLock: Sys.capsLock
   readonly property bool numLock: Sys.numLock
 
-  readonly property string version: manifest && manifest.version ? manifest.version : "0.63.0"
+  readonly property string version: manifest && manifest.version ? manifest.version : "0.48.1"
 
   signal toggleRequested(string name, string screenName, string arg)
 
@@ -116,7 +116,7 @@ Item {
   // Every bar widget the shell has loaded (Omarchy's own included), as
   // [{ id, firstParty, name, enabled }]: what a widget of its own in
   // bar.layout can be. Read from the registry, so a widget a later Omarchy
-  // adds is here without Omashell knowing it. Omarchy registers its own
+  // adds is here without Omacale knowing it. Omarchy registers its own
   // widgets whether they are on or not; on means in its bar layout
   // (shell.json, what `omarchy plugin enable` adds to), which is all a
   // custom bar is shown of the plugin registry.
@@ -175,7 +175,7 @@ Item {
   }
 
   // Omarchy widgets draw their mark in Style.bar.iconCanvas (16px) with a
-  // 13px glyph; Omashell's status icons are Material glyphs at iconSize.small
+  // 13px glyph; Omacale's status icons are Material glyphs at iconSize.small
   // (15pt = a 20px em). Hosted widgets are laid out in Omarchy's units and
   // scaled by this, so a plugin's canvas lands on a status icon's em and every
   // mark in the bar reads at one size. pluginBarSize is the pill's breadth in
@@ -278,7 +278,7 @@ Item {
   // The host routes every bar-widget summon through the active bar
   // (shell.qml summon / hide / isPluginOpen / togglePanelAt), so Omarchy's
   // panel hotkeys -- SUPER+CTRL+A/B/W/P, SUPER+CTRL+ALT+D, SUPER+CTRL+1..9 --
-  // land here with Omarchy ids. Each maps to the Omashell popout that does
+  // land here with Omarchy ids. Each maps to the Omacale popout that does
   // that job; a hosted third-party widget opens its own panel. They open on
   // the focused monitor, with the keyboard (ScreenScope.openPopoutKeys).
   // SUPER+CTRL+1..9 counts the third-party widgets only.
@@ -291,8 +291,8 @@ Item {
     return scopes.length ? scopes[0] : null
   }
 
-  // Omarchy id -> the Omashell popout for it. Not mapped, so their hotkeys do
-  // nothing: omarchy.monitor (no Omashell display panel yet), and the clock
+  // Omarchy id -> the Omacale popout for it. Not mapped, so their hotkeys do
+  // nothing: omarchy.monitor (no Omacale display panel yet), and the clock
   // and weather (SUPER+CTRL+ALT+D) -- the dashboard has its own binds.
   // `onBar`: only while that popout's icon is on the status bar.
   readonly property var widgetTargets: ({
@@ -345,7 +345,7 @@ Item {
     // Bar hidden: nothing to open a bar panel from.
     if (barHidden) return false
     // Omarchy's own widget on the bar (Settings › Taskbar) answers its own
-    // hotkey, ahead of the Omashell popout it stands in for.
+    // hotkey, ahead of the Omacale popout it stands in for.
     var own = hostedSlot(id, screenName)
     if (own && typeof own.activeItem.open === "function") {
       own.activeItem.open()
@@ -407,7 +407,7 @@ Item {
   }
   // `togglePanelAt <section> <n>` (SUPER+CTRL+1..9): the nth hosted widget
   // you can see (1-based), whatever the section --
-  // Omashell's own popouts have their letter hotkeys. "" when there is none,
+  // Omacale's own popouts have their letter hotkeys. "" when there is none,
   // and the host then does nothing.
   function panelWidgetIdAt(section, index) {
     if (barHidden) return ""
@@ -453,7 +453,7 @@ Item {
         return inst
       }
     } else if (comp.status === Component.Error) {
-      console.warn("omashell: failed to create hosted service for", key, comp.errorString())
+      console.warn("omacale: failed to create hosted service for", key, comp.errorString())
     }
     return null
   }
@@ -579,7 +579,7 @@ Item {
   }
 
   IpcHandler {
-    target: "omashell"
+    target: "omacale"
     // Quickshell IPC needs typed arguments and return types.
     function launcher(): void { root.toggle("launcher") }
     function dashboard(): void { root.toggle("dashboard") }
@@ -609,7 +609,7 @@ Item {
       else if (action === "revert") DisplayService.revert()
       return DisplayService.confirming ? "confirming " + DisplayService.seconds : DisplayService.previewPending ? "applying" : "idle"
     }
-    // Any bar popout by Omashell's own name (network, bluetooth, audio,
+    // Any bar popout by Omacale's own name (network, bluetooth, audio,
     // battery, kblayout, lockstatus, update, activewindow), opened with the
     // keyboard on the focused monitor; again closes it.
     // SUPER+CTRL+0: the bar takes the keyboard, a cursor walks its items.
@@ -668,9 +668,9 @@ Item {
   readonly property bool notifHandover: NotifHandover.installed
   readonly property bool osdHandover: OsdHandover.installed
   // Keeps Hyprland's gaps and window rounding in step with the UI scale
-  // through omashell.lua (services/HyprLook.qml). Referenced to create it.
+  // through omacale.lua (services/HyprLook.qml). Referenced to create it.
   readonly property string hyprLook: HyprLook.args
-  // Omarchy's own menus in Omashell's colours, when chosen (services/OmarchySurfaces.qml).
+  // Omarchy's own menus in Omacale's colours, when chosen (services/OmarchySurfaces.qml).
   readonly property bool omarchySurfaces: OmarchySurfaces.on
   // Settings › Display › Identify: every screen's name on it for a moment.
   Variants {
@@ -708,7 +708,7 @@ Item {
     onTriggered: if (!DisplayService.quickOpen && !DisplayService.confirming) root.displayMenu()
   }
 
-  // Transparency: blur the Omashell layer behind translucent surfaces. This is
+  // Transparency: blur the Omacale layer behind translucent surfaces. This is
   // a runtime Hyprland rule (hyprctl eval) — nothing is written to
   // ~/.config/hypr, and it disappears on the next Hyprland reload.
   readonly property bool blur: Config.o.appearance.transparency.enabled
@@ -718,7 +718,7 @@ Item {
   // the frame -- so they need the same blur behind them.
   function applyBlur() {
     Quickshell.execDetached(["hyprctl", "eval",
-      'hl.layer_rule({ match = { namespace = "^omashell(-notifications)?$" }, blur = ' + (blur ? "true" : "false") +
+      'hl.layer_rule({ match = { namespace = "^omacale(-notifications)?$" }, blur = ' + (blur ? "true" : "false") +
       ', ignore_alpha = ' + ignoreAlpha.toFixed(2) + ' })'])
   }
   onBlurChanged: applyBlur()
@@ -734,9 +734,9 @@ Item {
   readonly property bool visBlur: Config.o.background.visualiser.blur
   function applyDesktopBlur() {
     Quickshell.execDetached(["hyprctl", "eval",
-      'hl.layer_rule({ match = { namespace = "^omashell-clock$" }, blur = ' + (clockBlur ? "true" : "false") +
+      'hl.layer_rule({ match = { namespace = "^omacale-clock$" }, blur = ' + (clockBlur ? "true" : "false") +
       ', ignore_alpha = ' + clockIgnoreAlpha.toFixed(2) + ' }); ' +
-      'hl.layer_rule({ match = { namespace = "^omashell-visualiser$" }, blur = ' + (visBlur ? "true" : "false") +
+      'hl.layer_rule({ match = { namespace = "^omacale-visualiser$" }, blur = ' + (visBlur ? "true" : "false") +
       ', ignore_alpha = 0.5 })'])
   }
   // The lock card is drawn by an overlay Hyprland puts above the session
@@ -745,7 +745,7 @@ Item {
   // keyboard always stays with the lock. Runtime only, like the blur.
   function applyLockRule() {
     Quickshell.execDetached(["hyprctl", "eval",
-      'hl.layer_rule({ match = { namespace = "^omashell-unlock$" }, no_anim = true, above_lock = 2 })'])
+      'hl.layer_rule({ match = { namespace = "^omacale-unlock$" }, no_anim = true, above_lock = 2 })'])
   }
 
   onClockBlurChanged: applyDesktopBlur()

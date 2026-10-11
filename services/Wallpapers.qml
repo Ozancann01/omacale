@@ -110,7 +110,7 @@ QtObject {
     }
   }
 
-  // Omashell no longer touches Omarchy's menu; drop the route block an older
+  // Omacale no longer touches Omarchy's menu; drop the route block an older
   // version may have left in omarchy-menu.jsonc (a no-op when there is none).
   Component.onCompleted: Quickshell.execDetached(["bash", script, "menu", "off"])
 }
