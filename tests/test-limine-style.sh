@@ -47,6 +47,15 @@ grep -qx 'default_entry: 2' "$conf" && grep -qx 'hash_mismatch_panic: no' "$conf
 [ "$(ls "$esp/omacale/backups" | wc -l)" = 1 ] && cmp -s "$esp/omacale/backups/"* "$tmp/before" && ok "backup is the old file" || bad "backup"
 [ "$(grep -c '^interface_branding:' "$conf")" = 1 ] && ok "no duplicate keys" || bad "duplicates"
 
+# ---- margin, soft edge, text size
+fresh
+rc=$(run apply '{"margin":120,"marginGradient":16,"fontScale":"2x2"}')
+[ "$rc" = 0 ] && grep -qx 'term_margin: 120' "$conf" && grep -qx 'term_margin_gradient: 16' "$conf" && grep -qx 'term_font_scale: 2x2' "$conf" && ok "margin, soft edge and text size set" || bad "margin/scale rc=$rc $(cat "$tmp/err")"
+rc=$(run apply '{"margin":null,"marginGradient":null,"fontScale":null}')
+[ "$rc" = 0 ] && ! grep -q '^term_margin\|^term_font_scale' "$conf" && ok "null gives them back to Limine" || bad "margin/scale removal"
+rc=$(run apply '{"margin":80,"fontScale":"3x3"}'); rc=$(run restore-default)
+[ "$rc" = 0 ] && ! grep -q '^term_margin\|^term_font_scale' "$conf" && ok "restore-default drops them" || bad "restore-default margin/scale"
+
 # ---- dry run
 fresh; cp "$conf" "$tmp/before"
 rc=$(run apply '{"branding":"X"}' --dry-run)
@@ -60,7 +69,8 @@ for bad_json in \
   '{"brandingColor":"12345"}' '{"brandingColor":"zzzzzz"}' '{"foreground":"#ffffff"}' \
   '{"timeout":0}' '{"timeout":31}' '{"timeout":"5"}' '{"timeout":true}' '{"rememberLast":"yes"}' \
   '{"backgroundAlpha":10}' '{"background":"000000","backgroundAlpha":300}' '{"wallpaperStyle":"fit"}' \
-  '{"default_entry":"1"}' '{"wallpaper":"relative.png"}' '{"wallpaper":"/etc/passwd"}' \
+  '{"margin":-1}' '{"margin":241}' '{"margin":"64"}' '{"margin":true}' '{"marginGradient":65}' \
+  '{"fontScale":"5x5"}' '{"fontScale":"2x1"}' '{"fontScale":2}' '{"default_entry":"1"}' '{"wallpaper":"relative.png"}' '{"wallpaper":"/etc/passwd"}' \
   '{"wallpaper":"'"$tmp"'/passwd-link"}' '{"wallpaper":"'"$tmp"'/huge.png"}' '{"wallpaper":"'"$tmp"'/fifo"}' \
   '{"wallpaper":"'"$esp"'/inside.png"}' '{"wallpaper":"'"$tmp"'/missing.png"}' '[1]' 'not json'; do
   rc=$(run apply "$bad_json")

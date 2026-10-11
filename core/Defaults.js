@@ -55,7 +55,10 @@ var values = {
   boot: {
     branding: "Omarchy Bootloader", brandingColor: "9ece6a", foreground: "c0caf5", background: "1a1b26",
     backgroundAlpha: 0, wallpaper: "", wallpaperStyle: "stretched", backdrop: "1a1b26",
-    timeout: 5, rememberLast: false, hideHelp: false, applied: ""
+    timeout: 5, rememberLast: false, hideHelp: false,
+    // Limine's own margin unless marginCustom; fontScale "" = by resolution.
+    marginCustom: false, margin: 64, marginGradient: 4, fontScale: "",
+    applied: ""
   },
   session: {
     enabled: true, gif: true, vimKeybinds: false, dragThreshold: 30, sleepAction: "hibernate",

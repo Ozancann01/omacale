@@ -21,8 +21,14 @@ Item {
   readonly property color brand: col(c.brandingColor, "#9ece6a")
   readonly property bool hasWall: c.wallpaper !== ""
   readonly property real s: width / 1920
-  readonly property real cw: 9 * s
-  readonly property real ch: 16 * s
+  // term_font_scale; unset is 1x below 2560x1440, which this screen is.
+  readonly property real fs: c.fontScale ? parseInt(c.fontScale) : 1
+  readonly property real cw: 9 * s * fs
+  readonly property real ch: 16 * s * fs
+  // term_margin / term_margin_gradient: Limine's own are 0 without a
+  // picture and 64 / 4 with one.
+  readonly property real margin: (c.marginCustom ? c.margin : hasWall ? 64 : 0) * s
+  readonly property real soft: Math.min(c.marginCustom ? c.marginGradient : hasWall ? 4 : 0, c.marginCustom ? c.margin : 64) * s
 
   Layout.fillWidth: true
   implicitHeight: Math.round(width * 9 / 16)
@@ -46,13 +52,32 @@ Item {
       asynchronous: true
     }
 
-    // The terminal: the whole screen without a wallpaper, inset over one.
-    Rectangle {
+    // The terminal, inset by the margin, its edge fading out over the
+    // soft edge (four strips, a gradient each, the outer side clear).
+    Item {
       id: term
-      readonly property real m: root.hasWall ? 64 * root.s : 0
+      readonly property real m: root.margin
       x: m; y: m; width: parent.width - 2 * m; height: parent.height - 2 * m
-      color: root.bg
       opacity: root.hasWall ? 1 - Math.max(0, Math.min(100, root.c.backgroundAlpha)) / 100 : 1
+      Rectangle { anchors.fill: parent; color: root.bg }
+      Repeater {
+        model: root.soft > 0 ? [0, 1, 2, 3] : []
+        Rectangle {
+          id: strip
+          required property int modelData
+          readonly property bool across: modelData < 2
+          readonly property real g: root.soft
+          x: across ? 0 : modelData === 2 ? -g : term.width
+          y: across ? (modelData === 0 ? -g : term.height) : 0
+          width: across ? term.width : g
+          height: across ? g : term.height
+          gradient: Gradient {
+            orientation: strip.across ? Gradient.Vertical : Gradient.Horizontal
+            GradientStop { position: 0; color: strip.modelData % 2 === 0 ? "transparent" : root.bg }
+            GradientStop { position: 1; color: strip.modelData % 2 === 0 ? root.bg : "transparent" }
+          }
+        }
+      }
     }
     Item {
       x: term.x; y: term.y; width: term.width; height: term.height

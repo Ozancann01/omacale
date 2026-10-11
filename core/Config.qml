@@ -258,6 +258,10 @@ QtObject {
         property int timeout: 5
         property bool rememberLast: false
         property bool hideHelp: false
+        property bool marginCustom: false
+        property int margin: 64
+        property int marginGradient: 4
+        property string fontScale: ""
         property string applied: ""
       }
       property JsonObject session: JsonObject {
