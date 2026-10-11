@@ -54,7 +54,8 @@ LOOK = ["timeout", "remember_last_entry", "interface_help_hidden",
         "interface_branding", "interface_branding_color", "interface_help_color",
         "interface_help_color_bright", "wallpaper", "wallpaper_style", "backdrop",
         "term_background", "term_foreground", "term_foreground_bright",
-        "term_background_bright", "term_margin"]
+        "term_background_bright", "term_margin", "term_margin_gradient",
+        "term_font_scale"]
 ALIASES = {"interface_branding_colour": "interface_branding_color",
            "interface_help_colour": "interface_help_color",
            "interface_help_colour_bright": "interface_help_color_bright"}
@@ -100,7 +101,8 @@ def build(fields, esp):
     """The look as {limine key: value or None (remove)} from the page's fields."""
     allowed = {"branding", "brandingColor", "helpColor", "foreground", "background",
                "backgroundAlpha", "timeout", "rememberLast", "hideHelp",
-               "wallpaper", "wallpaperStyle", "backdrop"}
+               "wallpaper", "wallpaperStyle", "backdrop",
+               "margin", "marginGradient", "fontScale"}
     if not isinstance(fields, dict): raise Refused("the look must be an object")
     unknown = set(fields) - allowed
     if unknown: raise Refused("unknown fields: " + ", ".join(sorted(unknown)))
@@ -142,9 +144,21 @@ def build(fields, esp):
         if w in (None, ""):
             out["wallpaper"] = None
             out["wallpaper_style"] = None
-            out["term_margin"] = None
         else:
             out["wallpaper"] = ("copy", check_wallpaper(w, esp))
+    # null = Limine's own (0, or 64 and 4 over a wallpaper). Capped so the
+    # menu always keeps room on a 1280x720 screen.
+    for k, key, top in (("margin", "term_margin", 240), ("marginGradient", "term_margin_gradient", 64)):
+        if k in fields:
+            v = fields[k]
+            if v is None: out[key] = None
+            elif isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= top: out[key] = str(v)
+            else: raise Refused(f"{k}: 0-{top} or null")
+    if "fontScale" in fields:
+        v = fields["fontScale"]
+        if v is None: out["term_font_scale"] = None
+        elif v in ("1x1", "2x2", "3x3", "4x4"): out["term_font_scale"] = v
+        else: raise Refused("fontScale: 1x1-4x4 or null")
     return out
 
 

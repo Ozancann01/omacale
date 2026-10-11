@@ -208,6 +208,17 @@ var pages = [
       { type: "custom", comp: "colour", key: "boot.foreground", label: "Text colour" },
       { type: "custom", comp: "colour", key: "boot.background", label: "Background colour", subtext: "Behind the text; the whole screen without a picture" },
       { type: "slider", key: "boot.backgroundAlpha", label: "Background see-through", icon: "opacity", from: 0, to: 100, step: 5, unit: "%" },
+      { type: "select", key: "boot.fontScale", label: "Text size", subtext: "Limine's own picks 2x from 2560x1440", options: [
+        { value: "", label: "Automatic", icon: "auto_awesome" },
+        { value: "1x1", label: "Normal", icon: "text_fields" },
+        { value: "2x2", label: "2x", icon: "format_size" },
+        { value: "3x3", label: "3x", icon: "format_size" },
+        { value: "4x4", label: "4x", icon: "format_size" }
+      ] },
+      { type: "section", text: "Margin" },
+      { type: "toggle", key: "boot.marginCustom", label: "Own margin", subtext: "Off: Limine's own, none without a picture and 64 px with one" },
+      { type: "slider", key: "boot.margin", when: { key: "boot.marginCustom", value: true }, label: "Margin", icon: "padding", from: 0, to: 240, step: 8, unit: "px" },
+      { type: "slider", key: "boot.marginGradient", when: { key: "boot.marginCustom", value: true }, label: "Soft edge", icon: "blur_on", from: 0, to: 64, step: 2, unit: "px" },
       { type: "section", text: "Behaviour" },
       { type: "stepper", key: "boot.timeout", label: "Seconds before it starts", subtext: "Limine's own is 5. Never instant, so the menu and your snapshots stay reachable", from: 1, to: 30, step: 1 },
       { type: "toggle", key: "boot.rememberLast", label: "Remember the last choice", subtext: "Start what you picked last time" },

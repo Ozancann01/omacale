@@ -27,6 +27,9 @@ QtObject {
       backgroundAlpha: Math.round(Math.max(0, Math.min(100, c.backgroundAlpha)) * 2.55),
       timeout: c.timeout > 0 ? c.timeout : null,
       rememberLast: c.rememberLast, hideHelp: c.hideHelp,
+      margin: c.marginCustom ? c.margin : null,
+      marginGradient: c.marginCustom ? Math.min(c.marginGradient, c.margin) : null,
+      fontScale: c.fontScale || null,
       wallpaper: c.wallpaper
     }
     if (c.wallpaper) { f.wallpaperStyle = c.wallpaperStyle; f.backdrop = c.backdrop }
