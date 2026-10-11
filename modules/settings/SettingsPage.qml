@@ -27,7 +27,7 @@ ColumnLayout {
     audio: "pages/AudioPage.qml", appVolumes: "pages/AppVolumes.qml",
     wallpapers: "pages/WallpaperGrid.qml", apps: "pages/AppsPage.qml", allApps: "pages/AllApps.qml", appInfo: "pages/AppInfo.qml",
     plugins: "pages/PluginsPage.qml", pluginInfo: "pages/PluginInfo.qml",
-    trayIcons: "pages/TrayIcons.qml", barLayout: "pages/LayoutPage.qml",
+    trayIcons: "pages/TrayIcons.qml", barLayout: "pages/LayoutPage.qml", dockPins: "pages/DockPins.qml",
     sessionPicture: "cards/SessionPicture.qml",
     bootPreview: "cards/BootPreview.qml", bootWallpaper: "cards/BootWallpaper.qml", bootActions: "cards/BootActions.qml", colour: "rows/RowColour.qml",
     screens: "pages/ScreensCard.qml", screenSelect: "rows/ScreenSelect.qml",
@@ -89,7 +89,7 @@ ColumnLayout {
         Loader {
           required property var modelData
           required property int index
-          readonly property bool live: !modelData.when || Config.get(modelData.when.key) === modelData.when.value
+          readonly property bool live: !modelData.when || (modelData.when.values ? modelData.when.values.indexOf(Config.get(modelData.when.key)) >= 0 : Config.get(modelData.when.key) === modelData.when.value)
           Layout.fillWidth: true
           enabled: live
           opacity: live ? 1 : 0.38

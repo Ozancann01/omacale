@@ -14,6 +14,7 @@ ConnectedRect {
     if (row.unit === "%") return Math.round(row.to > 1 ? v : v * 100) + "%"
     if (row.unit === "x") return v.toFixed(2).replace(/0$/, "") + "×"
     if (row.unit === "px") return Math.round(v) + " px"
+    if (row.unit === "ms") return Math.round(v) + " ms"
     return String(v)
   }
   function valueAt(f) {
