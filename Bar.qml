@@ -602,9 +602,11 @@ Item {
       const m = Hyprland.focusedMonitor
       DisplayService.stepBrightness(m ? m.name : (Quickshell.screens[0] ? Quickshell.screens[0].name : ""), step)
     }
-    // Settings › Display's pending change: keep | revert | status.
+    // Settings › Display's pending change: keep | revert | status; also
+    // menu (the display menu) and identify (each screen's name on it).
     function display(action: string): string {
       if (action === "menu") root.displayMenu()
+      else if (action === "identify") DisplayService.identify()
       else if (action === "keep") DisplayService.keep()
       else if (action === "revert") DisplayService.revert()
       return DisplayService.confirming ? "confirming " + DisplayService.seconds : DisplayService.previewPending ? "applying" : "idle"
