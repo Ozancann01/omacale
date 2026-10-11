@@ -332,8 +332,8 @@ var subpages = {
     title: "Dock",
     rows: [
       { type: "toggle", key: "dock.enabled", label: "Enabled", subtext: "Pinned apps and open windows on one edge of the screen. Show or hide it with SUPER+CTRL+SHIFT+D (Settings \u203a Keybinds)" },
-      { type: "select", key: "dock.position", label: "Position", subtext: "Which edge it grows out of. Never the bar's: there it moves to the opposite edge", options: [
-        { value: "auto", label: "Opposite the bar", icon: "swap_horiz" },
+      { type: "select", key: "dock.position", label: "Position", subtext: "Which edge it grows out of. Never the bar's. Automatic: the bottom, or the top with the bar at the bottom, skipping an edge another screen is against", options: [
+        { value: "auto", label: "Automatic", icon: "auto_awesome" },
         { value: "bottom", label: "Bottom", icon: "vertical_align_bottom" },
         { value: "top", label: "Top", icon: "vertical_align_top" },
         { value: "left", label: "Left", icon: "align_horizontal_left" },

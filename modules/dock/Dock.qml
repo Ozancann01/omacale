@@ -18,7 +18,11 @@ Item {
   property int monitorId: -1
   readonly property bool vertical: edge === "left" || edge === "right"
   readonly property real cell: Tk.px(Config.o.dock.iconSize)
-  readonly property real pad: Tk.padding.small
+  // The icons sit on a plate of their own inside the drawer: with a theme
+  // whose surface is the windows' colour (a black one) the drawer alone
+  // doesn't show where the dock is. The window dots live in its margin.
+  readonly property real platePad: Tk.padding.small
+  readonly property real pad: Tk.padding.small + platePad
   readonly property real gap: Tk.spacing.small
 
   // The app whose menu is open (its key), "" for none.
@@ -192,6 +196,15 @@ Item {
 
   implicitWidth: (vertical ? iconsW + menuGap + menuW : Math.max(iconsW, menuW)) + pad * 2
   implicitHeight: (vertical ? Math.max(iconsH, menuH) : iconsH + menuGap + menuH) + pad * 2
+
+  Rectangle {
+    x: icons.x - root.platePad
+    y: icons.y - root.platePad
+    width: icons.width + root.platePad * 2
+    height: icons.height + root.platePad * 2
+    radius: Tk.rounding.large
+    color: Colours.m3surfaceContainer
+  }
 
   Grid {
     id: icons

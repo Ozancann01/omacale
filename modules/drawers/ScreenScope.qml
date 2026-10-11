@@ -84,14 +84,14 @@ Scope {
   property bool dashShortcut: false
 
   // ------------------------------------------------------------- dock
-  // The app dock (modules/dock, drawer r10). Never on the bar's edge:
-  // "auto", or the bar's own edge, is the one opposite it.
+  // The app dock (modules/dock, drawer r10). Never on the bar's edge;
+  // "auto" is the bottom (Screens.dockEdgeFor), off edges another screen
+  // sits against.
   readonly property bool dockEnabled: cfg.dock.enabled && Screens.targetFor(screen.name, cfg.dock.screen, focusedName, connected)
-  readonly property string dockEdge: {
-    const opposite = { left: "right", right: "left", top: "bottom", bottom: "top" }
-    const p = cfg.dock.position
-    return p === "auto" || p === barPos || !opposite[p] ? opposite[barPos] : p
-  }
+  readonly property var sharedEdges: Screens.sharedEdges(
+    { x: screen.x, y: screen.y, width: screen.width, height: screen.height },
+    Quickshell.screens.map(s => ({ x: s.x, y: s.y, width: s.width, height: s.height })))
+  readonly property string dockEdge: Screens.dockEdgeFor(cfg.dock.position, barPos, sharedEdges)
   readonly property bool dockVert: dockEdge === "left" || dockEdge === "right"
   readonly property string dockMode: cfg.dock.visibility
   // Out because the pointer reached its edge (auto-hide, smart).
@@ -711,7 +711,10 @@ Scope {
     Behavior on cpOff { Anim {} }
     Behavior on uOff { Anim {} }
     Behavior on osdOff { Anim {} }
-    Behavior on dockOff { Anim {} }
+    // The dock eases out and back without the spatial curve's overshoot: it
+    // is small and sits on its edge all the time, so a bounce reads as a
+    // wobble rather than as motion.
+    Behavior on dockOff { Anim { type: scope.dockShown ? "emphasized" : "standard" } }
 
     // Visibility flags
     readonly property bool dVis: dOff < 1
@@ -1114,7 +1117,7 @@ Scope {
     BlobDeform { id: sbDeform; amount: 0.03; cx: win.sbx + win.sbw / 2; cy: win.sbRectY + win.sbRectH / 2 }
     BlobDeform { id: utilDeform; amount: win.sbVis ? 0.1 : 0.15; cx: win.ux + win.uw / 2; cy: win.uy + win.uh / 2 }
     BlobDeform { id: osdDeform; amount: 0.25; cx: win.osdX + win.osdW / 2; cy: win.osdY + win.osdH / 2 }
-    BlobDeform { id: dockDeform; amount: 0.1; cx: win.dockX + win.dockW / 2; cy: win.dockY + win.dockH / 2 }
+    BlobDeform { id: dockDeform; amount: 0.04; cx: win.dockX + win.dockW / 2; cy: win.dockY + win.dockH / 2 }
 
     // ---------------------------------------------------- background
     Item {
@@ -1571,7 +1574,8 @@ Scope {
           width: win.dockW
           height: win.dockH
           visible: win.dockVis
-          opacity: Math.max(0, 1 - win.dockOff)
+          // In before it has finished rising, so the icons don't trail it.
+          opacity: Math.min(1, Math.max(0, (1 - win.dockOff) * 1.6))
           transform: Matrix4x4 { matrix: dockDeform.matrixAt(win.dockW / 2, win.dockH / 2) }
           edge: scope.dockEdge
           workspaceId: scope.monitor && scope.monitor.activeWorkspace ? scope.monitor.activeWorkspace.id : 1

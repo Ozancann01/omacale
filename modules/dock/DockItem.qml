@@ -40,8 +40,9 @@ Item {
     id: bg
     anchors.fill: parent
     radius: Tk.rounding.large
-    color: root.menuShown ? Colours.m3surfaceContainerHighest
-         : root.modelData.active ? Colours.m3surfaceContainerHigh : "transparent"
+    // Only the app whose menu is open gets a tile; the active one is told by
+    // its dot, so every icon sits on the plate the same way.
+    color: root.menuShown ? Colours.m3surfaceContainerHighest : "transparent"
     Behavior on color { CAnim {} }
 
     StateLayer {
@@ -74,9 +75,15 @@ Item {
     }
   }
 
+  // The cell's edge side holds the window dots (dotRoom), so the icon is
+  // centred in what is left and the two never touch.
+  readonly property real dotRoom: Tk.px(9)
+  readonly property real iconSize: Math.round(Math.min(root.cell * 0.78, root.cell - dotRoom * 2 + Tk.px(6)))
   IconImage {
-    anchors.centerIn: parent
-    implicitSize: Math.round(root.cell * 0.72)
+    implicitSize: root.iconSize
+    readonly property real away: (root.dotRoom - (root.cell - root.iconSize) / 2) > 0 ? root.dotRoom - (root.cell - root.iconSize) / 2 : 0
+    x: Math.round((root.width - width) / 2 + (root.edge === "left" ? away : root.edge === "right" ? -away : 0))
+    y: Math.round((root.height - height) / 2 + (root.edge === "top" ? away : root.edge === "bottom" ? -away : 0))
     asynchronous: true
     source: root.modelData.icon
   }
